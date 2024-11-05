@@ -32,10 +32,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # 경로는 모델 폴더가 설치된 경로로 설정해야 합니다.
 paths = [
-    # "google-t5/t5-base",
-    # "google-t5/t5-small",
+    "google-t5/t5-base",
+    "google-t5/t5-small",
     "google-t5/t5-3b",
-    "google-t5/t5-large"
+    "google-t5/t5-large",
 ]
 for path in paths:
 # path = "t5-base"
