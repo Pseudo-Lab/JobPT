@@ -1,0 +1,13 @@
+# prompts:
+#   - "prompts.py:simple_prompt"
+#   - "prompts.py:better_prompt"
+prompts:
+  - 'Act as a travel guide for {{location}}'
+  - 'I want you to act as a travel guide. I will write you my location and you will suggest a place to visit near my location.'
+
+providers:
+  - id: file://model.py:generate_text_qwen
+  # - id: file://model.py:generate_text_gemma
+  - id: file://model.py:generate_text_llama
+
+  
