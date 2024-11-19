@@ -1,13 +1,3053 @@
-# prompts:
-#   - "prompts.py:simple_prompt"
-#   - "prompts.py:better_prompt"
+description: News Summary Evaluation
 prompts:
-  - 'Act as a travel guide for {{location}}'
-  - 'I want you to act as a travel guide. I will write you my location and you will suggest a place to visit near my location.'
-
+- "Article: {{text}}\nYou will generate increasingly concise, entity-dense summaries\
+  \ of the above article. \n\nRepeat the following 2 steps 5 times. \n\nStep 1. Identify\
+  \ 1-3 informative entities (\";\" delimited) from the article which are missing\
+  \ from the previously generated summary. \nStep 2. Write a new, denser summary of\
+  \ identical length which covers every entity and detail from the previous summary\
+  \ plus the missing entities. \n\nA missing entity is:\n- relevant to the main story,\
+  \ \n- specific yet concise (5 words or fewer), \n- novel (not in the previous summary),\
+  \ \n- faithful (present in the article), \n- anywhere (can be located anywhere in\
+  \ the article).\n\nGuidelines:\n\n- The first summary should be long (4-5 sentences,\
+  \ ~80 words) yet highly non-specific, containing little information beyond the entities\
+  \ marked as missing. Use overly verbose language and fillers (e.g., \"this article\
+  \ discusses\") to reach ~80 words.\n- Make every word count: rewrite the previous\
+  \ summary to improve flow and make space for additional entities.\n- Make space\
+  \ with fusion, compression, and removal of uninformative phrases like \"the article\
+  \ discusses\".\n- The summaries should become highly dense and concise yet self-contained,\
+  \ i.e., easily understood without the article. \n- Missing entities can appear anywhere\
+  \ in the new summary.\n- Never drop entities from the previous summary. If space\
+  \ cannot be made, add fewer new entities. \n\nRemember, use the exact same number\
+  \ of words for each summary.\nAnswer in JSON. The JSON should be a list (length\
+  \ 5) of dictionaries whose keys are \"Missing_Entities\" and \"Denser_Summary\"\
+  .\n\nResults:"
+- "Article: {{text}}\nYou will generate increasingly concise, entity-dense summaries\
+  \ of the above article. \n\nRepeat the following 2 steps 10 times. \n\nStep 1. Identify\
+  \ 1-3 informative entities (\";\" delimited) from the article which are missing\
+  \ from the previously generated summary. \nStep 2. Write a new, denser summary of\
+  \ identical length which covers every entity and detail from the previous summary\
+  \ plus the missing entities. \n\nA missing entity is:\n- relevant to the main story,\
+  \ \n- specific yet concise (5 words or fewer), \n- novel (not in the previous summary),\
+  \ \n- faithful (present in the article), \n- anywhere (can be located anywhere in\
+  \ the article).\n\nGuidelines:\n\n- The first summary should be long (4-5 sentences,\
+  \ ~80 words) yet highly non-specific, containing little information beyond the entities\
+  \ marked as missing. Use overly verbose language and fillers (e.g., \"this article\
+  \ discusses\") to reach ~80 words.\n- Make every word count: rewrite the previous\
+  \ summary to improve flow and make space for additional entities.\n- Make space\
+  \ with fusion, compression, and removal of uninformative phrases like \"the article\
+  \ discusses\".\n- The summaries should become highly dense and concise yet self-contained,\
+  \ i.e., easily understood without the article. \n- Missing entities can appear anywhere\
+  \ in the new summary.\n- Never drop entities from the previous summary. If space\
+  \ cannot be made, add fewer new entities. \n- Generate at least two sentences.\n\
+  \n\nRemember, use the exact same number of words for each summary.\nAnswer in JSON.\
+  \ The JSON should be a list (length 10) of dictionaries whose keys are \"Missing_Entities\"\
+  \ and \"Denser_Summary\".\n\nResults:"
 providers:
-  - id: file://model.py:generate_text_qwen
-  # - id: file://model.py:generate_text_gemma
-  - id: file://model.py:generate_text_llama
+- file://inference.py:generate_text_qwen
+- file://inference.py:generate_text_qwen_templow
+tests:
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nNick Scholfield is lined up to ride Spring Heeled in the Grand\
+      \ National at Aintree on April 11.\n\nNick Scholfield has been lined up to ride\
+      \ Jim Culloty’s Spring Heeled in the Crabbie’s Grand National at Aintree on\
+      \ Saturday week.\n\nScholfield had been expected to partner Paul Nicholls-trained\
+      \ Sam Winner, who was pulled up in the Cheltenham Gold Cup, in the £1million\
+      \ race.\n\nBut the champion trainer  said on Wednesday it was unfair to tie\
+      \ Scholfield down to a gelding which is far from certain to run when the mount\
+      \ on another leading definite contender is being offered.\n\nScholfield, who\
+      \ has ridden in six Nationals and finished third in 2013 on Teaforthree, will\
+      \ travel to Ireland to sit on Spring Heeled at Culloty’s County Cork stable\
+      \ on Friday.\n\nNicholls said: ‘I have not made up my mind if I am going to\
+      \ run Sam Winner yet and Nick needed a decision.\n\n‘I did not want to get into\
+      \ a situation next week when I had to say \"sorry mate, he is not running\"\
+      \ and did not want to stop him getting a good ride.\n\n‘I have not pressed any\
+      \ buttons on any of the horses who ran at Cheltenham. That will happen over\
+      \ the weekend and early next week. I don’t want to run unless I am really happy.\n\
+      \n‘I have plenty of other lads who could ride Sam Winner if he runs and would\
+      \ not be afraid to use Will Biddick or Harry Skelton.’\n\nSpring Heeled (right)\
+      \ wins the Fulke Walwyn Kim Muir Challenge Cup at Cheltenham last year.\n\n\
+      Spring Heeled, winner of Fulke Walwyn Kim Muir Challenge Cup at last season’s\
+      \ Cheltenham Festival, has been given a National preparation.\n\nThe eight-year-old\
+      \ has run only once since finishing fourth to Road To Riches in the Galway Plate\
+      \ in July when he was fourth of five in the Bobbyjo Chase at Fairyhouse in February.\n\
+      \nRacemail revealed on Wednesday that Culloty would have two runners in the\
+      \ National.\n\nRobbie McNamara will ride his 2014 Gold Cup winner Lord Windermere.\n\
+      \nScholfield rides Teaforthree (front) as the horse jumps the last fence at\
+      \ Aintree in the 2013 Grand National.\n\nMcNamara said: ‘It's a great ride to\
+      \ get and I'm looking forward to it. I've ridden him before in a Grade One in\
+      \ Leopardstown and I was supposed to ride him in the Hennessy there as well,\
+      \ but I broke my collarbone the day before. I'm delighted to get back on him.’\n\
+      \nWith Nigel Twiston-Davies-trained Double Ross another confirmed non runner,\
+      \ David Pipe’s well supported Soll appears guaranteed a run at the bottom of\
+      \ the weights.\n\nLuke Morris became the first jockey to ride 100 winners during\
+      \ an All Weather Flat racing season when a double at Chelmsford on Wednesday\
+      \ aboard Giantouch and Middle East Pearl carried him to 101 successes for the\
+      \ campaign."
+  vars:
+    text: 'Nick Scholfield is lined up to ride Spring Heeled in the Grand National
+      at Aintree on April 11.
 
-  
+
+      Nick Scholfield has been lined up to ride Jim Culloty’s Spring Heeled in the
+      Crabbie’s Grand National at Aintree on Saturday week.
+
+
+      Scholfield had been expected to partner Paul Nicholls-trained Sam Winner, who
+      was pulled up in the Cheltenham Gold Cup, in the £1million race.
+
+
+      But the champion trainer  said on Wednesday it was unfair to tie Scholfield
+      down to a gelding which is far from certain to run when the mount on another
+      leading definite contender is being offered.
+
+
+      Scholfield, who has ridden in six Nationals and finished third in 2013 on Teaforthree,
+      will travel to Ireland to sit on Spring Heeled at Culloty’s County Cork stable
+      on Friday.
+
+
+      Nicholls said: ‘I have not made up my mind if I am going to run Sam Winner yet
+      and Nick needed a decision.
+
+
+      ‘I did not want to get into a situation next week when I had to say "sorry mate,
+      he is not running" and did not want to stop him getting a good ride.
+
+
+      ‘I have not pressed any buttons on any of the horses who ran at Cheltenham.
+      That will happen over the weekend and early next week. I don’t want to run unless
+      I am really happy.
+
+
+      ‘I have plenty of other lads who could ride Sam Winner if he runs and would
+      not be afraid to use Will Biddick or Harry Skelton.’
+
+
+      Spring Heeled (right) wins the Fulke Walwyn Kim Muir Challenge Cup at Cheltenham
+      last year.
+
+
+      Spring Heeled, winner of Fulke Walwyn Kim Muir Challenge Cup at last season’s
+      Cheltenham Festival, has been given a National preparation.
+
+
+      The eight-year-old has run only once since finishing fourth to Road To Riches
+      in the Galway Plate in July when he was fourth of five in the Bobbyjo Chase
+      at Fairyhouse in February.
+
+
+      Racemail revealed on Wednesday that Culloty would have two runners in the National.
+
+
+      Robbie McNamara will ride his 2014 Gold Cup winner Lord Windermere.
+
+
+      Scholfield rides Teaforthree (front) as the horse jumps the last fence at Aintree
+      in the 2013 Grand National.
+
+
+      McNamara said: ‘It''s a great ride to get and I''m looking forward to it. I''ve
+      ridden him before in a Grade One in Leopardstown and I was supposed to ride
+      him in the Hennessy there as well, but I broke my collarbone the day before.
+      I''m delighted to get back on him.’
+
+
+      With Nigel Twiston-Davies-trained Double Ross another confirmed non runner,
+      David Pipe’s well supported Soll appears guaranteed a run at the bottom of the
+      weights.
+
+
+      Luke Morris became the first jockey to ride 100 winners during an All Weather
+      Flat racing season when a double at Chelmsford on Wednesday aboard Giantouch
+      and Middle East Pearl carried him to 101 successes for the campaign.'
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nDr Mehmet Oz's fellow faculty members at Columbia have written\
+      \ an op-ed lashing out at how his 'unsubstantiated medicine... sullies the reputation'\
+      \ of the university - in just the latest attack on his talk show tactics.\n\n\
+      But they also leap to the physician's defense in the piece, saying that his\
+      \ on-air 'Ozisms' should not cancel out his stellar work at the university,\
+      \ where he has an unblemished record as a doctor.\n\nThe eight staff wrote the\
+      \ op-ed for USA Today after 10 doctors urged Columbia to sever all ties with\
+      \ Oz, who serves as vice chairman and professor of surgery at the College of\
+      \ Physicians.\n\nThose doctors accused him of being a 'charlatan' who promotes\
+      \ 'quack treatments' on his syndicated talk show - accusations Dr Oz has vehemently\
+      \ fought this week.\n\nScroll down for videos.\n\nUnder fire: Faculty at Columbia\
+      \ University have said some of Dr Mehmet Oz's tactics have 'sullied their reputation'\
+      \ - but also applauded him for the work he had carried out at the Ivy League\
+      \ school.\n\nIn the new op-ed, his fellow faculty also denounced his TV show\
+      \ methods.\n\nThey pointed out that in 2014, the BMJ medical journal said 'that\
+      \ less than half of the recommendations on his show are based on at least somewhat\
+      \ believable evidence'.\n\n'Many of us are spending a significant amount of\
+      \ our clinical time debunking Ozisms regarding metabolism game changers,' the\
+      \ staff members wrote in the op-ed.\n\n'Irrespective of the underlying motives,\
+      \ this unsubstantiated medicine sullies the reputation of Columbia University\
+      \ and undermines the trust that is essential to physician-patient relationships.'\n\
+      \nThat said, 'the weaknesses in [his] professional balance sheet' should not\
+      \ force him out of his job at Columbia University, where he has been employed\
+      \ since 2001, they wrote.\n\nHe was hired because of his strengths as a doctor\
+      \ and receives top reviews from his peers and patients, and therefore should\
+      \ not be forced to leave the job 'in which he excels', they wrote.\n\nSupport:\
+      \ The eight faculty members, including Drs Michael Rosenbaum, left, and Joan\
+      \ Bregstein. right, said they have spent a great deal of their time debunking\
+      \ 'Ozisms' their colleague had shared on air.\n\nInstead, they suggested that\
+      \ his case raises questions of what responsibilities doctors in the media have\
+      \ to their patients.\n\n'What happens when a doctor's job in media-medicine\
+      \ collides with office- or hospital-based medicine? Dr. Mehmet Oz is a case\
+      \ in-point.'\n\n'Many of us are spending a significant amount of our clinical\
+      \ time debunking Ozisms regarding metabolism game changers. Irrespective of\
+      \ the underlying motives, this unsubstantiated medicine sullies the reputation\
+      \ of Columbia University and undermines the trust that is essential to physician-patient\
+      \ relationships.'\n\n'We need to re-evaluate the roles of the health sciences\
+      \ and government in broadcast medicine and what are the responsibilities of\
+      \ media physicians to their patients?'\n\n'Non-evidence based medical recommendations\
+      \ presented without the appropriate caveats are costly and potentially harmful.\
+      \ However, unless these foibles can be shown to render Dr. Oz inadequate or\
+      \ ineffective at Columbia, there is no justification for forcing him to resign\
+      \ from a well-earned position in academic medicine.\n\n'Regulatory guidance\
+      \ addressing the tension between his two positions is potentially a far better\
+      \ solution that could result in improved health care both in the doctor's office\
+      \ and in the media.\n\n'Dr. Oz might begin each program with a simple disclaimer:\
+      \ \"The opinions expressed on this program may not be evidence-based or part\
+      \ of accepted medical practice and have no endorsement from Columbia University.\"\
+      '\n\nThe full op-ed can be read at USA Today.\n\n'Non-evidence based medical\
+      \ recommendations presented without the appropriate caveats are costly and potentially\
+      \ harmful,' they wrote. 'However, unless these foibles can be shown to render\
+      \ Dr. Oz inadequate or ineffective at Columbia, there is no justification for\
+      \ forcing him to resign from a well-earned position in academic medicine.'\n\
+      \nRather, he should start each show with a disclaimer: 'The opinions expressed\
+      \ on this program may not be evidence-based or part of accepted medical practice\
+      \ and have no endorsement from Columbia University,' they said.\n\nThe op-ed\
+      \ was penned by Dr Michael Rosenbaum, Dr Joan Bregstein, Dr Elizabeth Oelsner,\
+      \ Dr Sumit Mohan and Dr Dana March of Columbia University Medical Center, Dr\
+      \ Michelle Odlum of the School of Nursing, Dr Katherine Shear of the College\
+      \ of Physicians & Surgeons, and Tal Gross of the Department of Health Policy\
+      \ and Management.\n\nOn Friday, Dr Oz, 54, said he was 'very proud to have that\
+      \ feedback' from his colleagues as he appeared on the Today show.\n\n'The [Dr\
+      \ Oz] show has to be much broader than what might take place in a doctor's office,'\
+      \ he said.\n\n'I completely respect why so many of my colleagues might have\
+      \ a difficulty with that, but I'm also appreciative that many of them do understand\
+      \ why that's important.'\n\nWhile appearing on Today, he insisted that, despite\
+      \ the criticisms, his show will continue. He has been hosting the program since\
+      \ 2009.\n\n'Without question, the show will survive it,' he said. 'I want to\
+      \ keep doing the show for as long as I can because I think we played an important\
+      \ role in making America a better place.'\n\nEven though he often wears his\
+      \ scrubs on air, he added that his show is not about medicine, but about living\
+      \ 'the good life', such as looking at the power of prayer or techniques abroad.\n\
+      \nDefense: On Friday, Dr Oz appeared on the Today show and said his show would\
+      \ survive the criticism.\n\nVehement: He told Matt Lauer that his show was more\
+      \ about living 'the good life' than medical information.\n\nHe said he continues\
+      \ to stand by his use of the word 'miracle' to some treatments - but wishes\
+      \ he had not used it for weight-loss supplements.\n\n'This is a flawed area\
+      \ with lots of fraud, both in the research and in products,' he said. 'And we\
+      \ no longer talk about them. I haven't talked about them in a year.'\n\nAnd\
+      \ talking about the letter from the 10 doctors last week, he said that those\
+      \ critics have agendas, particularly against genetically modified organisms,\
+      \ which he has supported.\n\n'The 10 doctors who attacked me got what they wanted\
+      \ – sensational headlines and sound bites,' he previously said on his Thursday\
+      \ show, which was entitled The Truth About His Critics.\n\n'It's ironic that\
+      \ I am being accused of a conflict of interest by these doctors, when, as you\
+      \ are about to see, some of them have their own conflict of interest issues\
+      \ - and some integrity ones also.'\n\nFour who signed the letter, including\
+      \ leader author Henry Miller, have at some point been associated with the American\
+      \ Council on Science and Health.\n\nDefiant: The celebrity doctor used Thursday's\
+      \ episode of The Dr. Oz Show to hit back and claim that the criticism he's received\
+      \ is part of a conspiracy because of his outspoken views on genetically modified\
+      \ food.\n\nThe organization has previously received grants from Monsanto, who\
+      \ manufactures GMO seeds.\n\nDuring his show on Thursday, Oz denied attacking\
+      \ genetically modified foods.\n\n'That is not true. I have never judged GMO\
+      \ foods,' he said. 'But just like 64 countries around the world, I support GMO\
+      \ labeling so you can decide on the foods for your family.'\n\nDr Miller had\
+      \ written of Oz: 'He's a quack and a fake and a charlatan. I think I know the\
+      \ motivation at Columbia. 'They're star-struck, and like having on their faculty\
+      \ the best-known doctor in the country.\n\n'But the fact is that his advice\
+      \ endangers patients, and this doesn't seem to faze them.'\n\nColumbia previously\
+      \ released a statement that it 'is committed to the principle of academic freedom\
+      \ and to upholding faculty members' freedom of expression for statements they\
+      \ make in public discussion.'"
+  vars:
+    text: 'Dr Mehmet Oz''s fellow faculty members at Columbia have written an op-ed
+      lashing out at how his ''unsubstantiated medicine... sullies the reputation''
+      of the university - in just the latest attack on his talk show tactics.
+
+
+      But they also leap to the physician''s defense in the piece, saying that his
+      on-air ''Ozisms'' should not cancel out his stellar work at the university,
+      where he has an unblemished record as a doctor.
+
+
+      The eight staff wrote the op-ed for USA Today after 10 doctors urged Columbia
+      to sever all ties with Oz, who serves as vice chairman and professor of surgery
+      at the College of Physicians.
+
+
+      Those doctors accused him of being a ''charlatan'' who promotes ''quack treatments''
+      on his syndicated talk show - accusations Dr Oz has vehemently fought this week.
+
+
+      Scroll down for videos.
+
+
+      Under fire: Faculty at Columbia University have said some of Dr Mehmet Oz''s
+      tactics have ''sullied their reputation'' - but also applauded him for the work
+      he had carried out at the Ivy League school.
+
+
+      In the new op-ed, his fellow faculty also denounced his TV show methods.
+
+
+      They pointed out that in 2014, the BMJ medical journal said ''that less than
+      half of the recommendations on his show are based on at least somewhat believable
+      evidence''.
+
+
+      ''Many of us are spending a significant amount of our clinical time debunking
+      Ozisms regarding metabolism game changers,'' the staff members wrote in the
+      op-ed.
+
+
+      ''Irrespective of the underlying motives, this unsubstantiated medicine sullies
+      the reputation of Columbia University and undermines the trust that is essential
+      to physician-patient relationships.''
+
+
+      That said, ''the weaknesses in [his] professional balance sheet'' should not
+      force him out of his job at Columbia University, where he has been employed
+      since 2001, they wrote.
+
+
+      He was hired because of his strengths as a doctor and receives top reviews from
+      his peers and patients, and therefore should not be forced to leave the job
+      ''in which he excels'', they wrote.
+
+
+      Support: The eight faculty members, including Drs Michael Rosenbaum, left, and
+      Joan Bregstein. right, said they have spent a great deal of their time debunking
+      ''Ozisms'' their colleague had shared on air.
+
+
+      Instead, they suggested that his case raises questions of what responsibilities
+      doctors in the media have to their patients.
+
+
+      ''What happens when a doctor''s job in media-medicine collides with office-
+      or hospital-based medicine? Dr. Mehmet Oz is a case in-point.''
+
+
+      ''Many of us are spending a significant amount of our clinical time debunking
+      Ozisms regarding metabolism game changers. Irrespective of the underlying motives,
+      this unsubstantiated medicine sullies the reputation of Columbia University
+      and undermines the trust that is essential to physician-patient relationships.''
+
+
+      ''We need to re-evaluate the roles of the health sciences and government in
+      broadcast medicine and what are the responsibilities of media physicians to
+      their patients?''
+
+
+      ''Non-evidence based medical recommendations presented without the appropriate
+      caveats are costly and potentially harmful. However, unless these foibles can
+      be shown to render Dr. Oz inadequate or ineffective at Columbia, there is no
+      justification for forcing him to resign from a well-earned position in academic
+      medicine.
+
+
+      ''Regulatory guidance addressing the tension between his two positions is potentially
+      a far better solution that could result in improved health care both in the
+      doctor''s office and in the media.
+
+
+      ''Dr. Oz might begin each program with a simple disclaimer: "The opinions expressed
+      on this program may not be evidence-based or part of accepted medical practice
+      and have no endorsement from Columbia University."''
+
+
+      The full op-ed can be read at USA Today.
+
+
+      ''Non-evidence based medical recommendations presented without the appropriate
+      caveats are costly and potentially harmful,'' they wrote. ''However, unless
+      these foibles can be shown to render Dr. Oz inadequate or ineffective at Columbia,
+      there is no justification for forcing him to resign from a well-earned position
+      in academic medicine.''
+
+
+      Rather, he should start each show with a disclaimer: ''The opinions expressed
+      on this program may not be evidence-based or part of accepted medical practice
+      and have no endorsement from Columbia University,'' they said.
+
+
+      The op-ed was penned by Dr Michael Rosenbaum, Dr Joan Bregstein, Dr Elizabeth
+      Oelsner, Dr Sumit Mohan and Dr Dana March of Columbia University Medical Center,
+      Dr Michelle Odlum of the School of Nursing, Dr Katherine Shear of the College
+      of Physicians & Surgeons, and Tal Gross of the Department of Health Policy and
+      Management.
+
+
+      On Friday, Dr Oz, 54, said he was ''very proud to have that feedback'' from
+      his colleagues as he appeared on the Today show.
+
+
+      ''The [Dr Oz] show has to be much broader than what might take place in a doctor''s
+      office,'' he said.
+
+
+      ''I completely respect why so many of my colleagues might have a difficulty
+      with that, but I''m also appreciative that many of them do understand why that''s
+      important.''
+
+
+      While appearing on Today, he insisted that, despite the criticisms, his show
+      will continue. He has been hosting the program since 2009.
+
+
+      ''Without question, the show will survive it,'' he said. ''I want to keep doing
+      the show for as long as I can because I think we played an important role in
+      making America a better place.''
+
+
+      Even though he often wears his scrubs on air, he added that his show is not
+      about medicine, but about living ''the good life'', such as looking at the power
+      of prayer or techniques abroad.
+
+
+      Defense: On Friday, Dr Oz appeared on the Today show and said his show would
+      survive the criticism.
+
+
+      Vehement: He told Matt Lauer that his show was more about living ''the good
+      life'' than medical information.
+
+
+      He said he continues to stand by his use of the word ''miracle'' to some treatments
+      - but wishes he had not used it for weight-loss supplements.
+
+
+      ''This is a flawed area with lots of fraud, both in the research and in products,''
+      he said. ''And we no longer talk about them. I haven''t talked about them in
+      a year.''
+
+
+      And talking about the letter from the 10 doctors last week, he said that those
+      critics have agendas, particularly against genetically modified organisms, which
+      he has supported.
+
+
+      ''The 10 doctors who attacked me got what they wanted – sensational headlines
+      and sound bites,'' he previously said on his Thursday show, which was entitled
+      The Truth About His Critics.
+
+
+      ''It''s ironic that I am being accused of a conflict of interest by these doctors,
+      when, as you are about to see, some of them have their own conflict of interest
+      issues - and some integrity ones also.''
+
+
+      Four who signed the letter, including leader author Henry Miller, have at some
+      point been associated with the American Council on Science and Health.
+
+
+      Defiant: The celebrity doctor used Thursday''s episode of The Dr. Oz Show to
+      hit back and claim that the criticism he''s received is part of a conspiracy
+      because of his outspoken views on genetically modified food.
+
+
+      The organization has previously received grants from Monsanto, who manufactures
+      GMO seeds.
+
+
+      During his show on Thursday, Oz denied attacking genetically modified foods.
+
+
+      ''That is not true. I have never judged GMO foods,'' he said. ''But just like
+      64 countries around the world, I support GMO labeling so you can decide on the
+      foods for your family.''
+
+
+      Dr Miller had written of Oz: ''He''s a quack and a fake and a charlatan. I think
+      I know the motivation at Columbia. ''They''re star-struck, and like having on
+      their faculty the best-known doctor in the country.
+
+
+      ''But the fact is that his advice endangers patients, and this doesn''t seem
+      to faze them.''
+
+
+      Columbia previously released a statement that it ''is committed to the principle
+      of academic freedom and to upholding faculty members'' freedom of expression
+      for statements they make in public discussion.'''
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\n\"It's all about taking an opportunity in a crisis,\" says the\
+      \ outgoing Conservative leader of Melton Borough Council.\n\nByron Rhodes is\
+      \ taking me around the modern council headquarters. It's full of light. It's\
+      \ busy.\n\nThe building has regenerated the area around Melton Mowbray's railway\
+      \ station, once a muddy pot-holed piece of wasteland where those in the know\
+      \ parked for free.\n\nNow the council offices link the station to a park and\
+      \ the town centre.\n\nIt was partly paid for with insurance money after a fire\
+      \ destroyed the old offices on the other side of town.\n\nA supermarket moved\
+      \ in to replace it and helped with the money too, putting the council on a firm\
+      \ financial footing.\n\nBut that was four years ago and the crisis is a different\
+      \ one today. It's being experienced by all local authorities - cuts in central\
+      \ government funding which threaten the services they provide.\n\nMr Rhodes\
+      \ is also deputy leader of Leicestershire County Council, with responsibility\
+      \ for finance.\n\nLeicestershire is historically the poorest funded council\
+      \ in the country because of a quirk of Whitehall recalculations, going back\
+      \ a quarter of a century since the poll tax, or community charge, was scrapped.\n\
+      \nAt the moment councils get income from council tax, a share of the business\
+      \ rates, any income they generate themselves from services plus a grant from\
+      \ central government.\n\nIt's the grant cut which is causing them grief.\n\n\
+      What's called the \"core funding\" is worked out by the number of homes multiplied\
+      \ by a set amount. And each authority has a different value set per dwelling.\n\
+      \nIf we look at Surrey, which is top of the table, the amount will be £1,686\
+      \ by 2019/20.\n\nNottinghamshire is mid-table at £1,482, Derbyshire is in the\
+      \ lower reaches with £1,422 per dwelling and then comes Leicestershire at £1,354.\n\
+      \n\"The funding system is chaotic,\" says Byron Rhodes.\n\n\"It doesn't reflect\
+      \ real need. Look at Oxfordshire which is an interesting example,\" he says\
+      \ with a glint in his eye.\n\nCould he possibly be referring to the prime ministerial\
+      \ plea to the county council about cutbacks to services there?\n\n\"If we had\
+      \ the same funding as Oxfordshire, we'd have £50m a year extra. If we had the\
+      \ same as Surrey, we'd have £100m more. We'd be partying everyday if we had\
+      \ that kind of money.\"\n\nLeicestershire have been helped with a small share\
+      \ of what's been called transitional funding - about £300m to help councils\
+      \ following pressure from Conservative MPs.\n\nThink back to the vote on Sunday\
+      \ trading. With a majority of only  17 in the Commons, the Conservatives lost\
+      \ the vote when 20 odd rebelled.\n\nLast month there would've been another rebellion,\
+      \ including some of our own Tory MPs in the East Midlands, if something wasn't\
+      \ done to improve the local government finance settlement over the next four\
+      \ years.\n\nThe money has gone largely to shire counties. Leicestershire got\
+      \ £6.6m spread over two years, enough to save some services from closure.\n\n\
+      But it's a drop in the ocean for an authority with a £19m black hole in the\
+      \ budget every year after the latest cutbacks.\n\nLabour have protested that\
+      \ 83% of the councils getting transition funding are Conservative-run. Many\
+      \ Labour-run authorities such as Derby, Leicester and Nottingham, got nothing.\n\
+      \nThe leader of Derby City Council, Ranjit Banwait, has launched a \"fair funding\
+      \ for Derby\" campaign. He says the allocation of government funding is unfair\
+      \ and political and the cuts they're having to impose on leisure services and\
+      \ culture are devastating.\n\n\"Now they are threatening our ability to protect\
+      \ the vulnerable and our ability to function is under threat,\" said Mr Banwait.\n\
+      \nBack in Melton Mowbray, Byron Rhodes has some sympathy for the Labour council\
+      \ in Derby.\n\n\"Derby probably have some greater needs,\" he says.\n\nBut once\
+      \ more he is talking about seizing an opportunity in a crisis.\n\nLeicestershire's\
+      \ finance team are working on a submission to put to the government with good\
+      \ arguments on how to restructure the way funds are allocated.\n\n\"We're going\
+      \ to do it. We're going to work up a system which is fairer.\"\n\nHe has the\
+      \ backing of local MPs and is talking to neighbouring authorities.\n\nAnd with\
+      \ a hand out to Derby, he says: \"If they want to talk to us about how to improve\
+      \ things I'm happy to speak to them.\"\n\nIt's a crucial time to get things\
+      \ right. The government is moving to a system where, by 2020, the grant will\
+      \ go.\n\nCouncils will instead get an allocation of funds from the business\
+      \ rates instead.\n\nHow they come up a formula for doing that in a fair way,\
+      \ which helps those authorities with most need, is the next challenge."
+  vars:
+    text: '"It''s all about taking an opportunity in a crisis," says the outgoing
+      Conservative leader of Melton Borough Council.
+
+
+      Byron Rhodes is taking me around the modern council headquarters. It''s full
+      of light. It''s busy.
+
+
+      The building has regenerated the area around Melton Mowbray''s railway station,
+      once a muddy pot-holed piece of wasteland where those in the know parked for
+      free.
+
+
+      Now the council offices link the station to a park and the town centre.
+
+
+      It was partly paid for with insurance money after a fire destroyed the old offices
+      on the other side of town.
+
+
+      A supermarket moved in to replace it and helped with the money too, putting
+      the council on a firm financial footing.
+
+
+      But that was four years ago and the crisis is a different one today. It''s being
+      experienced by all local authorities - cuts in central government funding which
+      threaten the services they provide.
+
+
+      Mr Rhodes is also deputy leader of Leicestershire County Council, with responsibility
+      for finance.
+
+
+      Leicestershire is historically the poorest funded council in the country because
+      of a quirk of Whitehall recalculations, going back a quarter of a century since
+      the poll tax, or community charge, was scrapped.
+
+
+      At the moment councils get income from council tax, a share of the business
+      rates, any income they generate themselves from services plus a grant from central
+      government.
+
+
+      It''s the grant cut which is causing them grief.
+
+
+      What''s called the "core funding" is worked out by the number of homes multiplied
+      by a set amount. And each authority has a different value set per dwelling.
+
+
+      If we look at Surrey, which is top of the table, the amount will be £1,686 by
+      2019/20.
+
+
+      Nottinghamshire is mid-table at £1,482, Derbyshire is in the lower reaches with
+      £1,422 per dwelling and then comes Leicestershire at £1,354.
+
+
+      "The funding system is chaotic," says Byron Rhodes.
+
+
+      "It doesn''t reflect real need. Look at Oxfordshire which is an interesting
+      example," he says with a glint in his eye.
+
+
+      Could he possibly be referring to the prime ministerial plea to the county council
+      about cutbacks to services there?
+
+
+      "If we had the same funding as Oxfordshire, we''d have £50m a year extra. If
+      we had the same as Surrey, we''d have £100m more. We''d be partying everyday
+      if we had that kind of money."
+
+
+      Leicestershire have been helped with a small share of what''s been called transitional
+      funding - about £300m to help councils following pressure from Conservative
+      MPs.
+
+
+      Think back to the vote on Sunday trading. With a majority of only  17 in the
+      Commons, the Conservatives lost the vote when 20 odd rebelled.
+
+
+      Last month there would''ve been another rebellion, including some of our own
+      Tory MPs in the East Midlands, if something wasn''t done to improve the local
+      government finance settlement over the next four years.
+
+
+      The money has gone largely to shire counties. Leicestershire got £6.6m spread
+      over two years, enough to save some services from closure.
+
+
+      But it''s a drop in the ocean for an authority with a £19m black hole in the
+      budget every year after the latest cutbacks.
+
+
+      Labour have protested that 83% of the councils getting transition funding are
+      Conservative-run. Many Labour-run authorities such as Derby, Leicester and Nottingham,
+      got nothing.
+
+
+      The leader of Derby City Council, Ranjit Banwait, has launched a "fair funding
+      for Derby" campaign. He says the allocation of government funding is unfair
+      and political and the cuts they''re having to impose on leisure services and
+      culture are devastating.
+
+
+      "Now they are threatening our ability to protect the vulnerable and our ability
+      to function is under threat," said Mr Banwait.
+
+
+      Back in Melton Mowbray, Byron Rhodes has some sympathy for the Labour council
+      in Derby.
+
+
+      "Derby probably have some greater needs," he says.
+
+
+      But once more he is talking about seizing an opportunity in a crisis.
+
+
+      Leicestershire''s finance team are working on a submission to put to the government
+      with good arguments on how to restructure the way funds are allocated.
+
+
+      "We''re going to do it. We''re going to work up a system which is fairer."
+
+
+      He has the backing of local MPs and is talking to neighbouring authorities.
+
+
+      And with a hand out to Derby, he says: "If they want to talk to us about how
+      to improve things I''m happy to speak to them."
+
+
+      It''s a crucial time to get things right. The government is moving to a system
+      where, by 2020, the grant will go.
+
+
+      Councils will instead get an allocation of funds from the business rates instead.
+
+
+      How they come up a formula for doing that in a fair way, which helps those authorities
+      with most need, is the next challenge.'
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nManchester City boss Pep Guardiola says his first season in the\
+      \ Premier League has not been good enough but promised \"in the future I will\
+      \ be better\".\n\nCity are fourth in the league following defeat at Chelsea\
+      \ on Wednesday, all but ending hopes of a league title in the Catalan's debut\
+      \ campaign in England.\n\n\"In future I will be better - definitely,\" said\
+      \ the former Barcelona and Bayern Munich coach.\n\n\"This season has been a\
+      \ massive lesson for me.\"\n\nHe added: \"We have a lot of beautiful things\
+      \ to fight for and to qualify for the Champions League will be a huge success.\
+      \ But we have to be honest with ourselves. We were not good enough to compete\
+      \ for the Premier League [title].\"\n\nDefeat at Stamford Bridge left City just\
+      \ four points ahead of Arsenal and Manchester United, both of whom have a game\
+      \ in hand.\n\nWith the FA Cup being City's only realistic chance of winning\
+      \ a trophy this term, it is likely to be the worst season of Guardiola's managerial\
+      \ career.\n\nThe 46-year-old has never gone a single season without winning\
+      \ a trophy - he has won the title in six out of seven attempts and his sides\
+      \ have always reached the last four of the Champions League.\n\nGuardiola has\
+      \ also responded to questions about a row between City and Chelsea coaching\
+      \ staff at Stamford Bridge following the defeat on Wednesday night.\n\nThere\
+      \ have been conflicting claims about the precise nature of the row, but stewards\
+      \ were needed to calm the situation down after Chelsea's 2-1 win.\n\nThe incident\
+      \ centred around a disagreement between Chelsea fitness coach Paolo Bertelli\
+      \ and Manchester City masseur Mark Sertori, both of whom speak Italian, as the\
+      \ Premier League leaders celebrated their victory.\n\nGuardiola said: \"We are\
+      \ so polite in our defeats and we are so polite when we win. When we win, normally\
+      \ we celebrate a little bit, then we go to the locker room.\n\nChelsea manager\
+      \ Antonio Conte was not involved and has played the incident down.\n\nHe said:\
+      \ \"Respect is the most important thing in football.\""
+  vars:
+    text: 'Manchester City boss Pep Guardiola says his first season in the Premier
+      League has not been good enough but promised "in the future I will be better".
+
+
+      City are fourth in the league following defeat at Chelsea on Wednesday, all
+      but ending hopes of a league title in the Catalan''s debut campaign in England.
+
+
+      "In future I will be better - definitely," said the former Barcelona and Bayern
+      Munich coach.
+
+
+      "This season has been a massive lesson for me."
+
+
+      He added: "We have a lot of beautiful things to fight for and to qualify for
+      the Champions League will be a huge success. But we have to be honest with ourselves.
+      We were not good enough to compete for the Premier League [title]."
+
+
+      Defeat at Stamford Bridge left City just four points ahead of Arsenal and Manchester
+      United, both of whom have a game in hand.
+
+
+      With the FA Cup being City''s only realistic chance of winning a trophy this
+      term, it is likely to be the worst season of Guardiola''s managerial career.
+
+
+      The 46-year-old has never gone a single season without winning a trophy - he
+      has won the title in six out of seven attempts and his sides have always reached
+      the last four of the Champions League.
+
+
+      Guardiola has also responded to questions about a row between City and Chelsea
+      coaching staff at Stamford Bridge following the defeat on Wednesday night.
+
+
+      There have been conflicting claims about the precise nature of the row, but
+      stewards were needed to calm the situation down after Chelsea''s 2-1 win.
+
+
+      The incident centred around a disagreement between Chelsea fitness coach Paolo
+      Bertelli and Manchester City masseur Mark Sertori, both of whom speak Italian,
+      as the Premier League leaders celebrated their victory.
+
+
+      Guardiola said: "We are so polite in our defeats and we are so polite when we
+      win. When we win, normally we celebrate a little bit, then we go to the locker
+      room.
+
+
+      Chelsea manager Antonio Conte was not involved and has played the incident down.
+
+
+      He said: "Respect is the most important thing in football."'
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nSweet life: The Duchess of Cornwall.\n\nThe Duchess of Cornwall\
+      \ has created a buzz with the launch of her own honey, produced in late spring\
+      \ by the bees in her Wiltshire garden.\n\nJust 250 jars are being produced,\
+      \ at £20 each, with all proceeds going to charity.\n\nBut Camilla’s venture\
+      \ reflects a rocketing demand for gourmet honey. Sales of high-end versions\
+      \ are up by 45 per cent at Selfridges since last year.\n\nDoes luxury honey\
+      \ really taste different enough from ordinary varieties to justify its price\
+      \ tag, though?\n\nAnd how does Camilla’s honey fare against some of its exclusive\
+      \ rivals — including her husband’s Duchy brand? We tested the best-selling gourmet\
+      \ honeys to find out...\n\nDuchess of Cornwall Honey.\n\n£20 for 227g, Fortnum\
+      \ & Mason.\n\nPROMISE: The Duchess’s late-spring honey is made from ‘delicately\
+      \ perfumed nectar with subtle hints of chamomile’ and billed as ‘the ideal accompaniment\
+      \ to ice cream on hot summer days, or for sweetening tea’. All proceeds go to\
+      \ the Medical Detection Dogs charity, of which the Duchess is patron.\n\nVERDICT:\
+      \ This tastefully packaged little jar, decorated with a pretty drawing of a\
+      \ pink flower and bee, has a handwritten number on the back. It contains a clear,\
+      \ golden, liquid honey, and when I open the jar a delicate smell of flowers\
+      \ greets my nostrils. When you ooze it over buttered bread, it’s impossible\
+      \ to stop eating. Delicate, delicious and the perfect gift for any honey-lover.\
+      \ A royal winner. 5/5.\n\nRoyal winner: Camilla’s honey is made from ‘delicately\
+      \ perfumed nectar with subtle hints of chamomile'\n\nDuchy Originals Scottish\
+      \ Heather Honey.\n\n£5.10 for 227g, Waitrose.\n\nPROMISE: Heathers growing on\
+      \ the Crown Estate in Balmoral produce the nectar for this honey. Beekeepers\
+      \ prize heather honey for its unique taste, and this is a combination of two\
+      \ types of heather, Bell and Ling.\n\nVERDICT: Open the jar and just smell the\
+      \ heather aroma before you taste this golden delight. Camilla may have set the\
+      \ bar high but Prince Charles’s answer is also rather beautiful and rare. It\
+      \ has a thick, velvety, sugary texture and a strong but fabulous taste. 3/5.\n\
+      \nDuchy Originals Scottish Heather Honey has a thick, velvety, sugary texture\
+      \ and a strong but fabulous taste.\n\nWedderspoon Gold Organic Rata Honey.\n\
+      \n£14.95 for 325g, wedderspoon.co.uk.\n\nPROMISE: Wild Rata trees grow on high\
+      \ land in New Zealand. They flower sporadically, so the nectar is extremely\
+      \ rare. The honey is kept at a low temperature — the same as that of a beehive\
+      \ — to preserve natural enzymes, antioxidants, vitamins and minerals.\n\nVERDICT:\
+      \ Did you ever think honey could taste like a Christmas tree? Take one gulp\
+      \ of this delicious amber nectar and, seconds later, a subtle taste of pines\
+      \ will dance on your tongue. This creamy, firm-set honey scooped a place in\
+      \ the top 50 products (out of 10,000) in the ‘food Oscars’, the Great Taste\
+      \ Awards. Now I’ve tried it, that comes as no surprise. 4/5.\n\nWedderspoon\
+      \ Gold Organic Rata Honey scooped a place in the top 50 products in the ‘food\
+      \ Oscars’\n\nTregothnan Cornish Floral Manuka.\n\n£29.95 for 113g, tregothnan.co.uk.\n\
+      \nPROMISE: Although manuka is generally expensive, this is a more normal-tasting\
+      \ version and Britain’s costliest home-grown honey. Most manuka plants grow\
+      \ in New Zealand but bushes have been growing, hidden behind a garden wall,\
+      \ on the Tregothnan estate in Cornwall since 1880.\n\nBees on the estate feast\
+      \ on these plants as well as on flowers in the deer park and gardens and produce\
+      \ honey in state-of-the-art, six-foot hives, which cost £5,000 each. There is\
+      \ only a limited supply made, hence the hefty price tag.\n\nVERDICT: This honey\
+      \ is so rare it is sold in very small jars, so every teaspoon is expensive.\
+      \ Yet it sells out fast each year and has a cult following among honey fans.\n\
+      \nThe jar opens to reveal a light, cream-coloured honey with an almost-white\
+      \ crust. Dip your spoon in to discover solid, set honey which tastes like crystallised\
+      \ sugar. I used a small teaspoon on each dessert for a dinner party and my guests\
+      \ raved about it. A treat for anyone with a sweet tooth. 4/5.\n\nTregothnan\
+      \ Cornish Floral Manuka honey is so rare it is sold in very small jars, so every\
+      \ spoonful is pricey.\n\nVasilissa Greek Honey with Edible Gold Leaf.\n\n£39.99\
+      \ for 250g, selfridges.co.uk.\n\nPROMISE: Produced by hand on a small family\
+      \ farm on the island of Evia, this honey is trickled with 24-carat edible gold\
+      \ to make it the ultimate in food bling.\n\nThe small gold flakes are added\
+      \ to honey made from thyme blossom, infusing it with the flavour of the herb.\
+      \ Greek honey is said to be among the best in the world, thanks to the aroma\
+      \ of mountain herbs and flowers, long sunny days and ancient, organic production\
+      \ methods.\n\nVERDICT: The shimmering flecks make this an indulgent gift for\
+      \ any honey-lover. It looks so good, I don’t know whether to open the jar or\
+      \ use it as a paperweight.\n\nThe beautiful white packaging makes it feel extra-special,\
+      \ and when I unscrew the lid the deep aroma is like a glorious perfume.\n\n\
+      Inside is a smooth, dark-gold honey that tastes like treacle. The experts who\
+      \ hand-make it say the flavour changes subtly each year; they can recognise\
+      \ each one like wine experts identifying a vintage. Tasting this, I can see\
+      \ why they call honey the food of the gods. 5/5.\n\nVasilissa Greek Honey  is\
+      \ trickled with 24-carat edible gold to make it the ultimate in food bling.\n\
+      \nAlemany Rosemary Honey.\n\n£7.95 for 500g, souschef.co.uk.\n\nPROMISE: This\
+      \ is made by a small producer in northern Spain, still using the same traditional\
+      \ methods after five generations.\n\nThe nectar comes from rosemary bushes that\
+      \ grow at the foot of the Montsec mountains, and the resulting herb-infused\
+      \ honey has a high iron content. It is said to be particularly good for the\
+      \ digestion, and as an aid to relaxation.\n\nVERDICT: This is the honey equivalent\
+      \ of a soft-boiled egg. Dip your spoon in for oozing, runny honey in the middle,\
+      \ but enjoy the crunch of the pale, crystallised honey at the sides. It’s very\
+      \ mild — there is no strong aroma and the rosemary flavour is so delicate that\
+      \ you notice it only after several mouthfuls.\n\nIt does gives a rather surprising\
+      \ aftertaste, though. This is my daughter Ruby’s favourite honey — she describes\
+      \ it as the best of both worlds, for its double consistency. 4/5.\n\nAlemany\
+      \ Rosemary Honey uses nectar from rosemary bushes that grow at the foot of the\
+      \ Montsec mountains.\n\nWelsh Chunk Honeycomb Amphora.\n\n£21 for 908g, Fortnum\
+      \ & Mason.\n\nPROMISE: Clear Welsh honey with a gentle fruity flavour. The delicate\
+      \ honeycomb adds a crumbly texture. Gathered by bees from the wildflowers of\
+      \ meadows and hedgerows in mid-Wales.\n\nVERDICT: This looks impressive — a\
+      \ huge glass jar with golden, syrupy honey and a huge, striking honeycomb in\
+      \ the middle, sparkling like a jewel.\n\nThe Fortnum & Mason label adds to the\
+      \ impression of real quality. What a disappointment, then, to bite into the\
+      \ honeycomb and find that it tastes of earwax.\n\nThe chewy mass is like old\
+      \ gum. I spit it out — as does my honey-loving son Charlie, who says it tastes\
+      \ no different from the supermarket own-brand honey we usually buy. Proof that\
+      \ paying more doesn’t always guarantee a pot of gold. 1/5.\n\nHeather Honeycomb\
+      \ Starflower Honey.\n\n£19.99 for 227g, selfridges.co.uk.\n\nPROMISE: The starflower\
+      \ is another name for the borage plant (which sounds much less exotic). But\
+      \ this herbal flower is rich in calcium, vitamin C and potassium. It is used\
+      \ to strengthen adrenal functions, and its oils are prescribed to treat skin\
+      \ diseases. This light and delicate honey comes from Hampshire, and includes\
+      \ heather honeycomb with a hint of herb flavour.\n\nVERDICT: You can’t see the\
+      \ chunky honeycomb until you open the lid, because the pale honey that surrounds\
+      \ it isn’t transparent.\n\nI’ve never liked the texture of honeycomb myself,\
+      \ but bite into this and breakfast will never be the same again.\n\nIt crumbles\
+      \ delightfully in the mouth, while the light honey (not quite runny but not\
+      \ totally set) unleashes a real taste of the countryside. The jar, with its\
+      \ bright yellow ribbon and artisan label, gives this a real sense of occasion.\
+      \ 4/5.\n\nHeather Honeycomb Starflower Honey crumbles delightfully in the mouth,\
+      \ while the light honey unleashes a real taste of the countryside.\n\nChestnut\
+      \ Honey.\n\n£6.95 for 500g, souschef.co.uk.\n\nPROMISE: A dark, runny honey\
+      \ with a rich, nutty taste and smoky aromas. This is formed from the flowers\
+      \ of the chestnut tree, so it has a slightly bitter, savoury aftertaste. A favourite\
+      \ among chefs, who claim that it adds instant depth to dishes.\n\nVERDICT: After\
+      \ tasting so many sweet honeys, this one came as a total shock. A dark brown,\
+      \ treacle-tasting honey, it has a wonderful, unmistakable chestnut aroma. My\
+      \ children didn’t like it at all, but I teamed it with cheese and biscuits to\
+      \ serve after a dinner party and the combination was a winner. Perfect if you\
+      \ want something completely different. 3/5.\n\nChestnut Honey is a dark, runny\
+      \ honey with a rich, nutty taste and smoky aromas."
+  vars:
+    text: 'Sweet life: The Duchess of Cornwall.
+
+
+      The Duchess of Cornwall has created a buzz with the launch of her own honey,
+      produced in late spring by the bees in her Wiltshire garden.
+
+
+      Just 250 jars are being produced, at £20 each, with all proceeds going to charity.
+
+
+      But Camilla’s venture reflects a rocketing demand for gourmet honey. Sales of
+      high-end versions are up by 45 per cent at Selfridges since last year.
+
+
+      Does luxury honey really taste different enough from ordinary varieties to justify
+      its price tag, though?
+
+
+      And how does Camilla’s honey fare against some of its exclusive rivals — including
+      her husband’s Duchy brand? We tested the best-selling gourmet honeys to find
+      out...
+
+
+      Duchess of Cornwall Honey.
+
+
+      £20 for 227g, Fortnum & Mason.
+
+
+      PROMISE: The Duchess’s late-spring honey is made from ‘delicately perfumed nectar
+      with subtle hints of chamomile’ and billed as ‘the ideal accompaniment to ice
+      cream on hot summer days, or for sweetening tea’. All proceeds go to the Medical
+      Detection Dogs charity, of which the Duchess is patron.
+
+
+      VERDICT: This tastefully packaged little jar, decorated with a pretty drawing
+      of a pink flower and bee, has a handwritten number on the back. It contains
+      a clear, golden, liquid honey, and when I open the jar a delicate smell of flowers
+      greets my nostrils. When you ooze it over buttered bread, it’s impossible to
+      stop eating. Delicate, delicious and the perfect gift for any honey-lover. A
+      royal winner. 5/5.
+
+
+      Royal winner: Camilla’s honey is made from ‘delicately perfumed nectar with
+      subtle hints of chamomile''
+
+
+      Duchy Originals Scottish Heather Honey.
+
+
+      £5.10 for 227g, Waitrose.
+
+
+      PROMISE: Heathers growing on the Crown Estate in Balmoral produce the nectar
+      for this honey. Beekeepers prize heather honey for its unique taste, and this
+      is a combination of two types of heather, Bell and Ling.
+
+
+      VERDICT: Open the jar and just smell the heather aroma before you taste this
+      golden delight. Camilla may have set the bar high but Prince Charles’s answer
+      is also rather beautiful and rare. It has a thick, velvety, sugary texture and
+      a strong but fabulous taste. 3/5.
+
+
+      Duchy Originals Scottish Heather Honey has a thick, velvety, sugary texture
+      and a strong but fabulous taste.
+
+
+      Wedderspoon Gold Organic Rata Honey.
+
+
+      £14.95 for 325g, wedderspoon.co.uk.
+
+
+      PROMISE: Wild Rata trees grow on high land in New Zealand. They flower sporadically,
+      so the nectar is extremely rare. The honey is kept at a low temperature — the
+      same as that of a beehive — to preserve natural enzymes, antioxidants, vitamins
+      and minerals.
+
+
+      VERDICT: Did you ever think honey could taste like a Christmas tree? Take one
+      gulp of this delicious amber nectar and, seconds later, a subtle taste of pines
+      will dance on your tongue. This creamy, firm-set honey scooped a place in the
+      top 50 products (out of 10,000) in the ‘food Oscars’, the Great Taste Awards.
+      Now I’ve tried it, that comes as no surprise. 4/5.
+
+
+      Wedderspoon Gold Organic Rata Honey scooped a place in the top 50 products in
+      the ‘food Oscars’
+
+
+      Tregothnan Cornish Floral Manuka.
+
+
+      £29.95 for 113g, tregothnan.co.uk.
+
+
+      PROMISE: Although manuka is generally expensive, this is a more normal-tasting
+      version and Britain’s costliest home-grown honey. Most manuka plants grow in
+      New Zealand but bushes have been growing, hidden behind a garden wall, on the
+      Tregothnan estate in Cornwall since 1880.
+
+
+      Bees on the estate feast on these plants as well as on flowers in the deer park
+      and gardens and produce honey in state-of-the-art, six-foot hives, which cost
+      £5,000 each. There is only a limited supply made, hence the hefty price tag.
+
+
+      VERDICT: This honey is so rare it is sold in very small jars, so every teaspoon
+      is expensive. Yet it sells out fast each year and has a cult following among
+      honey fans.
+
+
+      The jar opens to reveal a light, cream-coloured honey with an almost-white crust.
+      Dip your spoon in to discover solid, set honey which tastes like crystallised
+      sugar. I used a small teaspoon on each dessert for a dinner party and my guests
+      raved about it. A treat for anyone with a sweet tooth. 4/5.
+
+
+      Tregothnan Cornish Floral Manuka honey is so rare it is sold in very small jars,
+      so every spoonful is pricey.
+
+
+      Vasilissa Greek Honey with Edible Gold Leaf.
+
+
+      £39.99 for 250g, selfridges.co.uk.
+
+
+      PROMISE: Produced by hand on a small family farm on the island of Evia, this
+      honey is trickled with 24-carat edible gold to make it the ultimate in food
+      bling.
+
+
+      The small gold flakes are added to honey made from thyme blossom, infusing it
+      with the flavour of the herb. Greek honey is said to be among the best in the
+      world, thanks to the aroma of mountain herbs and flowers, long sunny days and
+      ancient, organic production methods.
+
+
+      VERDICT: The shimmering flecks make this an indulgent gift for any honey-lover.
+      It looks so good, I don’t know whether to open the jar or use it as a paperweight.
+
+
+      The beautiful white packaging makes it feel extra-special, and when I unscrew
+      the lid the deep aroma is like a glorious perfume.
+
+
+      Inside is a smooth, dark-gold honey that tastes like treacle. The experts who
+      hand-make it say the flavour changes subtly each year; they can recognise each
+      one like wine experts identifying a vintage. Tasting this, I can see why they
+      call honey the food of the gods. 5/5.
+
+
+      Vasilissa Greek Honey  is trickled with 24-carat edible gold to make it the
+      ultimate in food bling.
+
+
+      Alemany Rosemary Honey.
+
+
+      £7.95 for 500g, souschef.co.uk.
+
+
+      PROMISE: This is made by a small producer in northern Spain, still using the
+      same traditional methods after five generations.
+
+
+      The nectar comes from rosemary bushes that grow at the foot of the Montsec mountains,
+      and the resulting herb-infused honey has a high iron content. It is said to
+      be particularly good for the digestion, and as an aid to relaxation.
+
+
+      VERDICT: This is the honey equivalent of a soft-boiled egg. Dip your spoon in
+      for oozing, runny honey in the middle, but enjoy the crunch of the pale, crystallised
+      honey at the sides. It’s very mild — there is no strong aroma and the rosemary
+      flavour is so delicate that you notice it only after several mouthfuls.
+
+
+      It does gives a rather surprising aftertaste, though. This is my daughter Ruby’s
+      favourite honey — she describes it as the best of both worlds, for its double
+      consistency. 4/5.
+
+
+      Alemany Rosemary Honey uses nectar from rosemary bushes that grow at the foot
+      of the Montsec mountains.
+
+
+      Welsh Chunk Honeycomb Amphora.
+
+
+      £21 for 908g, Fortnum & Mason.
+
+
+      PROMISE: Clear Welsh honey with a gentle fruity flavour. The delicate honeycomb
+      adds a crumbly texture. Gathered by bees from the wildflowers of meadows and
+      hedgerows in mid-Wales.
+
+
+      VERDICT: This looks impressive — a huge glass jar with golden, syrupy honey
+      and a huge, striking honeycomb in the middle, sparkling like a jewel.
+
+
+      The Fortnum & Mason label adds to the impression of real quality. What a disappointment,
+      then, to bite into the honeycomb and find that it tastes of earwax.
+
+
+      The chewy mass is like old gum. I spit it out — as does my honey-loving son
+      Charlie, who says it tastes no different from the supermarket own-brand honey
+      we usually buy. Proof that paying more doesn’t always guarantee a pot of gold.
+      1/5.
+
+
+      Heather Honeycomb Starflower Honey.
+
+
+      £19.99 for 227g, selfridges.co.uk.
+
+
+      PROMISE: The starflower is another name for the borage plant (which sounds much
+      less exotic). But this herbal flower is rich in calcium, vitamin C and potassium.
+      It is used to strengthen adrenal functions, and its oils are prescribed to treat
+      skin diseases. This light and delicate honey comes from Hampshire, and includes
+      heather honeycomb with a hint of herb flavour.
+
+
+      VERDICT: You can’t see the chunky honeycomb until you open the lid, because
+      the pale honey that surrounds it isn’t transparent.
+
+
+      I’ve never liked the texture of honeycomb myself, but bite into this and breakfast
+      will never be the same again.
+
+
+      It crumbles delightfully in the mouth, while the light honey (not quite runny
+      but not totally set) unleashes a real taste of the countryside. The jar, with
+      its bright yellow ribbon and artisan label, gives this a real sense of occasion.
+      4/5.
+
+
+      Heather Honeycomb Starflower Honey crumbles delightfully in the mouth, while
+      the light honey unleashes a real taste of the countryside.
+
+
+      Chestnut Honey.
+
+
+      £6.95 for 500g, souschef.co.uk.
+
+
+      PROMISE: A dark, runny honey with a rich, nutty taste and smoky aromas. This
+      is formed from the flowers of the chestnut tree, so it has a slightly bitter,
+      savoury aftertaste. A favourite among chefs, who claim that it adds instant
+      depth to dishes.
+
+
+      VERDICT: After tasting so many sweet honeys, this one came as a total shock.
+      A dark brown, treacle-tasting honey, it has a wonderful, unmistakable chestnut
+      aroma. My children didn’t like it at all, but I teamed it with cheese and biscuits
+      to serve after a dinner party and the combination was a winner. Perfect if you
+      want something completely different. 3/5.
+
+
+      Chestnut Honey is a dark, runny honey with a rich, nutty taste and smoky aromas.'
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nControversial plans for 10 marine conservation zones have been\
+      \ withdrawn by a Welsh government minister.\n\nAlun Davies told AMs they had\
+      \ received 7,000 responses to a consultation containing \"strongly held\" views.\n\
+      \nHe said he would now look at the 125 existing marine protected areas to see\
+      \ if further improvements could be made.\n\nThe Marine Conservation Society\
+      \ (MCS) described it as an \"embarrassing U-turn\" for the Welsh government,\
+      \ and has called for better protection of seas.\n\nCreating the zones would\
+      \ mean a ban on fishing and anchoring in some areas and had brought opposition.\n\
+      \nThe Welsh Fishermen's Association said previously that existing conservation\
+      \ networks for Welsh waters are adequate.\n\nThe Welsh government proposed the\
+      \ zones last year with the backing of the Countryside Council of Wales and the\
+      \ Marine Conservation Society.\n\nThe minister for natural resources said the\
+      \ decision had been made after the thousands of responses to the consultation\
+      \ brought \"divergent and strongly held views\".\n\nMr Davies said to \"avoid\
+      \ any continuing uncertainty over the options presented in the 2012 consultation,\
+      \ I am also withdrawing all the proposed sites\".\n\nHis comments come after\
+      \ the findings were published of a task and finish team which reviewed the feedback.\n\
+      \nNow, he will concentrate on the existing 125 Marine Protected Areas (MPAs)\
+      \ that cover 36% of Welsh seas to see if any changes can be made rather than\
+      \ creating additional zones.\n\n\"We are now in a stronger position to assess\
+      \ our current contribution to the network's ecological coherence,\" he said.\n\
+      \n\"I have, therefore, commissioned an assessment of our current MPAs to identify\
+      \ if there are any gaps and what the options might be to fill those gaps.\n\n\
+      \"If any measures are required, I believe they should be simple, proportionate\
+      \ and fit for purpose.\"\n\nDr Peter Richardson, biodiversity programme manager\
+      \ for MCS, said the Welsh government \"spent an awful lot of time and money\
+      \ and encouraged other people to put effort into this consultation response\"\
+      .\n\nHe said: \"70% of the consultation responses were in favour of designating\
+      \ these sites and yet today the minister has announced he's scrapping the whole\
+      \ thing... bit of an embarrassing U-turn for the government I think.\"\n\nHe\
+      \ added: \"I think there are plenty of people in the fishing industry... that\
+      \ understand that in order to get the best yields from the marine habitats on\
+      \ which they depend, they have to be managed properly.\""
+  vars:
+    text: 'Controversial plans for 10 marine conservation zones have been withdrawn
+      by a Welsh government minister.
+
+
+      Alun Davies told AMs they had received 7,000 responses to a consultation containing
+      "strongly held" views.
+
+
+      He said he would now look at the 125 existing marine protected areas to see
+      if further improvements could be made.
+
+
+      The Marine Conservation Society (MCS) described it as an "embarrassing U-turn"
+      for the Welsh government, and has called for better protection of seas.
+
+
+      Creating the zones would mean a ban on fishing and anchoring in some areas and
+      had brought opposition.
+
+
+      The Welsh Fishermen''s Association said previously that existing conservation
+      networks for Welsh waters are adequate.
+
+
+      The Welsh government proposed the zones last year with the backing of the Countryside
+      Council of Wales and the Marine Conservation Society.
+
+
+      The minister for natural resources said the decision had been made after the
+      thousands of responses to the consultation brought "divergent and strongly held
+      views".
+
+
+      Mr Davies said to "avoid any continuing uncertainty over the options presented
+      in the 2012 consultation, I am also withdrawing all the proposed sites".
+
+
+      His comments come after the findings were published of a task and finish team
+      which reviewed the feedback.
+
+
+      Now, he will concentrate on the existing 125 Marine Protected Areas (MPAs) that
+      cover 36% of Welsh seas to see if any changes can be made rather than creating
+      additional zones.
+
+
+      "We are now in a stronger position to assess our current contribution to the
+      network''s ecological coherence," he said.
+
+
+      "I have, therefore, commissioned an assessment of our current MPAs to identify
+      if there are any gaps and what the options might be to fill those gaps.
+
+
+      "If any measures are required, I believe they should be simple, proportionate
+      and fit for purpose."
+
+
+      Dr Peter Richardson, biodiversity programme manager for MCS, said the Welsh
+      government "spent an awful lot of time and money and encouraged other people
+      to put effort into this consultation response".
+
+
+      He said: "70% of the consultation responses were in favour of designating these
+      sites and yet today the minister has announced he''s scrapping the whole thing...
+      bit of an embarrassing U-turn for the government I think."
+
+
+      He added: "I think there are plenty of people in the fishing industry... that
+      understand that in order to get the best yields from the marine habitats on
+      which they depend, they have to be managed properly."'
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nAubrey de Grey (pictured) says ageing is a 'disease that can and\
+      \ should be cured'\n\nWith his Rasputin beard and lines etched deep into his\
+      \ forehead, Aubrey de Grey looks like a man a lot older than his 51 years. A\
+      \ penchant for beer, fried food and an aversion to exercise could fool you into\
+      \ believing the lanky ex-public schoolboy cares little about ageing.\n\nBut\
+      \ you would be wrong.\n\nFor de Grey, a charismatic Harrow School and Cambridge-educated\
+      \ biomedical theorist, firmly believes there is no reason, with the right 'therapies',\
+      \ why any of us shouldn't reach 500, 1,000 or even 5,000 years of age.\n\nIt\
+      \ sounds bonkers but de Grey's theories have gained him some high-profile supporters\
+      \ in Silicon Valley, the super-rich tech enclave in northern California that\
+      \ is home to more middle-aged billionaires than anywhere else on the planet.\n\
+      \nPayPal boss Peter Thiel (worth £1.5 billion) donated £2.4 million to de Grey's\
+      \ anti-ageing institute Strategies for Engineered Negligible Senescence (SENS).\
+      \ Senescence is scientific jargon for ageing.\n\nWhile many academics mock him,\
+      \ in age-obsessed California de Grey now regularly breaks bread and funds his\
+      \ research with donations from some of the sharpest minds in the world, including\
+      \ Google co-founders Larry Page and Sergey Brin (who has talked of 'curing death')\
+      \ and Larry Ellison, of Oracle, who are all showing an interest in gerontology,\
+      \ or the study of ageing.\n\nGoogle's Bill Maris, who heads the computer giant's\
+      \ investment arm, said: 'We have tools in the life sciences to achieve anything\
+      \ you have the audacity to envision. I hope to live long enough not to die.'\n\
+      \nOne source at a leading software company told The Mail on Sunday: 'De Grey\
+      \ has tapped a rich vein in Silicon Valley. He's become something of a controversial\
+      \ cheerleader for a generation of tech billionaires who have made their fortunes\
+      \ and now, of course, want to live for ever.'\n\nDe Grey was raised in Chelsea\
+      \ by his artist mother Cordelia, who left him £11 million when she died in 2011\
+      \ – £9 million of which he has invested in his company. He spent the remainder\
+      \ on a 'very nice house'. He never knew his father and became fascinated by\
+      \ seeking a cure for ageing while still at Harrow.\n\nScroll down for video.\n\
+      \n'Ageing is a disease that can and should be cured,' he says. 'I've been ridiculed\
+      \ but finally people are starting to come round to my way of thinking. Anyone\
+      \ who has ever wanted to change the world has been attacked. Gandhi said first\
+      \ they ignore you, then they ridicule you, then they fight you and then they\
+      \ say, \"We were with you all along\".'\n\nDe Grey's radical thesis is that\
+      \ ageing can be halted and even reversed by treating the human body like a vintage\
+      \ car – 'replace the parts, clean it up, keep it running smoothly way past its\
+      \ expected expiration date'.\n\nHis argument is that cellular decay causes ageing,\
+      \ illness and, ultimately, death, and that technologies being developed now\
+      \ and inventions in the future will allow us to repair and replace damaged body\
+      \ parts at a cellular level – leading to virtual immortality.\n\nPeople will\
+      \ still die in accidents and from suicide, 'but there is no reason that someone\
+      \ living today shouldn't live to 500, 1,000 years. As the technologies improve,\
+      \ lifespans will increase', says de Grey.\n\nHe believes the first person who\
+      \ will live to be 1,000 has already been born, and cites research that has dramatically\
+      \ extended the lives of mice, worms and fruit flies as proof science is 'catching\
+      \ up' with his theories that therapies which will genetically alter, replace\
+      \ and repair the cells in our bodies will be the key to eternal life.\n\nHe\
+      \ accuses the majority of us of being in a 'pro-ageing trance', content to accept\
+      \ ageing and death as inevitable, while the reality is that technology will,\
+      \ within two decades, he says, have advanced far enough that we can replace\
+      \ and repair faulty genes, 'clear out the gunk around cells' and rejuvenate\
+      \ our bodies.\n\nIt sounds fanciful but as he talks, it is clear that de Grey\
+      \ is empowered by the support of the Silicon Valley billionaires. 'It is a good\
+      \ feeling to finally be getting validation,' he admits.\n\nMany academics have\
+      \ dismissed his theories as pie in the sky. It should be noted that much of\
+      \ what he says is theoretical and, critics point out, de Grey has never actually\
+      \ done any practical lab work.\n\nDe Grey and his biologist wife Adelaide (pictured)\
+      \ have an unconventional marriage and he admits to having 'two younger girlfriends'\n\
+      \nNir Barsilai, director of the Institute for Aging Research at the Albert Einstein\
+      \ College of Medicine, said: 'Based on the biology that we know today, somewhere\
+      \ between 100 and 120 there is a roof in play and I challenge if we can get\
+      \ beyond it.' The oldest human to date was Frenchwoman Jeanne Calment, who died\
+      \ in August 1997 at the age of 122 years 164 days.\n\nDe Grey has been mockingly\
+      \ compared to a 'Messiah' figure because of his flowing facial hair, and heads\
+      \ turn in the airport bar as he bangs his glass on the table and loudly pronounces\
+      \ that '150,000 people die every day worldwide and of those people, two-thirds\
+      \ die of ageing one way or another. That's 30 World Trade Centers every day.\
+      \ If I bring forward the cure for ageing by one day I've saved 100,000 lives'.\n\
+      \nDe Grey is notoriously eccentric. He refuses to carry a mobile phone ('anti-social,\
+      \ nasty things') and has never learned to drive due to a 'mental block'. 'Cars\
+      \ can kill people without it being the driver's fault,' he says. He gives interviews\
+      \ to 'spread the word' and has written several anti-ageing books.\n\nLast year\
+      \ he featured in a critically acclaimed independent movie, The Immortalists.\n\
+      \nDe Grey and his biologist wife Adelaide, 19 years his senior, have an unconventional\
+      \ marriage and he cheerfully admits to having 'two younger girlfriends', aged\
+      \ 45 and 24.\n\nIsn't juggling the needs of three women enough to age any man\
+      \ prematurely? He laughs: 'It keeps me busy.'\n\nCritics argue that if he is\
+      \ right and we all live longer, the world's resources will be stretched by overpopulation,\
+      \ but he hits back by saying: 'Society will adapt. People will have fewer children.'\n\
+      \nWhat about the cost of keeping so many people alive? 'People will continue\
+      \ to contribute to society because they will be healthier and more productive.\n\
+      \n'When people think about longevity they forget about the health and then they\
+      \ start to think this whole thing is morally questionable. It might be technologically\
+      \ fanciful but all we do is medical research. I work on stopping people from\
+      \ getting sicker as they get older. The by-product of that is longevity.\n\n\
+      'I have no idea if I will live to 100. I do know I'd like to have the chance\
+      \ to live to 100 when I am 99 rather than having that choice removed from me\
+      \ by declining health.'"
+  vars:
+    text: 'Aubrey de Grey (pictured) says ageing is a ''disease that can and should
+      be cured''
+
+
+      With his Rasputin beard and lines etched deep into his forehead, Aubrey de Grey
+      looks like a man a lot older than his 51 years. A penchant for beer, fried food
+      and an aversion to exercise could fool you into believing the lanky ex-public
+      schoolboy cares little about ageing.
+
+
+      But you would be wrong.
+
+
+      For de Grey, a charismatic Harrow School and Cambridge-educated biomedical theorist,
+      firmly believes there is no reason, with the right ''therapies'', why any of
+      us shouldn''t reach 500, 1,000 or even 5,000 years of age.
+
+
+      It sounds bonkers but de Grey''s theories have gained him some high-profile
+      supporters in Silicon Valley, the super-rich tech enclave in northern California
+      that is home to more middle-aged billionaires than anywhere else on the planet.
+
+
+      PayPal boss Peter Thiel (worth £1.5 billion) donated £2.4 million to de Grey''s
+      anti-ageing institute Strategies for Engineered Negligible Senescence (SENS).
+      Senescence is scientific jargon for ageing.
+
+
+      While many academics mock him, in age-obsessed California de Grey now regularly
+      breaks bread and funds his research with donations from some of the sharpest
+      minds in the world, including Google co-founders Larry Page and Sergey Brin
+      (who has talked of ''curing death'') and Larry Ellison, of Oracle, who are all
+      showing an interest in gerontology, or the study of ageing.
+
+
+      Google''s Bill Maris, who heads the computer giant''s investment arm, said:
+      ''We have tools in the life sciences to achieve anything you have the audacity
+      to envision. I hope to live long enough not to die.''
+
+
+      One source at a leading software company told The Mail on Sunday: ''De Grey
+      has tapped a rich vein in Silicon Valley. He''s become something of a controversial
+      cheerleader for a generation of tech billionaires who have made their fortunes
+      and now, of course, want to live for ever.''
+
+
+      De Grey was raised in Chelsea by his artist mother Cordelia, who left him £11
+      million when she died in 2011 – £9 million of which he has invested in his company.
+      He spent the remainder on a ''very nice house''. He never knew his father and
+      became fascinated by seeking a cure for ageing while still at Harrow.
+
+
+      Scroll down for video.
+
+
+      ''Ageing is a disease that can and should be cured,'' he says. ''I''ve been
+      ridiculed but finally people are starting to come round to my way of thinking.
+      Anyone who has ever wanted to change the world has been attacked. Gandhi said
+      first they ignore you, then they ridicule you, then they fight you and then
+      they say, "We were with you all along".''
+
+
+      De Grey''s radical thesis is that ageing can be halted and even reversed by
+      treating the human body like a vintage car – ''replace the parts, clean it up,
+      keep it running smoothly way past its expected expiration date''.
+
+
+      His argument is that cellular decay causes ageing, illness and, ultimately,
+      death, and that technologies being developed now and inventions in the future
+      will allow us to repair and replace damaged body parts at a cellular level –
+      leading to virtual immortality.
+
+
+      People will still die in accidents and from suicide, ''but there is no reason
+      that someone living today shouldn''t live to 500, 1,000 years. As the technologies
+      improve, lifespans will increase'', says de Grey.
+
+
+      He believes the first person who will live to be 1,000 has already been born,
+      and cites research that has dramatically extended the lives of mice, worms and
+      fruit flies as proof science is ''catching up'' with his theories that therapies
+      which will genetically alter, replace and repair the cells in our bodies will
+      be the key to eternal life.
+
+
+      He accuses the majority of us of being in a ''pro-ageing trance'', content to
+      accept ageing and death as inevitable, while the reality is that technology
+      will, within two decades, he says, have advanced far enough that we can replace
+      and repair faulty genes, ''clear out the gunk around cells'' and rejuvenate
+      our bodies.
+
+
+      It sounds fanciful but as he talks, it is clear that de Grey is empowered by
+      the support of the Silicon Valley billionaires. ''It is a good feeling to finally
+      be getting validation,'' he admits.
+
+
+      Many academics have dismissed his theories as pie in the sky. It should be noted
+      that much of what he says is theoretical and, critics point out, de Grey has
+      never actually done any practical lab work.
+
+
+      De Grey and his biologist wife Adelaide (pictured) have an unconventional marriage
+      and he admits to having ''two younger girlfriends''
+
+
+      Nir Barsilai, director of the Institute for Aging Research at the Albert Einstein
+      College of Medicine, said: ''Based on the biology that we know today, somewhere
+      between 100 and 120 there is a roof in play and I challenge if we can get beyond
+      it.'' The oldest human to date was Frenchwoman Jeanne Calment, who died in August
+      1997 at the age of 122 years 164 days.
+
+
+      De Grey has been mockingly compared to a ''Messiah'' figure because of his flowing
+      facial hair, and heads turn in the airport bar as he bangs his glass on the
+      table and loudly pronounces that ''150,000 people die every day worldwide and
+      of those people, two-thirds die of ageing one way or another. That''s 30 World
+      Trade Centers every day. If I bring forward the cure for ageing by one day I''ve
+      saved 100,000 lives''.
+
+
+      De Grey is notoriously eccentric. He refuses to carry a mobile phone (''anti-social,
+      nasty things'') and has never learned to drive due to a ''mental block''. ''Cars
+      can kill people without it being the driver''s fault,'' he says. He gives interviews
+      to ''spread the word'' and has written several anti-ageing books.
+
+
+      Last year he featured in a critically acclaimed independent movie, The Immortalists.
+
+
+      De Grey and his biologist wife Adelaide, 19 years his senior, have an unconventional
+      marriage and he cheerfully admits to having ''two younger girlfriends'', aged
+      45 and 24.
+
+
+      Isn''t juggling the needs of three women enough to age any man prematurely?
+      He laughs: ''It keeps me busy.''
+
+
+      Critics argue that if he is right and we all live longer, the world''s resources
+      will be stretched by overpopulation, but he hits back by saying: ''Society will
+      adapt. People will have fewer children.''
+
+
+      What about the cost of keeping so many people alive? ''People will continue
+      to contribute to society because they will be healthier and more productive.
+
+
+      ''When people think about longevity they forget about the health and then they
+      start to think this whole thing is morally questionable. It might be technologically
+      fanciful but all we do is medical research. I work on stopping people from getting
+      sicker as they get older. The by-product of that is longevity.
+
+
+      ''I have no idea if I will live to 100. I do know I''d like to have the chance
+      to live to 100 when I am 99 rather than having that choice removed from me by
+      declining health.'''
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nA breakthrough has been made in the development of clean hydrogen\
+      \ power, scientists claim.\n\nAt the moment, while hydrogen fuel is appealing,\
+      \ the production of hydrogen is incredible difficult - requiring huge amounts\
+      \ of energy.\n\nBut the researchers say they have made a new material that can\
+      \ generate hydrogen from water, meaning it is less reliant on fossil fuels.\n\
+      \nHydrogen-fuel is appealing for use in cars like the Vauxhall Zafira minivan\
+      \ pictured, but producing hydrogen requires huge amounts of energy. With the\
+      \ new breakthrough, it could be possible to make it more easily.\n\nResearchers\
+      \ at the University of Bath and Yale University created the invention.\n\nIt\
+      \ uses a newly designed molecular catalyst to split water in an electrolyser\
+      \ and create clean and storable hydrogen fuel.\n\nLead research Dr Ulrich Hintermair\
+      \ told MailOnline that the main problem with the production of hydrogen through\
+      \ a process known as water electrolysis was the waste oxygen it produces.\n\n\
+      Water splitting is an electro-chemical process in which two electrodes generate\
+      \ oxygen and hydrogen from water, respectively.\n\nThe energy required to drive\
+      \ this process gets locked up in the hydrogen as the fuel with oxygen as a by-product.\
+      \ A fuel cell can then harness the energy again elsewhere by recombining the\
+      \ two.\n\nThe new patented catalyst is more efficient at performing the crucial\
+      \ oxidation half of the reaction than any other existing material, minimising\
+      \ energy losses in the electricity-to-hydrogen conversion process.\n\nIt can\
+      \ be directly applied to various electrode surfaces in a straightforward and\
+      \ highly economical manner.\n\nThe process splits water into hydrogen and oxygen\
+      \ but, while the first part can be done quite efficiently, the latter was more\
+      \ difficult and lots of energy is lost.\n\nWith this in mind the team designed\
+      \ a catalyst - a substance that alters the speed of the chemical reaction -\
+      \ to improve the efficiency.\n\n‘Oxygen is the most difficult bit,’ Dr Hintermair\
+      \ explained.\n\nTheir catalyst, placed on an electrode used in the production\
+      \ of hydrogen, is much more efficient - and although Dr Hintermair didn’t have\
+      \ an exact figure, he said the energy loss using it is ‘almost non-existent’.\n\
+      \nThe major benefit from this breakthrough is that hydrogen could now be used\
+      \ more easily as a way to store energy from renewable sources like wind and\
+      \ solar.\n\n‘We can make electricity out of sunlight and wind, low carbon renewable\
+      \ sources, but we can’t store it very well,’ Dr Hintermair continued.\n\n‘We\
+      \ can put it in a battery but you can’t, for example, fly an airplane on a battery\
+      \ yet.\n\n‘So we need to convert it into a chemical fuel, and for that water\
+      \ electrolysis is a key technology because we can take any renewable technology,\
+      \ connect it to an electrolyster and store it in hydrogen, which is a fantastic\
+      \ fuel.’\n\nThis, for example, would make hydrogen fuel cells for cars much\
+      \ more economical.\n\nOn this right in this image is the catalyst being used\
+      \ in the water electrolysis process. The large bubbles are oxygen, while the\
+      \ smaller bubbles on the left are hydrogen.\n\nThe team are in discussions with\
+      \ a number of energy companies about utilising this technology on a large scale\
+      \ and hope the breakthrough marks the start of contributing to providing the\
+      \ world with more sustainable fuels.\n\n‘In theory it could be used on all systems,\
+      \ but it depends on cost and scale,’ said Dr Hintermair.\n\nAs regulations tighten\
+      \ on the use of fossil fuels and their emissions, there is a growing focus on\
+      \ the need for cost effective and efficient ways of creating energy carriers\
+      \ from renewable sources.\n\nSolar power is thought to be able to provide up\
+      \ to four per cent of the UK's electricity by the end of the decade.\n\nHowever,\
+      \ while the price of photovoltaic technology has dramatically decreased in recent\
+      \ years as demand has risen, solar energy is problematic as it is intermittent,\
+      \ meaning electricity is only created when it is light.\n\nOne use of the newly\
+      \ developed catalyst could be to store the energy produced by solar power by\
+      \ using the electricity to produce hydrogen which can then be used on demand,\
+      \ regardless of the time of day.\n\nSolar power is thought to be able to provide\
+      \ up to four per cent of the UK's electricity by the end of the decade (Wymeswold\
+      \ Solar Farm in Leicestershire, UK shown), but storing it is difficult. This\
+      \ new technology could store energy as hydrogen, which can then be used on demand.\n\
+      \nDr Hintermair is a Whorrod research fellow at the Centre for Sustainable Chemical\
+      \ Technologies at the University of Bath.\n\n'Hydrogen is a fantastically versatile\
+      \ and environmentally friendly fuel, however, hydrogen-powered applications\
+      \ are only as \"green\" as the hydrogen on which they run,' he said.\n\n'Currently,\
+      \ over 90 per cent is derived from fossil fuels. If we want to bring about a\
+      \ clean hydrogen economy we must first generate clean hydrogen.\n\n'This new\
+      \ molecular catalyst will hopefully play a large role in helping create hydrogen\
+      \ from renewable energy sources such as solar power.\n\n'We are also interested\
+      \ in applying this technology to other forms of renewable energy such as tidal,\
+      \ wind and wave power.'\n\nProfessor Matthew Davidson, head of the department\
+      \ of chemistry, added: 'Splitting water into its constituent parts is deceptively\
+      \ simple chemistry, but doing it in a sustainable way is one of the holy grails\
+      \ of chemistry because it is the key step in the goal of artificial photosynthesis.\n\
+      \n'[Dr Hintermair's] results are extremely exciting because of their potential\
+      \ for practical application.'"
+  vars:
+    text: 'A breakthrough has been made in the development of clean hydrogen power,
+      scientists claim.
+
+
+      At the moment, while hydrogen fuel is appealing, the production of hydrogen
+      is incredible difficult - requiring huge amounts of energy.
+
+
+      But the researchers say they have made a new material that can generate hydrogen
+      from water, meaning it is less reliant on fossil fuels.
+
+
+      Hydrogen-fuel is appealing for use in cars like the Vauxhall Zafira minivan
+      pictured, but producing hydrogen requires huge amounts of energy. With the new
+      breakthrough, it could be possible to make it more easily.
+
+
+      Researchers at the University of Bath and Yale University created the invention.
+
+
+      It uses a newly designed molecular catalyst to split water in an electrolyser
+      and create clean and storable hydrogen fuel.
+
+
+      Lead research Dr Ulrich Hintermair told MailOnline that the main problem with
+      the production of hydrogen through a process known as water electrolysis was
+      the waste oxygen it produces.
+
+
+      Water splitting is an electro-chemical process in which two electrodes generate
+      oxygen and hydrogen from water, respectively.
+
+
+      The energy required to drive this process gets locked up in the hydrogen as
+      the fuel with oxygen as a by-product. A fuel cell can then harness the energy
+      again elsewhere by recombining the two.
+
+
+      The new patented catalyst is more efficient at performing the crucial oxidation
+      half of the reaction than any other existing material, minimising energy losses
+      in the electricity-to-hydrogen conversion process.
+
+
+      It can be directly applied to various electrode surfaces in a straightforward
+      and highly economical manner.
+
+
+      The process splits water into hydrogen and oxygen but, while the first part
+      can be done quite efficiently, the latter was more difficult and lots of energy
+      is lost.
+
+
+      With this in mind the team designed a catalyst - a substance that alters the
+      speed of the chemical reaction - to improve the efficiency.
+
+
+      ‘Oxygen is the most difficult bit,’ Dr Hintermair explained.
+
+
+      Their catalyst, placed on an electrode used in the production of hydrogen, is
+      much more efficient - and although Dr Hintermair didn’t have an exact figure,
+      he said the energy loss using it is ‘almost non-existent’.
+
+
+      The major benefit from this breakthrough is that hydrogen could now be used
+      more easily as a way to store energy from renewable sources like wind and solar.
+
+
+      ‘We can make electricity out of sunlight and wind, low carbon renewable sources,
+      but we can’t store it very well,’ Dr Hintermair continued.
+
+
+      ‘We can put it in a battery but you can’t, for example, fly an airplane on a
+      battery yet.
+
+
+      ‘So we need to convert it into a chemical fuel, and for that water electrolysis
+      is a key technology because we can take any renewable technology, connect it
+      to an electrolyster and store it in hydrogen, which is a fantastic fuel.’
+
+
+      This, for example, would make hydrogen fuel cells for cars much more economical.
+
+
+      On this right in this image is the catalyst being used in the water electrolysis
+      process. The large bubbles are oxygen, while the smaller bubbles on the left
+      are hydrogen.
+
+
+      The team are in discussions with a number of energy companies about utilising
+      this technology on a large scale and hope the breakthrough marks the start of
+      contributing to providing the world with more sustainable fuels.
+
+
+      ‘In theory it could be used on all systems, but it depends on cost and scale,’
+      said Dr Hintermair.
+
+
+      As regulations tighten on the use of fossil fuels and their emissions, there
+      is a growing focus on the need for cost effective and efficient ways of creating
+      energy carriers from renewable sources.
+
+
+      Solar power is thought to be able to provide up to four per cent of the UK''s
+      electricity by the end of the decade.
+
+
+      However, while the price of photovoltaic technology has dramatically decreased
+      in recent years as demand has risen, solar energy is problematic as it is intermittent,
+      meaning electricity is only created when it is light.
+
+
+      One use of the newly developed catalyst could be to store the energy produced
+      by solar power by using the electricity to produce hydrogen which can then be
+      used on demand, regardless of the time of day.
+
+
+      Solar power is thought to be able to provide up to four per cent of the UK''s
+      electricity by the end of the decade (Wymeswold Solar Farm in Leicestershire,
+      UK shown), but storing it is difficult. This new technology could store energy
+      as hydrogen, which can then be used on demand.
+
+
+      Dr Hintermair is a Whorrod research fellow at the Centre for Sustainable Chemical
+      Technologies at the University of Bath.
+
+
+      ''Hydrogen is a fantastically versatile and environmentally friendly fuel, however,
+      hydrogen-powered applications are only as "green" as the hydrogen on which they
+      run,'' he said.
+
+
+      ''Currently, over 90 per cent is derived from fossil fuels. If we want to bring
+      about a clean hydrogen economy we must first generate clean hydrogen.
+
+
+      ''This new molecular catalyst will hopefully play a large role in helping create
+      hydrogen from renewable energy sources such as solar power.
+
+
+      ''We are also interested in applying this technology to other forms of renewable
+      energy such as tidal, wind and wave power.''
+
+
+      Professor Matthew Davidson, head of the department of chemistry, added: ''Splitting
+      water into its constituent parts is deceptively simple chemistry, but doing
+      it in a sustainable way is one of the holy grails of chemistry because it is
+      the key step in the goal of artificial photosynthesis.
+
+
+      ''[Dr Hintermair''s] results are extremely exciting because of their potential
+      for practical application.'''
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nForeign observers of the UK's debate on its forthcoming referendum\
+      \ on whether to stay in the European Union may have noticed an awful lot of\
+      \ fuss about the views of a man called Boris Johnson - yes, that man on the\
+      \ zip wire.\n\nMr Johnson, the Mayor of London, announced on Sunday that he\
+      \ would be backing the campaign for Britain to leave the EU.\n\nHis intervention\
+      \ in the debate - made, as he termed it, with \"deafening eclat\" - was even\
+      \ said to have helped cause the pound to slide on the international money markets\
+      \ as traders thought it made the possibility of a so-called Brexit more likely.\n\
+      \nHe has arguably the highest profile of any of the governing Conservative Party\
+      \ except the Prime Minister David Cameron, but those outside the UK may be wondering:\
+      \ who is he, and is that actually his hair? Read on.\n\nProfile: Boris Johnson\n\
+      \nHow could 'zip wire prat' become prime minister?\n\nRead more about the UK's\
+      \ referendum on the EU\n\nAlexander Boris de Pfeffel Johnson, to give him his\
+      \ full name, was born in New York and is descended from Turkish, French and\
+      \ German stock. He describes himself as a \"one-man melting pot\".\n\nHe first\
+      \ made a name for himself in journalism, including a stint as Brussels correspondent\
+      \ for the right-wing Daily Telegraph newspaper and editor of The Spectator magazine.\
+      \ His humorous persona led him to become a fixture on various television programmes,\
+      \ including the satirical BBC panel show Have I Got News For You.\n\nHe still\
+      \ has a lucrative and entertaining column in the Daily Telegraph, in which august\
+      \ forum he explained the reasons for his decision on the EU.\n\nAs a politician,\
+      \ he has been a Conservative member of parliament for two constituencies, Henley\
+      \ from 2001 to 2008 and then Uxbridge and South Ruislip from 2015.\n\nLest you\
+      \ think he was putting his feet up between parliamentary mandates, he is also\
+      \ currently serving the second of two terms as mayor of London, no mean feat\
+      \ in a city where the centre-left Labour Party has dominated in recent decades.\n\
+      \nThat's indicative of the position Mr Johnson has carved out for himself as\
+      \ one of the most charismatic politicians in the UK who has wide appeal beyond\
+      \ Conservative heartlands - polling has suggested that his stance on the EU\
+      \ referendum may sway some undecided voters.\n\nJust look what happens when\
+      \ you type his name into Google.co.uk.\n\nNot quite. He has previously courted\
+      \ controversy for his remarks about (among others) the populations of Liverpool,\
+      \ Portsmouth and Papua New Guinea, not to mention run-ins with his own party\
+      \ leadership and TV chef Jamie Oliver.\n\nLast October he accidentally flattened\
+      \ a 10-year-old schoolboy at what was meant to be a friendly game of photo-op\
+      \ rugby in Japan.\n\nBut none of this seems to have affected his standing among\
+      \ the party faithful or the public at large. Even getting stuck on a zip-wire\
+      \ during the London Olympics in 2012, a sure-fire route to derision for any\
+      \ other politician, only enhanced his eccentric image.\n\nMr Johnson finally\
+      \ ended months of speculation about which side of the EU debate he would back\
+      \ in an immaculately impromptu media scrum outside his home in North London,\
+      \ having reportedly informed the prime minister of his decision earlier the\
+      \ same day.\n\nHe said that he had come to his decision as a result of deeply\
+      \ held convictions and \"after a huge amount of heartache\". His father Stanley,\
+      \ a former Conservative member of the European parliament, said that his son\
+      \ had performed a noble and potentially \"career-ending move\", ruining any\
+      \ chance of serving in Mr Cameron's cabinet.\n\nBut Mr Cameron has already said\
+      \ he won't run for another mandate when his current one ends in 2020. Some observers\
+      \ of British politics point out that even if the UK votes to remain in the EU,\
+      \ positioning himself in the \"Out\" camp won't do Mr Johnson any harm with\
+      \ grassroots Conservatives, many of who are Eurosceptic and will have the final\
+      \ say in choosing a new leader.\n\nIn this, some suggest, he is implementing\
+      \ his long-standing policy on cake: \"My policy on cake is pro having it and\
+      \ pro eating it.\"\n\nNo, that's Donald Trump. Also a pioneer of unorthodox\
+      \ political hair, but they don't get on.\n\nWhen Mr Trump commented that parts\
+      \ of London are \"so radicalised the police are afraid for their lives\", Mr\
+      \ Johnson retorted: \"The only reason I wouldn't go to some parts of New York\
+      \ is the real risk of meeting Donald Trump.\"\n\nNo, I've confused you now by\
+      \ mentioning Donald Trump. Same hair though.\n\nNo, that's Julian Assange."
+  vars:
+    text: 'Foreign observers of the UK''s debate on its forthcoming referendum on
+      whether to stay in the European Union may have noticed an awful lot of fuss
+      about the views of a man called Boris Johnson - yes, that man on the zip wire.
+
+
+      Mr Johnson, the Mayor of London, announced on Sunday that he would be backing
+      the campaign for Britain to leave the EU.
+
+
+      His intervention in the debate - made, as he termed it, with "deafening eclat"
+      - was even said to have helped cause the pound to slide on the international
+      money markets as traders thought it made the possibility of a so-called Brexit
+      more likely.
+
+
+      He has arguably the highest profile of any of the governing Conservative Party
+      except the Prime Minister David Cameron, but those outside the UK may be wondering:
+      who is he, and is that actually his hair? Read on.
+
+
+      Profile: Boris Johnson
+
+
+      How could ''zip wire prat'' become prime minister?
+
+
+      Read more about the UK''s referendum on the EU
+
+
+      Alexander Boris de Pfeffel Johnson, to give him his full name, was born in New
+      York and is descended from Turkish, French and German stock. He describes himself
+      as a "one-man melting pot".
+
+
+      He first made a name for himself in journalism, including a stint as Brussels
+      correspondent for the right-wing Daily Telegraph newspaper and editor of The
+      Spectator magazine. His humorous persona led him to become a fixture on various
+      television programmes, including the satirical BBC panel show Have I Got News
+      For You.
+
+
+      He still has a lucrative and entertaining column in the Daily Telegraph, in
+      which august forum he explained the reasons for his decision on the EU.
+
+
+      As a politician, he has been a Conservative member of parliament for two constituencies,
+      Henley from 2001 to 2008 and then Uxbridge and South Ruislip from 2015.
+
+
+      Lest you think he was putting his feet up between parliamentary mandates, he
+      is also currently serving the second of two terms as mayor of London, no mean
+      feat in a city where the centre-left Labour Party has dominated in recent decades.
+
+
+      That''s indicative of the position Mr Johnson has carved out for himself as
+      one of the most charismatic politicians in the UK who has wide appeal beyond
+      Conservative heartlands - polling has suggested that his stance on the EU referendum
+      may sway some undecided voters.
+
+
+      Just look what happens when you type his name into Google.co.uk.
+
+
+      Not quite. He has previously courted controversy for his remarks about (among
+      others) the populations of Liverpool, Portsmouth and Papua New Guinea, not to
+      mention run-ins with his own party leadership and TV chef Jamie Oliver.
+
+
+      Last October he accidentally flattened a 10-year-old schoolboy at what was meant
+      to be a friendly game of photo-op rugby in Japan.
+
+
+      But none of this seems to have affected his standing among the party faithful
+      or the public at large. Even getting stuck on a zip-wire during the London Olympics
+      in 2012, a sure-fire route to derision for any other politician, only enhanced
+      his eccentric image.
+
+
+      Mr Johnson finally ended months of speculation about which side of the EU debate
+      he would back in an immaculately impromptu media scrum outside his home in North
+      London, having reportedly informed the prime minister of his decision earlier
+      the same day.
+
+
+      He said that he had come to his decision as a result of deeply held convictions
+      and "after a huge amount of heartache". His father Stanley, a former Conservative
+      member of the European parliament, said that his son had performed a noble and
+      potentially "career-ending move", ruining any chance of serving in Mr Cameron''s
+      cabinet.
+
+
+      But Mr Cameron has already said he won''t run for another mandate when his current
+      one ends in 2020. Some observers of British politics point out that even if
+      the UK votes to remain in the EU, positioning himself in the "Out" camp won''t
+      do Mr Johnson any harm with grassroots Conservatives, many of who are Eurosceptic
+      and will have the final say in choosing a new leader.
+
+
+      In this, some suggest, he is implementing his long-standing policy on cake:
+      "My policy on cake is pro having it and pro eating it."
+
+
+      No, that''s Donald Trump. Also a pioneer of unorthodox political hair, but they
+      don''t get on.
+
+
+      When Mr Trump commented that parts of London are "so radicalised the police
+      are afraid for their lives", Mr Johnson retorted: "The only reason I wouldn''t
+      go to some parts of New York is the real risk of meeting Donald Trump."
+
+
+      No, I''ve confused you now by mentioning Donald Trump. Same hair though.
+
+
+      No, that''s Julian Assange.'
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nThree people were injured when a broken-down bus was hit by a lorry\
+      \ on the A34 in Oxfordshire.\n\nFifty people were on the First Great Western\
+      \ rail replacement service from Oxford to Didcot when it was hit at Drayton,\
+      \ at 00:30 GMT.\n\nOne of the three people taken to hospital sustained serious\
+      \ but non life-threatening injuries, police said.\n\nThe southbound carriageway\
+      \ has been reopened but investigations are continuing.\n\nThe remaining passengers,\
+      \ who did not require hospital treatment, were taken to Abingdon police station.\n\
+      \nPassenger Rebecca Crow posted a picture of her injuries on Twitter and wrote:\
+      \ \"I was on the bus, it was insane. Very thankful for no fatalities; just a\
+      \ bust up face!\"\n\nThe bus was a replacement for the 00:05 First Great Western\
+      \ service from Oxford to Didcot.\n\nBus passenger Adam Graves said on Twitter:\
+      \ \"One moment the bus power failed, a minute or 2 later the lorry hit us. Bus\
+      \ ended up part down the embankment. #a34\"\n\nHe later told BBC News: \"It\
+      \ sort of jumped forward. There were people screaming inside.\n\n\"Then you\
+      \ suddenly noticed you're falling out of your seat - everyone was flying everywhere.\n\
+      \n\"Once that initial shock had passed people were quite calm.\n\n\"A lot of\
+      \ people on the bus had been coming back from a gig in Oxford, that's where\
+      \ I'd been, that kept people calm as a few recognised each other.\"\n\nIn a\
+      \ statement, a First Great Western spokesman said the firm was \"keen\" to offer\
+      \ support to all of the bus passengers and their families.\n\nHe said initial\
+      \ reports from its own contractor \"suggest the driver followed correct safety\
+      \ procedures\", but added police were investigating.\n\n\"We are offering them\
+      \ any assistance we can to understand the full details of the incident,\" he\
+      \ said.\n\nThe A34 was shut between the Botley and Milton interchanges.\n\n\
+      It had been due to reopen at 11:00 but was delayed due to difficulties in recovering\
+      \ the vehicles, police said.\n\nOfficers on site were having problems earlier\
+      \ with drivers ignoring the closure and driving through, according to BBC Radio\
+      \ Oxford travel reporter Sara Dumbell.\n\nShe said diversions had also led to\
+      \ lengthy traffic delays in the area."
+  vars:
+    text: 'Three people were injured when a broken-down bus was hit by a lorry on
+      the A34 in Oxfordshire.
+
+
+      Fifty people were on the First Great Western rail replacement service from Oxford
+      to Didcot when it was hit at Drayton, at 00:30 GMT.
+
+
+      One of the three people taken to hospital sustained serious but non life-threatening
+      injuries, police said.
+
+
+      The southbound carriageway has been reopened but investigations are continuing.
+
+
+      The remaining passengers, who did not require hospital treatment, were taken
+      to Abingdon police station.
+
+
+      Passenger Rebecca Crow posted a picture of her injuries on Twitter and wrote:
+      "I was on the bus, it was insane. Very thankful for no fatalities; just a bust
+      up face!"
+
+
+      The bus was a replacement for the 00:05 First Great Western service from Oxford
+      to Didcot.
+
+
+      Bus passenger Adam Graves said on Twitter: "One moment the bus power failed,
+      a minute or 2 later the lorry hit us. Bus ended up part down the embankment.
+      #a34"
+
+
+      He later told BBC News: "It sort of jumped forward. There were people screaming
+      inside.
+
+
+      "Then you suddenly noticed you''re falling out of your seat - everyone was flying
+      everywhere.
+
+
+      "Once that initial shock had passed people were quite calm.
+
+
+      "A lot of people on the bus had been coming back from a gig in Oxford, that''s
+      where I''d been, that kept people calm as a few recognised each other."
+
+
+      In a statement, a First Great Western spokesman said the firm was "keen" to
+      offer support to all of the bus passengers and their families.
+
+
+      He said initial reports from its own contractor "suggest the driver followed
+      correct safety procedures", but added police were investigating.
+
+
+      "We are offering them any assistance we can to understand the full details of
+      the incident," he said.
+
+
+      The A34 was shut between the Botley and Milton interchanges.
+
+
+      It had been due to reopen at 11:00 but was delayed due to difficulties in recovering
+      the vehicles, police said.
+
+
+      Officers on site were having problems earlier with drivers ignoring the closure
+      and driving through, according to BBC Radio Oxford travel reporter Sara Dumbell.
+
+
+      She said diversions had also led to lengthy traffic delays in the area.'
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nChildren of the 1970s and 1980s will likely remember the chunky,\
+      \ plastic Fisher-Price magnets that adorned fridges in family homes.\n\nThe\
+      \ popular toys were designed to help teach children to read and spell.\n\nBut\
+      \ for some people, they had another unintended consequence; the magnets forever\
+      \ changed the colours that people would associate with letters.\n\nThe child\
+      \ with the hood in this photo was born in 1988 and is an adult synesthete. His\
+      \ colour-letter pairings matched 25 of the 26 letters in the Fisher-Price magnet\
+      \ set, which is in the foreground.\n\nAt least that's the conclusion of a study\
+      \ on synaesthesia - a neurological condition in which two or more senses experienced\
+      \ separately are involuntarily joined together.\n\nFor instance, some synaesthetes\
+      \ experience colour when they hear sounds or read words. Others experience tastes,\
+      \ smells or shapes.\n\nIt is believe that around one in 10,000 of people have\
+      \ synaesthesia, and scientists are still unsure exactly what causes some people\
+      \ to perceive two senses at the same time.\n\nA large amount of research, according\
+      \ to Discover magazine, has previously suggested the condition can be learned,\
+      \ rather than being the result of genetic factors.\n\nThis graphic shows the\
+      \ results for 400 synesthetes with 10 or more letters matching the toy. The\
+      \ rows correspond to participants and columns to letters. The colours along\
+      \ the bottom represent the most frequently chosen colour label for each letter.\n\
+      \nThe latest study adds to that body of work by suggesting the toy caused a\
+      \ generation to foreever link A with red, F with purple and P with green.\n\n\
+      Researchers from the Department of Psychology at Stanford University used data\
+      \ from 6,588 registered users to determine which colours are most commonly associated\
+      \ with which letters.\n\nThey then compared these colour-letter matches to fridge\
+      \ magnets sold by Fisher-Price between 1971 and 1990.\n\nThe results revealed\
+      \ that at least six per cent (400 out of the 6588 participants) learnt 'many\
+      \ of their matches' from the Fisher-Price set.\n\nAmong those born in the decade\
+      \ after the toy began to be manufactured, the proportion of synesthetes with\
+      \ learned letter-colour pairings was closer to 15 per cent.\n\nThe colours in\
+      \ the toy (upper row), the average colour choice for each letter from the 6188\
+      \ synesthetes (middle row), and the most commonly assigned colour for each letter\
+      \ for the 400 synesthetes are shown here. Fig C shows when the choice does not\
+      \ match the toy (bottom row)\n\nRed bars show proportion of participants with\
+      \ 10 or more matches to the magnet set. Grey bars show participants with seven\
+      \ or more matches. For participants born between 1970 and 1985, the prevalence\
+      \ of synesthesia apparently learned from the Fisher-Price set can exceed 15\
+      \ per cent.\n\nSynaesthesia is a neurological condition in which two or more\
+      \ senses experienced separately are involuntarily joined together.\n\nFor instance,\
+      \ some synaesthetes experience colour when they hear sounds or read words. Others\
+      \ experience tastes, smells or shapes.\n\nSome people are born with synaesthesia,\
+      \ while others experience it after a stroke, or while using psychedelic drugs\
+      \ such as LSD. Famous synaesthetes include singers Pharrell Williams and Lady\
+      \ Gaga.\n\nThere have also been studies in which researchers claimed to have\
+      \ taught people to be synaesthetic - and as a result it is a widely contested\
+      \ condition.\n\nReports claim it can affect as many as one in 23 people and\
+      \ has been linked with high-levels of creativity and intelligence.\n\nBut among\
+      \ those born five years or more before it was manufactured, none of the colour-letter\
+      \ matches were aligned with the colours used in the set.\n\n'Analysis of the\
+      \ letter-colour matching data suggests the only difference between synesthetes\
+      \ with matches to the toy and those without is exposure to the stimulus,' explained\
+      \ the paper.\n\n'This indicates learning of letter-colour pairings from external\
+      \ [sources] can occur in a substantial fraction of synesthetic, and are consistent\
+      \ with the hypothesis that synesthesia is a kind of conditioned mental imagery.'\n\
+      \nThe authors did point out, however, that there may have been other cues –\
+      \ such as cultural influences, or other popular toys or magnet sets that played\
+      \ a role.\n\nThey also said their findings don't suggest that colourful toys\
+      \ cause synaesthesia.\n\nInstead the associations of people already predisposed\
+      \ to the condition can be influenced by external factors.\n\nThe authors did\
+      \ point out that there may have been other cues – such as cultural influences,\
+      \ or other popular toys or magnet sets that played a role."
+  vars:
+    text: 'Children of the 1970s and 1980s will likely remember the chunky, plastic
+      Fisher-Price magnets that adorned fridges in family homes.
+
+
+      The popular toys were designed to help teach children to read and spell.
+
+
+      But for some people, they had another unintended consequence; the magnets forever
+      changed the colours that people would associate with letters.
+
+
+      The child with the hood in this photo was born in 1988 and is an adult synesthete.
+      His colour-letter pairings matched 25 of the 26 letters in the Fisher-Price
+      magnet set, which is in the foreground.
+
+
+      At least that''s the conclusion of a study on synaesthesia - a neurological
+      condition in which two or more senses experienced separately are involuntarily
+      joined together.
+
+
+      For instance, some synaesthetes experience colour when they hear sounds or read
+      words. Others experience tastes, smells or shapes.
+
+
+      It is believe that around one in 10,000 of people have synaesthesia, and scientists
+      are still unsure exactly what causes some people to perceive two senses at the
+      same time.
+
+
+      A large amount of research, according to Discover magazine, has previously suggested
+      the condition can be learned, rather than being the result of genetic factors.
+
+
+      This graphic shows the results for 400 synesthetes with 10 or more letters matching
+      the toy. The rows correspond to participants and columns to letters. The colours
+      along the bottom represent the most frequently chosen colour label for each
+      letter.
+
+
+      The latest study adds to that body of work by suggesting the toy caused a generation
+      to foreever link A with red, F with purple and P with green.
+
+
+      Researchers from the Department of Psychology at Stanford University used data
+      from 6,588 registered users to determine which colours are most commonly associated
+      with which letters.
+
+
+      They then compared these colour-letter matches to fridge magnets sold by Fisher-Price
+      between 1971 and 1990.
+
+
+      The results revealed that at least six per cent (400 out of the 6588 participants)
+      learnt ''many of their matches'' from the Fisher-Price set.
+
+
+      Among those born in the decade after the toy began to be manufactured, the proportion
+      of synesthetes with learned letter-colour pairings was closer to 15 per cent.
+
+
+      The colours in the toy (upper row), the average colour choice for each letter
+      from the 6188 synesthetes (middle row), and the most commonly assigned colour
+      for each letter for the 400 synesthetes are shown here. Fig C shows when the
+      choice does not match the toy (bottom row)
+
+
+      Red bars show proportion of participants with 10 or more matches to the magnet
+      set. Grey bars show participants with seven or more matches. For participants
+      born between 1970 and 1985, the prevalence of synesthesia apparently learned
+      from the Fisher-Price set can exceed 15 per cent.
+
+
+      Synaesthesia is a neurological condition in which two or more senses experienced
+      separately are involuntarily joined together.
+
+
+      For instance, some synaesthetes experience colour when they hear sounds or read
+      words. Others experience tastes, smells or shapes.
+
+
+      Some people are born with synaesthesia, while others experience it after a stroke,
+      or while using psychedelic drugs such as LSD. Famous synaesthetes include singers
+      Pharrell Williams and Lady Gaga.
+
+
+      There have also been studies in which researchers claimed to have taught people
+      to be synaesthetic - and as a result it is a widely contested condition.
+
+
+      Reports claim it can affect as many as one in 23 people and has been linked
+      with high-levels of creativity and intelligence.
+
+
+      But among those born five years or more before it was manufactured, none of
+      the colour-letter matches were aligned with the colours used in the set.
+
+
+      ''Analysis of the letter-colour matching data suggests the only difference between
+      synesthetes with matches to the toy and those without is exposure to the stimulus,''
+      explained the paper.
+
+
+      ''This indicates learning of letter-colour pairings from external [sources]
+      can occur in a substantial fraction of synesthetic, and are consistent with
+      the hypothesis that synesthesia is a kind of conditioned mental imagery.''
+
+
+      The authors did point out, however, that there may have been other cues – such
+      as cultural influences, or other popular toys or magnet sets that played a role.
+
+
+      They also said their findings don''t suggest that colourful toys cause synaesthesia.
+
+
+      Instead the associations of people already predisposed to the condition can
+      be influenced by external factors.
+
+
+      The authors did point out that there may have been other cues – such as cultural
+      influences, or other popular toys or magnet sets that played a role.'
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nA Texas mom who has already spent seven years in prison for the\
+      \ murder of her four-year-old adopted son, and was released shortly before Christmas,\
+      \ will not face new murder charges.\n\nHannah Overton, 37, wiped back tears\
+      \ as she, along with her husband Larry and five children, celebrated news that\
+      \ after having her conviction overturned for poisoning her son, Andrew Burd,\
+      \ with an overdose of salt, prosecutors have dropped all charges against her\
+      \ and will no longer be looking into her case.\n\nThroughout her incarceration,\
+      \ her family  stood by her and protested her innocence, but Nueces County district\
+      \ attorney Mark Skurka had said shortly after she was released that he would\
+      \ push again for capital murder charges.\n\nHe could do this as her conviction\
+      \ was overturned because of ineffective counsel, meaning this would not be a\
+      \ case of double jeopardy.\n\nScroll down for video.\n\nHannah Overton (above\
+      \ wiping away tears with her daughter and son) will not be tried on murder charges\
+      \ again in the death of her adopted son.\n\nOverton's five children and husband\
+      \ Larry (above) were there to  celebrate the news.\n\nIn a news release however,\
+      \ Skura said that he would not be trying the case again due to 'a myriad of\
+      \ factors which came about after a careful review of the previous trial, re-interviewing\
+      \ some of the key witnesses, consulting with some of the medical experts involved\
+      \ in the case, reviewing evidence adduced at recent hearings and staffing the\
+      \ case with the current prosecutors assigned to the case.'\n\nA judge then granted\
+      \ Skura's motion to dismiss.\n\n'Wow, we don't even know where to begin,' Overton\
+      \ said after hearing this news.\n\n'We are so excited about all God has done\
+      \ in and through all of this. He has carried us through.'\n\nAn appellate court's\
+      \ majority opinion to overturn Overton's conviction last year wrote that her\
+      \ trial was 'problematic from the beginning,' according to ABC News.\n\nOriginal\
+      \ prosecutor Sandra Eastwood was terminated for reasons unrelated to the original\
+      \ case years after Overton was convicted, and Overton has accused her of unprofessional\
+      \ conduct several times since.\n\nOn a fateful day in October 2006, Burd, whose\
+      \ biological teenage mother was a Meth addict, started acting up and then vomited,\
+      \ telling Overton that he didn't feel well.\n\nWhen he said he felt cold, he\
+      \ took a warm bath but as his symptoms worsened, the Overtons took him to the\
+      \ Corpus Christi hospital for treatment. He died a day later from salt poisoning.\n\
+      \nA week after his death, murder charges were brought against the mother. The\
+      \ lead prosecutor in the case, Eastwood, portrayed Overton as a frazzled care\
+      \ giver that had force fed Andrew cajun seasoning as a form of punishment, which\
+      \ caused the sodium poisoning.\n\nBut during the trial, the defense said the\
+      \ boy's death was accidental and was likely due to a medical condition, pica,\
+      \ that can cause a person to crave non-edible salty items like clay, sand or\
+      \ dirt.\n\nThe mother has been behind bars for seven years, separated from her\
+      \ husband and five children who are being cared for by their father and home\
+      \ schooled by a supportive church community that still believes in Overton's\
+      \ innocence.\n\nLate last year her conviction was overturned because of ineffective\
+      \ counsel, but Nueces County district attorney Mark Skurka was set to try her\
+      \ again.\n\nOverturned: In September, the Texas Court of Criminal Appeals overturned\
+      \ Overton's capital murder conviction in the 2006 salt poisoning death of her\
+      \ 4-year-old foster son, citing ineffective counsel at her 2007 trial for the\
+      \ death of Andrew Burd (right)\n\nNew details have emerged that allege the prosecutor\
+      \ in the case withheld evidence, like providing details on the boy's stomach\
+      \ content at the time of his death.\n\nThe defense said that the prosecution\
+      \ claimed that samples from the boy's vomit were unavailable but Overton's lawyers\
+      \ claimed Eastwood withheld evidence so the sample could not be tested.\n\n\
+      The pediatrician that had treated Andrew before he was placed in Overton's care\
+      \ has also said that the child's medical state was not properly explained at\
+      \ the trial.\n\nDr Edgar Cortes said the boy had development issues that contributed\
+      \ to his eating disorder.\n\n'I think that if we're going to be fair, if we're\
+      \ going to be just, we have to take all of the circumstances into consideration,'\
+      \ he testified at a February hearing, part of Overton's appeal.\n\nTeachers\
+      \ and friends who knew the boy have agreed that he had unusual eating habits\
+      \ and even tried to eat trash on one occasion.\n\nAndrew died a day after the\
+      \ Overtons took him to the hospital. Prosecutors claimed he died after Overton\
+      \ punished him by making him swallow spicy seasoning. Her defense was that Andrew\
+      \ had very odd eating habits or even an eating disorder called pica.\n\nThe\
+      \ boy's Sunday School teacher had actually tried to persuade the Overtons not\
+      \ to take Andrew into their care because of his development issues, saying that\
+      \ the parents should think of the welfare of their other children.\n\nBut the\
+      \ Overtons have said that even knowing what they do now, they would still have\
+      \ welcomed Andrew into their hearts and their home.\n\n'He had brothers and\
+      \ sisters and a mommy and daddy, what he called his forever family, because\
+      \ we had to go through a lot of pain since then,' Hannah Overton told 20/20\
+      \ in 2008.\n\nEastwood's professional abilities have also been called into question.\
+      \ After the trial she was fired by the district attorney's office in Nueces\
+      \ County in 2010.\n\nIn 2011, she admitted she struggled with alcohol dependency\
+      \ issues and was also taking diet pills during her tenure as a prosecutor, though\
+      \ she has denied those issues tainted her ability during the Overton trial."
+  vars:
+    text: 'A Texas mom who has already spent seven years in prison for the murder
+      of her four-year-old adopted son, and was released shortly before Christmas,
+      will not face new murder charges.
+
+
+      Hannah Overton, 37, wiped back tears as she, along with her husband Larry and
+      five children, celebrated news that after having her conviction overturned for
+      poisoning her son, Andrew Burd, with an overdose of salt, prosecutors have dropped
+      all charges against her and will no longer be looking into her case.
+
+
+      Throughout her incarceration, her family  stood by her and protested her innocence,
+      but Nueces County district attorney Mark Skurka had said shortly after she was
+      released that he would push again for capital murder charges.
+
+
+      He could do this as her conviction was overturned because of ineffective counsel,
+      meaning this would not be a case of double jeopardy.
+
+
+      Scroll down for video.
+
+
+      Hannah Overton (above wiping away tears with her daughter and son) will not
+      be tried on murder charges again in the death of her adopted son.
+
+
+      Overton''s five children and husband Larry (above) were there to  celebrate
+      the news.
+
+
+      In a news release however, Skura said that he would not be trying the case again
+      due to ''a myriad of factors which came about after a careful review of the
+      previous trial, re-interviewing some of the key witnesses, consulting with some
+      of the medical experts involved in the case, reviewing evidence adduced at recent
+      hearings and staffing the case with the current prosecutors assigned to the
+      case.''
+
+
+      A judge then granted Skura''s motion to dismiss.
+
+
+      ''Wow, we don''t even know where to begin,'' Overton said after hearing this
+      news.
+
+
+      ''We are so excited about all God has done in and through all of this. He has
+      carried us through.''
+
+
+      An appellate court''s majority opinion to overturn Overton''s conviction last
+      year wrote that her trial was ''problematic from the beginning,'' according
+      to ABC News.
+
+
+      Original prosecutor Sandra Eastwood was terminated for reasons unrelated to
+      the original case years after Overton was convicted, and Overton has accused
+      her of unprofessional conduct several times since.
+
+
+      On a fateful day in October 2006, Burd, whose biological teenage mother was
+      a Meth addict, started acting up and then vomited, telling Overton that he didn''t
+      feel well.
+
+
+      When he said he felt cold, he took a warm bath but as his symptoms worsened,
+      the Overtons took him to the Corpus Christi hospital for treatment. He died
+      a day later from salt poisoning.
+
+
+      A week after his death, murder charges were brought against the mother. The
+      lead prosecutor in the case, Eastwood, portrayed Overton as a frazzled care
+      giver that had force fed Andrew cajun seasoning as a form of punishment, which
+      caused the sodium poisoning.
+
+
+      But during the trial, the defense said the boy''s death was accidental and was
+      likely due to a medical condition, pica, that can cause a person to crave non-edible
+      salty items like clay, sand or dirt.
+
+
+      The mother has been behind bars for seven years, separated from her husband
+      and five children who are being cared for by their father and home schooled
+      by a supportive church community that still believes in Overton''s innocence.
+
+
+      Late last year her conviction was overturned because of ineffective counsel,
+      but Nueces County district attorney Mark Skurka was set to try her again.
+
+
+      Overturned: In September, the Texas Court of Criminal Appeals overturned Overton''s
+      capital murder conviction in the 2006 salt poisoning death of her 4-year-old
+      foster son, citing ineffective counsel at her 2007 trial for the death of Andrew
+      Burd (right)
+
+
+      New details have emerged that allege the prosecutor in the case withheld evidence,
+      like providing details on the boy''s stomach content at the time of his death.
+
+
+      The defense said that the prosecution claimed that samples from the boy''s vomit
+      were unavailable but Overton''s lawyers claimed Eastwood withheld evidence so
+      the sample could not be tested.
+
+
+      The pediatrician that had treated Andrew before he was placed in Overton''s
+      care has also said that the child''s medical state was not properly explained
+      at the trial.
+
+
+      Dr Edgar Cortes said the boy had development issues that contributed to his
+      eating disorder.
+
+
+      ''I think that if we''re going to be fair, if we''re going to be just, we have
+      to take all of the circumstances into consideration,'' he testified at a February
+      hearing, part of Overton''s appeal.
+
+
+      Teachers and friends who knew the boy have agreed that he had unusual eating
+      habits and even tried to eat trash on one occasion.
+
+
+      Andrew died a day after the Overtons took him to the hospital. Prosecutors claimed
+      he died after Overton punished him by making him swallow spicy seasoning. Her
+      defense was that Andrew had very odd eating habits or even an eating disorder
+      called pica.
+
+
+      The boy''s Sunday School teacher had actually tried to persuade the Overtons
+      not to take Andrew into their care because of his development issues, saying
+      that the parents should think of the welfare of their other children.
+
+
+      But the Overtons have said that even knowing what they do now, they would still
+      have welcomed Andrew into their hearts and their home.
+
+
+      ''He had brothers and sisters and a mommy and daddy, what he called his forever
+      family, because we had to go through a lot of pain since then,'' Hannah Overton
+      told 20/20 in 2008.
+
+
+      Eastwood''s professional abilities have also been called into question. After
+      the trial she was fired by the district attorney''s office in Nueces County
+      in 2010.
+
+
+      In 2011, she admitted she struggled with alcohol dependency issues and was also
+      taking diet pills during her tenure as a prosecutor, though she has denied those
+      issues tainted her ability during the Overton trial.'
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nIn a sport beset by tiresome braggadocio, Ricky Burns seems like\
+      \ an impostor.\n\nWith three defeats in his previous six bouts, the Scottish\
+      \ boxer's career seemed to be on the wane.\n\nBut his power, timing and focus\
+      \ returned in a supremely confident display at Glasgow's Hydro on Saturday night\
+      \ as he clinched the vacant WBA World Super-Lightweight title - and entered\
+      \ the record books as the first Scot to win world titles at three weights.\n\
+      \nItaly's Michele Di Rocco, at 34 a year older than Burns, hadn't lost a fight\
+      \ since September 2007.\n\nHe arrived with a record of 40 wins and a draw from\
+      \ 42 bouts. He left a lesser figure.\n\nThe referee deemed the man from Assisi\
+      \ to be in no state to continue in the eighth round, the result of a welter\
+      \ of blows to his head and body and made all the more unbearable by the hostile\
+      \ acoustic energy generated by 8,000 Scottish fans.\n\nSurely, for Burns, this\
+      \ was time to shout about his record, the ideal moment to counter all those\
+      \ who had written him off and questioned the wisdom of him leaving trainer Billy\
+      \ Nelson two years ago to work with Tony Sim in Essex?\n\nNo.\n\nInstead, the\
+      \ champion spoke of his disbelief at the ease of his victory, his gratitude\
+      \ that he was safe, of his thanks to promoter Eddie Hearn, manager Alex Morrison\
+      \ and coach Sim for believing in him, and of his desire to celebrate with a\
+      \ fast-food burger and 20 chicken nuggets.\n\n\"When I got in the ring after\
+      \ the fight, I said, 'You've done it! You've done it!',\" reported a beaming\
+      \ Hearn at the post-fight media conference.\n\n\"And you know what Ricky said?\
+      \ 'Can you get a picture with me and Michael Buffer [the legendary American\
+      \ boxing ring announcer]?'\"\n\nWhen he has time to reflect during a well-earned\
+      \ holiday, Burns will take immense satisfaction at being only the third British-born\
+      \ fighter, after Bob Fitzsimmons and Duke McKenzie, to be a three-weight world\
+      \ champion.\n\nIn Scottish terms, his achievements must mean that he is in the\
+      \ very top tier of boxing greats, comfortably mentioned in the same breath as\
+      \ former world champions Benny Lynch, Walter McGowan, Jackie Paterson, Ken Buchanan\
+      \ and Jim Watt, for example.\n\nBurns' record stands at 40 wins from 46 bouts.\
+      \ Remarkably, 11 of those have been world title fights.\n\nBuchanan's exploits\
+      \ in the United States add lustre to his legacy, but while Burns may never have\
+      \ fought someone like Roberto Duran, should Hearn manage to set up a bout against\
+      \ Cincinnati's Adrien Broner, the four-time world champion stripped of the WBA\
+      \ title because he could not make the weight, then Burns could achieve little\
+      \ more in the sport.\n\n\"There are some big fights out there for me,\" said\
+      \ Burns.\n\n\"I want to fight the top names. I will fight anybody. I do super-lightweight\
+      \ comfortably and lightweight is still an option. I would fight Terence Crawford\
+      \ again if it came down to it.\n\n\"That's nearly two years I have been with\
+      \ Tony and things have just started clicking.\n\n\"I had a bit of a bad run\
+      \ in the last year with stuff. Who'd have thought I'd be sitting here world\
+      \ champion again?\"\n\nHearn said suitors could \"make all the offers they want,\
+      \ we'll listen\".\n\n\"If they want to come with a sack-load of money for Ricky\
+      \ to defend his title against Broner in Vegas, I'm sure there are a few Scots\
+      \ who would like a trip there as well.\"\n\nAt that point Burns quipped: \"\
+      I'd be one of them.\"\n\nThe lovely thing is, you suspect Burns was speaking\
+      \ in the guise of a fan rather than that of a three-weight world champion who\
+      \ could enjoy a profitable title defence."
+  vars:
+    text: 'In a sport beset by tiresome braggadocio, Ricky Burns seems like an impostor.
+
+
+      With three defeats in his previous six bouts, the Scottish boxer''s career seemed
+      to be on the wane.
+
+
+      But his power, timing and focus returned in a supremely confident display at
+      Glasgow''s Hydro on Saturday night as he clinched the vacant WBA World Super-Lightweight
+      title - and entered the record books as the first Scot to win world titles at
+      three weights.
+
+
+      Italy''s Michele Di Rocco, at 34 a year older than Burns, hadn''t lost a fight
+      since September 2007.
+
+
+      He arrived with a record of 40 wins and a draw from 42 bouts. He left a lesser
+      figure.
+
+
+      The referee deemed the man from Assisi to be in no state to continue in the
+      eighth round, the result of a welter of blows to his head and body and made
+      all the more unbearable by the hostile acoustic energy generated by 8,000 Scottish
+      fans.
+
+
+      Surely, for Burns, this was time to shout about his record, the ideal moment
+      to counter all those who had written him off and questioned the wisdom of him
+      leaving trainer Billy Nelson two years ago to work with Tony Sim in Essex?
+
+
+      No.
+
+
+      Instead, the champion spoke of his disbelief at the ease of his victory, his
+      gratitude that he was safe, of his thanks to promoter Eddie Hearn, manager Alex
+      Morrison and coach Sim for believing in him, and of his desire to celebrate
+      with a fast-food burger and 20 chicken nuggets.
+
+
+      "When I got in the ring after the fight, I said, ''You''ve done it! You''ve
+      done it!''," reported a beaming Hearn at the post-fight media conference.
+
+
+      "And you know what Ricky said? ''Can you get a picture with me and Michael Buffer
+      [the legendary American boxing ring announcer]?''"
+
+
+      When he has time to reflect during a well-earned holiday, Burns will take immense
+      satisfaction at being only the third British-born fighter, after Bob Fitzsimmons
+      and Duke McKenzie, to be a three-weight world champion.
+
+
+      In Scottish terms, his achievements must mean that he is in the very top tier
+      of boxing greats, comfortably mentioned in the same breath as former world champions
+      Benny Lynch, Walter McGowan, Jackie Paterson, Ken Buchanan and Jim Watt, for
+      example.
+
+
+      Burns'' record stands at 40 wins from 46 bouts. Remarkably, 11 of those have
+      been world title fights.
+
+
+      Buchanan''s exploits in the United States add lustre to his legacy, but while
+      Burns may never have fought someone like Roberto Duran, should Hearn manage
+      to set up a bout against Cincinnati''s Adrien Broner, the four-time world champion
+      stripped of the WBA title because he could not make the weight, then Burns could
+      achieve little more in the sport.
+
+
+      "There are some big fights out there for me," said Burns.
+
+
+      "I want to fight the top names. I will fight anybody. I do super-lightweight
+      comfortably and lightweight is still an option. I would fight Terence Crawford
+      again if it came down to it.
+
+
+      "That''s nearly two years I have been with Tony and things have just started
+      clicking.
+
+
+      "I had a bit of a bad run in the last year with stuff. Who''d have thought I''d
+      be sitting here world champion again?"
+
+
+      Hearn said suitors could "make all the offers they want, we''ll listen".
+
+
+      "If they want to come with a sack-load of money for Ricky to defend his title
+      against Broner in Vegas, I''m sure there are a few Scots who would like a trip
+      there as well."
+
+
+      At that point Burns quipped: "I''d be one of them."
+
+
+      The lovely thing is, you suspect Burns was speaking in the guise of a fan rather
+      than that of a three-weight world champion who could enjoy a profitable title
+      defence.'
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nA wartime scientist has revisited the secret underground factory\
+      \ where she helped build aircraft engines 70 years since the end of the Second\
+      \ World War.\n\nMary Cartwright was 20 when she was called up to work in the\
+      \ laboratory at Drakelow Shadow Factory in Kidderminster, Worcestershire, in\
+      \ 1943.\n\nShe spent two years testing metal for Bristol aircraft engines in\
+      \ the site's underground laboratory, working as the only woman in her department.\n\
+      \nNow,  70 years after leaving her position, the 91-year-old great-grandmother\
+      \ has revisited the now defunct factory.\n\nMary Cartwright revisited Drakelow\
+      \ Underground Factory in Kidderminster, Worcestershire, where more than 700\
+      \ people worked during the war (right)  to produce aircraft engines. Now 91,\
+      \ the great grandmother tested metal for aircraft engines.\n\nRevisiting the\
+      \ site with her son, David, Mrs Cartwright said it was 'strange' to see it so\
+      \ quiet. She worked as the only woman in its laboratory between 1943 and 1945.\n\
+      \nBuilt in 1943, the factory became known as Drakelow Tunnels for its vast network\
+      \ of underground paths spread over three-and-a-half miles.\n\nIt was one of\
+      \ 26 'shadow' sites set-up to mass produce engines and parts for military aircraft\
+      \ and tanks that were built underground or into hillside so that production\
+      \ could continue if bombed.\n\nDesigned by Rover at the behest of the Air Ministry,\
+      \ Drakelow employed 700 people when Mrs Cartwright began working there.\n\n\
+      Arriving every day at 8.30am, she used scientific formulas to analyse the ratio\
+      \ of metals in shavings given to her by 'the men'.\n\nSpanning more than three\
+      \ miles, the site became known as the Drakelow Tunnels for its vast network\
+      \ of secret passageways.\n\nThe entrance to one of the tunnels which are built\
+      \ into hillside beneath Kingsford Country Park, Kidderminster.\n\nAnother of\
+      \ the tunnels' entrances in Kingsford Country Park. While built at road level\
+      \ it is 300ft from the top of the hill.\n\nSet up by Rover under the instruction\
+      \ of the Air Ministry, Drakelow was one of 26 'underground' factories established\
+      \ to allow production lines to continue if the country came under fire.\n\n\
+      With more than 700 people working at the site at a time it was one of the largest\
+      \ underground factories during the war.\n\nMrs Cartwright was sent to work there\
+      \ in 1943 after being called up at the age of 20. She had wanted to join the\
+      \ Civil Service beforehand.\n\nA stretch of offices in the underground factory.\
+      \ Their windows were high up so that staff would not be distracted by co-workers\
+      \ walking by.\n\nThe kitchen where staff would have eaten during one of the\
+      \ long, underground shifts. Mrs Cartwright had no previous experience when she\
+      \ was called up, but said she 'just got on with the job'\n\nMrs Cartwright said\
+      \ while the tunnels were built to protect production lines from bombing, by\
+      \ the time she began working at Drakelow the worst of the raids had already\
+      \ hit the country. Right, a newspaper cutting from 1941 detailing the deaths\
+      \ of three men killed when one of the tunnels collapsed during 'excavating operations'\n\
+      \n'I'd had no experience at the time, someone, I think my sister-in-law, just\
+      \ gave me a book which told me how to do it and I just got on with it,' Mrs\
+      \ Cartwright told MailOnline.\n\n'The metal could come in and it would be one\
+      \ of the men who would drill it into shavings. I'd dissolve it in acid and then\
+      \ put something on it that would allow me to analyse it so I could find how\
+      \ much nickle, chrome etc was in each part.'\n\nThe only woman in the laboratory,\
+      \ Mrs Cartwright had wanted to serve in the army before being called up.\n\n\
+      'In a way it was luck of the draw an din a way it wasn't. I wanted to go into\
+      \ the forces but parents in those days told you what to do and mine said: \"\
+      no, you'll go into industry.\"'\n\nEarning £3 a week, she was also tasked with\
+      \ taking photographs of the metal for developing in a dark room next door.\n\
+      \nWhile the factory's design was so carried out to avoid raids, the worst of\
+      \ the bombing across Britain had already occurred by the time Mrs Cartwright\
+      \ took up work, she said.\n\n'They started building the tunnels in 1941, quite\
+      \ late in the war. Around that time we were being badly bombed but never when\
+      \ I was there.'\n\nThe site was restored in the 1980s by the Ministry of Defence\
+      \ which installed two KW generators.\n\nTunnel 4, one of the main passageways\
+      \ used during the Second World War to shuttle workers to their stations.\n\n\
+      After the war ended, Mrs Cartwright trained as a teacher and spent years teaching\
+      \ P.E. in Worcester.\n\nShe met her late husband, Cecil Cartwright, after the\
+      \ war had ended and the pair married in 1953.\n\nRevisiting the Drakelow Tunnels\
+      \ with one of her sons, John, the great-grandmother said it was 'strange' to\
+      \ see it so quiet.\n\nIn 1936, the Air Ministry approached the car manufacturer\
+      \ Rover, asking them to help with wartime production.\n\nBy 1939, all motoring\
+      \ production had ceased and the company had begun working solely on aircraft\
+      \ parts and engines.\n\nBut when its Coventry factory was blitzed, bosses cited\
+      \ the need for a more secure setting to allow production to continue.\n\nShadow\
+      \ Factories were then created. Built underground, safe from the shelling of\
+      \ Hitler's army, workers were free to work on engines for military aircraft\
+      \ and tanks.\n\nA canteen that was reused  during the Cold War when Drakelow\
+      \ Factory became a Government bunker.\n\nThe Drakelow site was one of the largest,\
+      \ spanning more than three miles. Built into Kingsford Country Park, the factory\
+      \ is 300ft from the top of the hill but is in fact at road level.\n\nIt was\
+      \ used to produce aircraft engines specifically for four models of Bristol aircraft;\
+      \ the Pegasus, Hercules, Centaur and Mercury.\n\nWhen demand wavered at the\
+      \ end of the war some staff were kept on to continue working on tanks.\n\nProduction\
+      \ of the Meteor Tank Engine continued until 1952 when parts became surplus to\
+      \ requirements. All production stopped indefinitely thee years later when the\
+      \ site was handed over to the Ministry of Works.\n\nIn 1961 the Government converted\
+      \ half of the tunnels to become a nuclear-safe bunker known as Regional Seat\
+      \ of Government.\n\nBy the 1980s it had been modernised again with new blast\
+      \ doors fitted to meet updated requirements.\n\nIt was decommissioned and sold\
+      \ to a private company in the early 1990s and remains in their ownership.\n\n\
+      'All my memories are of a bustling hive of activity. I did enjoy my time there,\
+      \ it was certainly an experience. I just got on with it.'\n\nThe Drakelow Tunnels\
+      \ or Shadow Factory was one of 26 of the same kind across the UK, built into\
+      \ the ground or landscape.\n\nDuring the war it was used to produce engine parts\
+      \ for four Bristol aircraft - Hercules, Pegasus, Centaur and Mercury.\n\nFor\
+      \ a short while afterward the war production continued but to create parts for\
+      \ army tanks.\n\nThe site is owned by a private Swiss company, though historians\
+      \ are eager to turn it into a permanent museum."
+  vars:
+    text: 'A wartime scientist has revisited the secret underground factory where
+      she helped build aircraft engines 70 years since the end of the Second World
+      War.
+
+
+      Mary Cartwright was 20 when she was called up to work in the laboratory at Drakelow
+      Shadow Factory in Kidderminster, Worcestershire, in 1943.
+
+
+      She spent two years testing metal for Bristol aircraft engines in the site''s
+      underground laboratory, working as the only woman in her department.
+
+
+      Now,  70 years after leaving her position, the 91-year-old great-grandmother
+      has revisited the now defunct factory.
+
+
+      Mary Cartwright revisited Drakelow Underground Factory in Kidderminster, Worcestershire,
+      where more than 700 people worked during the war (right)  to produce aircraft
+      engines. Now 91, the great grandmother tested metal for aircraft engines.
+
+
+      Revisiting the site with her son, David, Mrs Cartwright said it was ''strange''
+      to see it so quiet. She worked as the only woman in its laboratory between 1943
+      and 1945.
+
+
+      Built in 1943, the factory became known as Drakelow Tunnels for its vast network
+      of underground paths spread over three-and-a-half miles.
+
+
+      It was one of 26 ''shadow'' sites set-up to mass produce engines and parts for
+      military aircraft and tanks that were built underground or into hillside so
+      that production could continue if bombed.
+
+
+      Designed by Rover at the behest of the Air Ministry, Drakelow employed 700 people
+      when Mrs Cartwright began working there.
+
+
+      Arriving every day at 8.30am, she used scientific formulas to analyse the ratio
+      of metals in shavings given to her by ''the men''.
+
+
+      Spanning more than three miles, the site became known as the Drakelow Tunnels
+      for its vast network of secret passageways.
+
+
+      The entrance to one of the tunnels which are built into hillside beneath Kingsford
+      Country Park, Kidderminster.
+
+
+      Another of the tunnels'' entrances in Kingsford Country Park. While built at
+      road level it is 300ft from the top of the hill.
+
+
+      Set up by Rover under the instruction of the Air Ministry, Drakelow was one
+      of 26 ''underground'' factories established to allow production lines to continue
+      if the country came under fire.
+
+
+      With more than 700 people working at the site at a time it was one of the largest
+      underground factories during the war.
+
+
+      Mrs Cartwright was sent to work there in 1943 after being called up at the age
+      of 20. She had wanted to join the Civil Service beforehand.
+
+
+      A stretch of offices in the underground factory. Their windows were high up
+      so that staff would not be distracted by co-workers walking by.
+
+
+      The kitchen where staff would have eaten during one of the long, underground
+      shifts. Mrs Cartwright had no previous experience when she was called up, but
+      said she ''just got on with the job''
+
+
+      Mrs Cartwright said while the tunnels were built to protect production lines
+      from bombing, by the time she began working at Drakelow the worst of the raids
+      had already hit the country. Right, a newspaper cutting from 1941 detailing
+      the deaths of three men killed when one of the tunnels collapsed during ''excavating
+      operations''
+
+
+      ''I''d had no experience at the time, someone, I think my sister-in-law, just
+      gave me a book which told me how to do it and I just got on with it,'' Mrs Cartwright
+      told MailOnline.
+
+
+      ''The metal could come in and it would be one of the men who would drill it
+      into shavings. I''d dissolve it in acid and then put something on it that would
+      allow me to analyse it so I could find how much nickle, chrome etc was in each
+      part.''
+
+
+      The only woman in the laboratory, Mrs Cartwright had wanted to serve in the
+      army before being called up.
+
+
+      ''In a way it was luck of the draw an din a way it wasn''t. I wanted to go into
+      the forces but parents in those days told you what to do and mine said: "no,
+      you''ll go into industry."''
+
+
+      Earning £3 a week, she was also tasked with taking photographs of the metal
+      for developing in a dark room next door.
+
+
+      While the factory''s design was so carried out to avoid raids, the worst of
+      the bombing across Britain had already occurred by the time Mrs Cartwright took
+      up work, she said.
+
+
+      ''They started building the tunnels in 1941, quite late in the war. Around that
+      time we were being badly bombed but never when I was there.''
+
+
+      The site was restored in the 1980s by the Ministry of Defence which installed
+      two KW generators.
+
+
+      Tunnel 4, one of the main passageways used during the Second World War to shuttle
+      workers to their stations.
+
+
+      After the war ended, Mrs Cartwright trained as a teacher and spent years teaching
+      P.E. in Worcester.
+
+
+      She met her late husband, Cecil Cartwright, after the war had ended and the
+      pair married in 1953.
+
+
+      Revisiting the Drakelow Tunnels with one of her sons, John, the great-grandmother
+      said it was ''strange'' to see it so quiet.
+
+
+      In 1936, the Air Ministry approached the car manufacturer Rover, asking them
+      to help with wartime production.
+
+
+      By 1939, all motoring production had ceased and the company had begun working
+      solely on aircraft parts and engines.
+
+
+      But when its Coventry factory was blitzed, bosses cited the need for a more
+      secure setting to allow production to continue.
+
+
+      Shadow Factories were then created. Built underground, safe from the shelling
+      of Hitler''s army, workers were free to work on engines for military aircraft
+      and tanks.
+
+
+      A canteen that was reused  during the Cold War when Drakelow Factory became
+      a Government bunker.
+
+
+      The Drakelow site was one of the largest, spanning more than three miles. Built
+      into Kingsford Country Park, the factory is 300ft from the top of the hill but
+      is in fact at road level.
+
+
+      It was used to produce aircraft engines specifically for four models of Bristol
+      aircraft; the Pegasus, Hercules, Centaur and Mercury.
+
+
+      When demand wavered at the end of the war some staff were kept on to continue
+      working on tanks.
+
+
+      Production of the Meteor Tank Engine continued until 1952 when parts became
+      surplus to requirements. All production stopped indefinitely thee years later
+      when the site was handed over to the Ministry of Works.
+
+
+      In 1961 the Government converted half of the tunnels to become a nuclear-safe
+      bunker known as Regional Seat of Government.
+
+
+      By the 1980s it had been modernised again with new blast doors fitted to meet
+      updated requirements.
+
+
+      It was decommissioned and sold to a private company in the early 1990s and remains
+      in their ownership.
+
+
+      ''All my memories are of a bustling hive of activity. I did enjoy my time there,
+      it was certainly an experience. I just got on with it.''
+
+
+      The Drakelow Tunnels or Shadow Factory was one of 26 of the same kind across
+      the UK, built into the ground or landscape.
+
+
+      During the war it was used to produce engine parts for four Bristol aircraft
+      - Hercules, Pegasus, Centaur and Mercury.
+
+
+      For a short while afterward the war production continued but to create parts
+      for army tanks.
+
+
+      The site is owned by a private Swiss company, though historians are eager to
+      turn it into a permanent museum.'
+- assert:
+  - type: llm-rubric
+    value: "Ensure the [article] captures the main ideas accurately and concisely.\n\
+      \ [article]\nJose Aldo and Conor McGregor may have taken the spotlight over\
+      \ the past two weeks when it comes to the UFC's featherweight division, but\
+      \ this weekend it's time for two other top ranked 145ers to take centre stage,\
+      \ as No 1 ranked Chad Mendes and No 4 ranked Ricardo Lamas meet in Fairfax,\
+      \ in a bout which could potentially determine the next challenger to the title.\n\
+      \nMendes' only two professional losses have come at the hands of the Brazilian\
+      \ king and Lamas also dropped a decision to Aldo when the two met in February\
+      \ last year.\n\nBut it is Aldo's upcoming opponent, Irishman McGregor, who has\
+      \ dominated conversation in the lead up to this weekend's fight.\n\nOpponents\
+      \ Chad Mendes and Ricardo Lamas face off during the UFC weigh-in at the Patriot\
+      \ Center.\n\nLamas holds an open training session for fans and media at the\
+      \ UFC Gym on in Fairfax, Virginia.\n\n'I thought Aldo handled it well' said\
+      \ Team Alpha Male's Mendes, when asked about Aldo's reaction to McGregor snatching\
+      \ the championship belt on stage in Dublin. 'But that's Conor, he is crazy,\
+      \ you know,' Mendes continued.\n\n'Aldo has been the champion for a long time.\
+      \ Conor is the type of guy who is always going to run his mouth, but I highly\
+      \ doubt Aldo is going to let that get to him. I feel like whoever wins, I'm\
+      \ good. I think Aldo is a better mixed martial artist so I think he is going\
+      \ to win. He knows what he is doing - I just see him winning the fight.'\n\n\
+      A stark contrast to the championship pairing, Mendes and Lamas have shown nothing\
+      \ but respect for one another in the lead up to Saturday night's main event.\n\
+      \nMendes flexes his guns at the weight-in before his clash with rival Lamas\
+      \ at the Patriot Centre.\n\nMendes is put though his paces in front of the fans\
+      \ ahead of the fight against Lamas in Fairfield.\n\nAnticipating a war when\
+      \ they meet, 'Money' Mendes is confident that he is stronger than 'The Bully'\
+      \ in every department and that, should he win convincingly, he believes the\
+      \ fans will want to see him get a third crack at Aldo.\n\n'I think Ricardo is\
+      \ a tough guy - he is good everywhere, you know. But the thing is, I feel like\
+      \ everything that he is good at, I'm just that little bit better,' he added.\n\
+      \n'I'm hoping that if I win this fight, then enough people will want to watch\
+      \ a third fight between me and Aldo and that the UFC will give it to us, but\
+      \ we'll see what happens.\n\n'If I can get out there and totally dominate, then\
+      \ hopefully that will be enough to get me another shot. I'm expecting a war\
+      \ out there - like I said, Lamas is a tough, tough fighter.'\n\nMendes holds\
+      \ an open training session for fans and media at the UFC Gym in Fairfax, Virginia.\n\
+      \nAnd Mendes is not the only one eyeing up a second shot at the featherweight\
+      \ title. Chicago-born Lamas claims he is under no illusions that he will be\
+      \ in for an easy night with Mendes.\n\n'If I keep performing well then the title\
+      \ shot will come,' he said. 'Mendes is a cool guy. He is a good sport and he\
+      \ is a respectful fighter. But this is going to be a tough fight and when it\
+      \ comes to the night, you're going to see us both try to go in there and take\
+      \ each other out.\n\n'I feel like I am strong for my weight but Mendes is a\
+      \ powerhouse too, so we will see what happens. I feel like Chad is a great fighter\
+      \ so we're going to bring the best out of each other, for sure.'\n\nLamas stretches\
+      \ his legs with a kick as he prepares to take on Mendes with an open training\
+      \ session.\n\nMeanwhile arguably two of the lightweight division's most exciting\
+      \ fighters, Jorge Masvidal and Al Iaquinta, meet in the co-main event - a bout\
+      \ which should showcase some of the finest striking in the division.\n\nWatch\
+      \ UFC Fight Night: Mendes vs. Lamas live on BT Sport 1 on Saturday, April 4.\
+      \ Catch the prelims from 4pm BST and the main card from 6pm BST."
+  vars:
+    text: 'Jose Aldo and Conor McGregor may have taken the spotlight over the past
+      two weeks when it comes to the UFC''s featherweight division, but this weekend
+      it''s time for two other top ranked 145ers to take centre stage, as No 1 ranked
+      Chad Mendes and No 4 ranked Ricardo Lamas meet in Fairfax, in a bout which could
+      potentially determine the next challenger to the title.
+
+
+      Mendes'' only two professional losses have come at the hands of the Brazilian
+      king and Lamas also dropped a decision to Aldo when the two met in February
+      last year.
+
+
+      But it is Aldo''s upcoming opponent, Irishman McGregor, who has dominated conversation
+      in the lead up to this weekend''s fight.
+
+
+      Opponents Chad Mendes and Ricardo Lamas face off during the UFC weigh-in at
+      the Patriot Center.
+
+
+      Lamas holds an open training session for fans and media at the UFC Gym on in
+      Fairfax, Virginia.
+
+
+      ''I thought Aldo handled it well'' said Team Alpha Male''s Mendes, when asked
+      about Aldo''s reaction to McGregor snatching the championship belt on stage
+      in Dublin. ''But that''s Conor, he is crazy, you know,'' Mendes continued.
+
+
+      ''Aldo has been the champion for a long time. Conor is the type of guy who is
+      always going to run his mouth, but I highly doubt Aldo is going to let that
+      get to him. I feel like whoever wins, I''m good. I think Aldo is a better mixed
+      martial artist so I think he is going to win. He knows what he is doing - I
+      just see him winning the fight.''
+
+
+      A stark contrast to the championship pairing, Mendes and Lamas have shown nothing
+      but respect for one another in the lead up to Saturday night''s main event.
+
+
+      Mendes flexes his guns at the weight-in before his clash with rival Lamas at
+      the Patriot Centre.
+
+
+      Mendes is put though his paces in front of the fans ahead of the fight against
+      Lamas in Fairfield.
+
+
+      Anticipating a war when they meet, ''Money'' Mendes is confident that he is
+      stronger than ''The Bully'' in every department and that, should he win convincingly,
+      he believes the fans will want to see him get a third crack at Aldo.
+
+
+      ''I think Ricardo is a tough guy - he is good everywhere, you know. But the
+      thing is, I feel like everything that he is good at, I''m just that little bit
+      better,'' he added.
+
+
+      ''I''m hoping that if I win this fight, then enough people will want to watch
+      a third fight between me and Aldo and that the UFC will give it to us, but we''ll
+      see what happens.
+
+
+      ''If I can get out there and totally dominate, then hopefully that will be enough
+      to get me another shot. I''m expecting a war out there - like I said, Lamas
+      is a tough, tough fighter.''
+
+
+      Mendes holds an open training session for fans and media at the UFC Gym in Fairfax,
+      Virginia.
+
+
+      And Mendes is not the only one eyeing up a second shot at the featherweight
+      title. Chicago-born Lamas claims he is under no illusions that he will be in
+      for an easy night with Mendes.
+
+
+      ''If I keep performing well then the title shot will come,'' he said. ''Mendes
+      is a cool guy. He is a good sport and he is a respectful fighter. But this is
+      going to be a tough fight and when it comes to the night, you''re going to see
+      us both try to go in there and take each other out.
+
+
+      ''I feel like I am strong for my weight but Mendes is a powerhouse too, so we
+      will see what happens. I feel like Chad is a great fighter so we''re going to
+      bring the best out of each other, for sure.''
+
+
+      Lamas stretches his legs with a kick as he prepares to take on Mendes with an
+      open training session.
+
+
+      Meanwhile arguably two of the lightweight division''s most exciting fighters,
+      Jorge Masvidal and Al Iaquinta, meet in the co-main event - a bout which should
+      showcase some of the finest striking in the division.
+
+
+      Watch UFC Fight Night: Mendes vs. Lamas live on BT Sport 1 on Saturday, April
+      4. Catch the prelims from 4pm BST and the main card from 6pm BST.'
