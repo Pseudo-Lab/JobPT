@@ -9,14 +9,21 @@ npm install -g promptfoo
 ```
 
 시작 템플릿 파일 생성
+
 ```
 promptfoo init
 ```
 
 ```
-promptfoo eval
+python generate_promptfoo_config.py
+```
+
+```
+NODE_OPTIONS="--max-old-space-size=44000" promptfoo eval --no-cache --share
 ```
 
 ```
 promptfoo view
+or
+promptfoo share
 ```
