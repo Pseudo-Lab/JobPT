@@ -1,2 +1,5 @@
 cache/
 data/
+chroma_db/
+.env
+*.pyc
