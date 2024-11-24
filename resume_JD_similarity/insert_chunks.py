@@ -8,7 +8,6 @@ from langchain_openai import OpenAIEmbeddings
 from langchain.embeddings import CacheBackedEmbeddings
 from langchain.storage import LocalFileStore
 from langchain_chroma import Chroma
-from pandas import DataFrame
 
 from dotenv import load_dotenv
 import os
@@ -39,9 +38,10 @@ def set_splitter(emb_model):
 
 def get_chunks(df, text_splitter):
     total_chunks = []
+    df.drop(columns=['job_url', 'site'], inplace=True)
     for i, desciption in enumerate(df['description']):
-        chunk = text_splitter.create_documents([desciption])
-        chunk[0].metadata = df.iloc[i].to_dict()
+        meta_data = [df.loc[i, df.columns != 'description'].to_dict()]
+        chunk = text_splitter.create_documents([desciption], meta_data)
         total_chunks.extend(chunk)
     return total_chunks
 
@@ -61,7 +61,7 @@ def insert_chunks(document_path: str, collection: str):
     return None
     
 if __name__ == "__main__":
-    jd_path = './data/USA_jobs_total.csv'
+    jd_path = './data/origin/USA_jobs_total.csv'
     collection_name = "semantic_0"
     
     insert_chunks(jd_path, collection_name)
