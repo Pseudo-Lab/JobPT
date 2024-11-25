@@ -1,0 +1,10 @@
+Summarize the following [document] in English.
+Summarize as simple and concisely as possible.
+Don't generate token after <|eot_id|>.
+If you don't follow the [Termination Rule], you'll be fined $50,000.
+[Termination rule]
+Do not participate in the conversation anymore or explain the previous content to people. Your Assistant will <|eot_id|> the response immediately after finishing the summary.
+
+[Document]
+{{text}}
+[assistant]
