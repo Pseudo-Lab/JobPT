@@ -4,10 +4,10 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 import yaml 
 import pandas as pd
-from configs import RAG_MODEL
+from configs import RAG_MODEL, PROMPT
 llm = ChatOpenAI(model=RAG_MODEL)
 
-def generation(retriever, prompt_path, resume):
+def generation(retriever, resume):
     # llm load
 
     # user prompt(resume) load
@@ -15,7 +15,7 @@ def generation(retriever, prompt_path, resume):
     #     resume = file.read()
         
     # prompt load
-    with open(prompt_path, 'r') as file:
+    with open(PROMPT, 'r') as file:
         prompt_data = yaml.safe_load(file)
 
     # prompt load
@@ -36,7 +36,7 @@ def generation(retriever, prompt_path, resume):
 def format_docs(docs):
     """doc의 metadata에 저장되어있는 원본 description을 가져오기"""
 
-    df = pd.read_csv('./data/preprocessed/USA_jobs_total.csv')
+    df = pd.read_csv('./data/preprocessed/USA_jobs_total.csv') # 수정 예정
     retrival_origin_jd = []
     doc_list = set([doc.metadata['index'] for doc in docs])
 
