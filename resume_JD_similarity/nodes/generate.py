@@ -4,14 +4,15 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 import yaml 
 import pandas as pd
+from configs import RAG_MODEL
+llm = ChatOpenAI(model=RAG_MODEL)
 
-def generation(retriever, prompt_path, resume_path):
+def generation(retriever, prompt_path, resume):
     # llm load
-    llm = ChatOpenAI(model="gpt-3.5-turbo")
 
     # user prompt(resume) load
-    with open (resume_path, "r") as file:
-        resume = file.read()
+    # with open (resume_path, "r") as file:
+    #     resume = file.read()
         
     # prompt load
     with open(prompt_path, 'r') as file:
