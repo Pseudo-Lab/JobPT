@@ -1,13 +1,13 @@
 """
 ChromaDB에 청크를 저장하는 기능입니다.
 """
-from utils.preprocess import preprocess
-# from langchain_text_splitters import CharacterTextSplitter
+from resume_JD_similarity.utils.preprocess import preprocess
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai import OpenAIEmbeddings
 from langchain.embeddings import CacheBackedEmbeddings
 from langchain.storage import LocalFileStore
 from langchain_chroma import Chroma
+from configs import JD_PATH, COLLECTION, DB_PATH
 
 from dotenv import load_dotenv
 import os
@@ -32,21 +32,21 @@ def load_emb_model(cache=True):
 def set_splitter(emb_model):
     """splitter를 셋업하는 함수입니다."""
     text_splitter = SemanticChunker(
-        emb_model, breakpoint_threshold_type="percentile"
+        emb_model, breakpoint_threshold_type="percentile",
+        breakpoint_threshold_amount=90
     )
     return text_splitter
 
 def get_chunks(df, text_splitter):
     total_chunks = []
-    df.drop(columns=['job_url', 'site'], inplace=True)
     for i, desciption in enumerate(df['description']):
-        meta_data = [df.loc[i, df.columns != 'description'].to_dict()]
+        # meta_data = [df.loc[i, df.columns != 'description'].to_dict()]
+        meta_data = [df.loc[i].to_dict()]
         chunk = text_splitter.create_documents([desciption], meta_data)
         total_chunks.extend(chunk)
     return total_chunks
 
 def insert_chunks(document_path: str, collection: str):
-    DB_PATH = "./chroma_db"
     emb_model = load_emb_model()
 
     preprocessed_doc = preprocess(document_path)
@@ -57,11 +57,15 @@ def insert_chunks(document_path: str, collection: str):
     db = Chroma.from_documents(
         total_chunks, emb_model, persist_directory=DB_PATH, collection_name=collection
     )
+    print("Completed inserting dataset into vector db")
 
     return None
     
 if __name__ == "__main__":
-    jd_path = './data/origin/USA_jobs_total.csv'
-    collection_name = "semantic_0"
-    
-    insert_chunks(jd_path, collection_name)
+    jd_folder = JD_PATH
+    collection_name = COLLECTION
+
+    for jd_path in os.listdir(jd_folder):    
+        full_path = os.path.join(jd_folder, jd_path)
+        if os.path.isfile(full_path):  # 파일인지 확인
+            insert_chunks(full_path, collection_name)
