@@ -5,11 +5,10 @@ from langchain_core.prompts import PromptTemplate
 import yaml 
 import pandas as pd
 from configs import RAG_MODEL, PROMPT
+
 llm = ChatOpenAI(model=RAG_MODEL)
 
 def generation(retriever, resume):
-    # llm load
-
     # user prompt(resume) load
     # with open (resume_path, "r") as file:
     #     resume = file.read()
@@ -29,22 +28,20 @@ def generation(retriever, resume):
         | llm
         | StrOutputParser()
     )
+    
+    # 가장 첫번째 job description 반환
+    job_descriptions = retriever.invoke(resume)
+    top_job_description  = job_descriptions[0].metadata['description']
 
+    # chain 실행하기
     answer = rag_chain.invoke(resume)
-    return answer
+    return answer, top_job_description
 
 def format_docs(docs):
     """doc의 metadata에 저장되어있는 원본 description을 가져오기"""
+    doc_list = [doc.metadata['description'] for doc in docs]
 
-    df = pd.read_csv('./data/preprocessed/USA_jobs_total.csv') # 수정 예정
-    retrival_origin_jd = []
-    doc_list = set([doc.metadata['index'] for doc in docs])
-
-    for doc_idx in doc_list:
-        jd = df.loc[df["index"] == doc_idx, 'description'].iloc[0]
-        retrival_origin_jd.append(jd)
-
-    return retrival_origin_jd[0] # top 1
+    return doc_list[0] # top 1
 
 
     
