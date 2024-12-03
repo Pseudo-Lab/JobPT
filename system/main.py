@@ -23,11 +23,16 @@ async def run(data: Request):
     ### pdf parsing
     resume = run_parser(resume_path)
 
+    # sample resume load
+    # resume_path = './resume_JD_similarity/data/sample_resume.txt'
+    # with open (resume_path, "r") as file:
+    #     resume = file.read()
+    
     ### resume matching
-
-    res = matching(resume)
+    res, job_description = matching(resume)
 
     return {
+        "JD": job_description,
         "output": res
     }    
 
