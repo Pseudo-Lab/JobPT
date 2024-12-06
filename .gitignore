@@ -1,5 +1,7 @@
 cache/
-data/
+resume_JD_similarity/data/** 
 chroma_db/
 .env
 *.pyc
+!resume_JD_similarity/data/prompt.yaml
+!resume_JD_similarity/data/sample_resume.txt

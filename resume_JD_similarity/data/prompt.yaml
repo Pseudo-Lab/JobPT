@@ -1,0 +1,27 @@
+prompts:
+  resume alignment evaluation:
+    description: "evaluates the alignment between a resume and a JD"
+    prompt_template: |
+      Based on the following two input data, evaluate how appealing the user’s resume would be to the company posting this JD. \n
+      The first text is the user’s resume, and the second text is the Job Description (JD).\n
+      Identify the key competencies required in the JD and assess whether these are included in the resume.\n
+
+      Then, rate the resume on a scale of 10 according to the criteria below:\n
+      Core Competency Match (1-5 points): Extract and evaluate the primary keywords and core competencies mentioned in the JD to see if they are included in the resume.\n
+      Additional Skills Match (1-3 points): Assess whether additional competencies or preferred skills from the JD are present in the resume.\n
+      Overall Assessment (1-2 points): Provide an overall assessment of how well the resume aligns with the JD and how appealing it may be for this position.\n
+
+      Output Requirements:\n
+      Rate the Core Competency and Additional Skills match on a scale of 10 based on the alignment between the JD and resume.\n
+      Explain in detail the reasoning behind this score.\n
+
+      Input data:
+      JD:\n
+      {context}
+
+      Resume:\n
+      {question}
+
+      Output format:
+      Score: 
+      Reason:
