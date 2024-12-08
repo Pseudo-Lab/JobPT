@@ -1,4 +1,4 @@
-from resume_JD_similarity.nodes.db_load import db_load
+from get_similarity.nodes.db_load import db_load
 
 def retrieveral(db, debug=False):
     # retriever

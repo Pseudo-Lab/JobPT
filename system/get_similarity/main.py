@@ -1,7 +1,7 @@
-from resume_JD_similarity.nodes.retrieval import retrieveral
-from resume_JD_similarity.nodes.generate import generation
+from get_similarity.nodes.retrieval import retrieveral
+from get_similarity.nodes.generate import generation
 from langchain_openai import OpenAIEmbeddings
-from resume_JD_similarity.nodes.db_load import db_load
+from get_similarity.nodes.db_load import db_load
 from dotenv import load_dotenv
 import os
 from configs import COLLECTION, OPENAI_API_KEY, DB_PATH
