@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 import uvicorn
 from pydantic import BaseModel
 
-from parser import run_parser
+from parser import run_parser, convert_pdf_to_jpg
 from get_similarity.main import matching
 
 app = FastAPI()
@@ -17,19 +17,28 @@ class Request(BaseModel):
 
 
 # 라우터 정의
+@app.post("/matching")
 async def run(data: Request):
-    resume_path = data["resume_path"]
-
+    resume_path = data.resume_path
+    output_folder = "data"
+    image_paths = convert_pdf_to_jpg(resume_path, output_folder)
+    print(image_paths)
     ### pdf parsing
-    resume = run_parser(resume_path)
+    resume_content = []
+    for image_path in image_paths:
+        resume = run_parser(image_path)
+        resume_content.append(resume)
 
+    resume_content = "".join(resume_content)
+    print(resume_content)
+    ### resume matching
     # sample resume load
     # resume_path = './resume_JD_similarity/data/sample_resume.txt'
     # with open (resume_path, "r") as file:
     #     resume = file.read()
 
     ### resume matching
-    res, job_description = matching(resume)
+    res, job_description = matching(resume_content)
 
     return {"JD": job_description, "output": res}
 

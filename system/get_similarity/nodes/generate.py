@@ -27,6 +27,7 @@ def generation(retriever, resume):
 
     # 가장 첫번째 job description 반환
     job_descriptions = retriever.invoke(resume)
+    print(job_descriptions)
     top_job_description = job_descriptions[0].metadata["description"]
 
     # chain 실행하기

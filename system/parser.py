@@ -13,6 +13,7 @@ import pytesseract
 
 import docx
 import cv2
+import fitz  # PyMuPDF
 
 import spacy
 from transformers import pipeline
@@ -82,8 +83,31 @@ def process(image_input, box_threshold=0.05, iou_threshold=0.1, use_paddleocr=Tr
     return image, parsed_content_list
 
 
-def run_parser(image_path):
+def convert_pdf_to_jpg(pdf_path, output_folder):
+    image_paths = []
+    try:
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
 
+        pdf_filename = os.path.splitext(os.path.basename(pdf_path))[0]
+        doc = fitz.open(pdf_path)
+
+        for i in range(doc.page_count):
+            page = doc.load_page(i)
+            pix = page.get_pixmap()
+            output_file = os.path.join(output_folder, f"{pdf_filename}_{i+1}.jpg")
+            pix.save(output_file)
+            print(f"페이지 {i+1}을(를) 저장했습니다: {output_file}")
+            image_paths.append(output_file)
+        print(f"변환 완료! 총 {doc.page_count} 페이지를 변환했습니다.")
+        return image_paths
+    except Exception as e:
+        print(f"에러가 발생했습니다: {str(e)}")
+
+
+def run_parser(image_path):
+    print("image_path")
+    print(image_path)
     box_threshold = 0.05
     iou_threshold = 0.1
     use_paddleocr = True
@@ -97,16 +121,16 @@ def run_parser(image_path):
     print("Parsed Screen Elements:")
     print(parsed_content)
 
-    plt.figure(figsize=(10, 10))
-    plt.imshow(output_image)
-    plt.axis("off")
-    plt.show()
+    # plt.figure(figsize=(10, 10))
+    # plt.imshow(output_image)
+    # plt.axis("off")
+    # plt.show()
 
     print("현재 위치:", os.getcwd())
 
-    if str(os.getcwd()[-10:]) == "OmniParser":
-        os.chdir("..")
-        print("변경된 위치:", os.getcwd())
+    # if str(os.getcwd()[-10:]) == "OmniParser":
+    #     os.chdir("..")
+    #     print("변경된 위치:", os.getcwd())
 
     lines = parsed_content.split("\n")
 
