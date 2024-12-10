@@ -12,6 +12,6 @@ def preprocess(data_path):
     # is_remote null 값 처리 - description을 llm에 전달한 후 job_type 넣기
     JD_csv['job_type'] = JD_csv['job_type'].fillna('fulltime')
     JD_csv = JD_csv.reset_index(drop=True)
-    JD_csv.drop(columns=['job_url', 'site'], inplace=True)
+    JD_csv.drop(columns=['site'], inplace=True)
 
     return JD_csv
