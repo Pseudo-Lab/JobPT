@@ -39,3 +39,6 @@ paddlepaddle
 paddleocr
 langchain_chroma
 langchain_openai
+pymupdf
+frontend
+langchain_experimental
