@@ -27,12 +27,13 @@ def generation(retriever, resume):
 
     # 가장 첫번째 job description 반환
     job_descriptions = retriever.invoke(resume)
-    print(job_descriptions)
+    
     top_job_description = job_descriptions[0].metadata["description"]
+    job_url = job_descriptions[0].metadata["job_url"]
 
     # chain 실행하기
     answer = rag_chain.invoke(resume)
-    return answer, top_job_description
+    return answer, top_job_description, job_url
 
 
 def format_docs(docs):

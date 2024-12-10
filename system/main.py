@@ -38,9 +38,9 @@ async def run(data: Request):
     #     resume = file.read()
 
     ### resume matching
-    res, job_description = matching(resume_content)
+    res, job_description, job_url = matching(resume_content)
 
-    return {"JD": job_description, "output": res}
+    return {"JD": job_description, "JD_url": job_url, "output": res}
 
 
 if __name__ == "__main__":
