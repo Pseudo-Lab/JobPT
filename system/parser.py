@@ -35,10 +35,10 @@ import base64
 import os
 import matplotlib.pyplot as plt
 
-from OmniParser.utils import check_ocr_box, get_yolo_model, get_caption_model_processor, get_som_labeled_img
+from OmniParser_v1.utils import check_ocr_box, get_yolo_model, get_caption_model_processor, get_som_labeled_img
 
-yolo_model = get_yolo_model(model_path="system/OmniParser/weights/icon_detect/best.pt")
-caption_model_processor = get_caption_model_processor(model_name="florence2", model_name_or_path="system/OmniParser/weights/icon_caption_florence")
+yolo_model = get_yolo_model(model_path="system/OmniParser_v1/weights/icon_detect/best.pt")
+caption_model_processor = get_caption_model_processor(model_name="florence2", model_name_or_path="system/OmniParser_v1/weights/icon_caption_florence")
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
