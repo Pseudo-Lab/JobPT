@@ -15,4 +15,4 @@ def send_post_request(resume_path):
 
 
 # 함수 호출 예시
-send_post_request("data/sample.pdf")
+send_post_request("data/joannadrummond-cv.pdf")
