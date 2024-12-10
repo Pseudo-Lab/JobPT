@@ -19,6 +19,6 @@ def matching(resume):
     # resume_path = './data/CV/ml_engineer_CV_3.txt'
     # prompt_path = './data/prompt.yaml'
         
-    answer, jd = generation(retriever, resume)
+    answer, jd, jd_url = generation(retriever, resume)
     
-    return answer, jd
+    return answer, jd, jd_url
