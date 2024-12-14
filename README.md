@@ -6,6 +6,9 @@
 ## 서비스 구조도
 ![pipeline](./system_pipeline.png)
 
+## 데이터베이스 구축
+![vectordb](./inserting_data.png)
+
 ## 시스템 사용 방법
 
 OmniParser 폴더 압축 해제
