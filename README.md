@@ -38,7 +38,7 @@
     -   이력서 평가 및 개선 기능에 활용 (ChatGPT API 사용)
     -   회사 정보 및 뉴스 요약에 활용 (Huggingface Qwen2.5 모델 사용)
 -   **Gradio**: 웹서비스 구동용 인터페이스에 활용
--   **LangChain**: LLM 멀티턴 시스템 구현을 위해 사용
+-   **LangChain**: LLM 추론 및 멀티턴 시스템 구현을 위해 사용
 
 ## DB 구조도
 
