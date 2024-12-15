@@ -4,13 +4,18 @@
 
 현대 사회에서 취업 준비는 반복적이고 시간 소모적인 과정으로, 구직자가 자신의 역량을 효과적으로 어필하지 못해 기회를 놓치는 경우가 많습니다. 이를 해결하기 위해, **직무 공고 필터링, 회사 정보 요약 제공, 이력서 분석 및 맞춤형 피드백** 기능을 갖춘 지능형 취업 지원 서비스를 제공합니다.
 
-## 서비스 구조도
+## 서비스 소개
 
-![pipeline](./imgs/system_pipeline.png)
+### 서비스 구조도
 
-## 데이터베이스 구축
+![pipeline](./assets/system_pipeline.png)
 
-![vectordb](./imgs/inserting_data.png)
+### 데이터베이스 구축
+
+![vectordb](./assets/inserting_data.png)
+
+## 서비스 데모 영상
+- https://www.youtube.com/watch?v=m6EhfmpShCg
 
 ## 시스템 사용 방법
 
