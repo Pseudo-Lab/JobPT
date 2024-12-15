@@ -15,13 +15,14 @@
 ![vectordb](./assets/inserting_data.png)
 
 ## 서비스 데모 영상
-- https://www.youtube.com/watch?v=m6EhfmpShCg
+
+-   https://www.youtube.com/watch?v=m6EhfmpShCg
 
 ## 시스템 사용 방법
 
 OmniParser 폴더 압축 해제
 
--   system 폴더안에 OmniParser_v1.zip 파일을 압축해제
+-   system 폴더안에 사전 제공된 OmniParser_v1.zip 파일을 압축해제
 -   반드시 OmniParser_v1 폴더명이여야 함
 
 프로젝트 패키지 설치
