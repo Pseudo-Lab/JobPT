@@ -52,7 +52,9 @@
 
 ### 웹 화면
 
-![demo1](./assets/demo1.png) ![demo2](./assets/demo2.png) ![demo3](./assets/demo3.png)
+<img src="./assets/demo1.png" width="50%" height="50%"/>
+<img src="./assets/demo2.png" width="50%" height="50%"/>
+<img src="./assets/demo3.png" width="50%" height="50%"/>
 
 ## 시스템 구동 방법
 
