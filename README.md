@@ -46,7 +46,7 @@
 
 ## 서비스 데모 영상
 
--   https://www.youtube.com/watch?v=m6EhfmpShCg
+-   [데모 유튜브 링크](https://www.youtube.com/watch?v=m6EhfmpShCg)
 
 ## 시스템 구동 방법
 
