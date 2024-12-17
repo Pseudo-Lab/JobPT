@@ -33,7 +33,7 @@
 
 -   **크롤링**: 여러 회사 JD 데이터 확보
 -   **PDF 파싱**: MS OmniParser를 사용해 컴퓨터 비전 기반 PDF 텍스트 추출
--   **Vector DB**: ChromaDB를 사용해 이력서 텍스트 Chunk 저장
+-   **Vector DB**: ChromaDB에 Job description 텍스트 Chunk 저장
 -   **LLM**
     -   이력서 평가 및 개선 기능에 활용 (ChatGPT API 사용)
     -   회사 정보 및 뉴스 요약에 활용 (Huggingface Qwen2.5 모델 사용)

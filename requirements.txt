@@ -27,3 +27,4 @@ frontend
 langchain_experimental
 pdfplumber
 python-docx
+markdown2
