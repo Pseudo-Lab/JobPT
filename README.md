@@ -78,8 +78,7 @@ export OPENAI_API_KEY=<your_openai_key>
 Chroma DB 세팅
 
 ```
-cd system
-python insert_chunks.py
+python system/insert_chunks.py
 ```
 
 API 실행
