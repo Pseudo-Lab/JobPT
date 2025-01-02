@@ -11,7 +11,6 @@ import pdfplumber
 from pdf2image import convert_from_path
 import pytesseract
 
-import docx
 import cv2
 import fitz  # PyMuPDF
 
@@ -44,6 +43,8 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def process(image_input, box_threshold=0.05, iou_threshold=0.1, use_paddleocr=True, imgsz=640) -> Optional[Image.Image]:
+    print("1. process 함수 시작")
+    print("이미지 입력값:", type(image_input))
     image_save_path = "imgs/saved_image_demo.png"
     os.makedirs("imgs", exist_ok=True)
     image_input.save(image_save_path)
@@ -79,7 +80,11 @@ def process(image_input, box_threshold=0.05, iou_threshold=0.1, use_paddleocr=Tr
         imgsz=imgsz,
     )
     image = Image.open(io.BytesIO(base64.b64decode(dino_labled_img)))
-    parsed_content_list = "\n".join(parsed_content_list)
+    print("parsed_content_list 타입:", type(parsed_content_list))
+    print(parsed_content_list)
+    print("첫 번째 항목:", parsed_content_list[0] if parsed_content_list else "비어있음")
+    # content 값들만 추출하여 문자열로 결합
+    parsed_content_list = "\n".join(item["content"] for item in parsed_content_list)
     return image, parsed_content_list
 
 
