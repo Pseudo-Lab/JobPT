@@ -155,6 +155,169 @@ def update_thumbnail(file_or_url):
 
 
 custom_css = """
+:root {
+    --primary-bg: #1a1b1e;
+    --secondary-bg: #2d2e32;
+    --accent-color: #6366f1;
+    --accent-hover: #818cf8;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --border-color: #374151;
+    --input-bg: #2d2e32;
+    --success-color: #10b981;
+    --error-color: #ef4444;
+}
+
+body, .gradio-container {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: white;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+#cv-analysis-tool {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+#cv-analysis-tool h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.025em;
+}
+
+#cv-analysis-tool .gr-tabbed-interface {
+    background-color: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+#cv-analysis-tool .tabs {
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+
+#cv-analysis-tool .tab-nav {
+    padding: 0.75rem 1.25rem;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+#cv-analysis-tool .tab-nav.selected {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
+#cv-analysis-tool .gr-textbox,
+#cv-analysis-tool .gr-dropdown {
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    color: var(--text-primary);
+    transition: border-color 0.2s ease;
+}
+#custom-markdown {
+    background-color: white;
+    border-radius: 12px; /* 모서리를 둥글게 */
+    padding: 20px; /* 내부 여백 */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 박스 그림자 */
+}
+
+
+#cv-analysis-tool .gr-textbox:focus,
+#cv-analysis-tool .gr-dropdown:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+#cv-analysis-tool .gr-button {
+    background-color: var(--accent-color);
+    color: #87ceeb;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+#cv-analysis-tool .gr-button:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+#cv-analysis-tool .gr-button:active {
+    transform: translateY(0);
+}
+
+#cv-analysis-tool .gr-image {
+    border: 2px dashed var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: border-color 0.2s ease;
+}
+
+#cv-analysis-tool .gr-image:hover {
+    border-color: var(--accent-color);
+}
+
+#cv-analysis-tool .gr-textbox[label="Analysis Result"] {
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-top: 1rem;
+    min-height: 200px;
+}
+
+@media (max-width: 768px) {
+    #cv-analysis-tool {
+        padding: 1rem;
+    }
+    
+    #cv-analysis-tool .gr-tabbed-interface {
+        padding: 1rem;
+    }
+    
+    #cv-analysis-tool .gr-row {
+        flex-direction: column;
+    }
+    
+    #cv-analysis-tool .gr-button {
+        width: 100%;
+        margin-top: 1rem;
+    }
+}
+
+#cv-analysis-tool .loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#cv-analysis-tool .gr-tab-content {
+    animation: fadeIn 0.3s ease;
+}
+
+footer, 
+header, 
+.border-t, 
+.absolute, 
+.flex-col > .items-center, 
+.gr-button:hover[data-testid="share-button"] {
+    display: none !important;
+}
 """
 
 with gr.Blocks(title="JobPT", css=custom_css, elem_id="cv-analysis-tool") as demo:
