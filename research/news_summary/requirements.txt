@@ -1,0 +1,7 @@
+transformers
+torch==2.5.1
+tensorflow
+XlsxWriter
+rouge-score
+pandas
+openpyxl
