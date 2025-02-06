@@ -5,3 +5,5 @@ XlsxWriter
 rouge-score
 pandas
 openpyxl
+xai-sdk
+groq
