@@ -77,7 +77,7 @@ def summarize_text(input_text, model="gpt-4o-mini"):
                     "content": prompts(input_text),
                 }
             ],
-            model="llama3-8b-8192",
+            model="deepseek-r1-distill-llama-70b",
         )
         summary = chat_completion.choices[0].message.content
         summary = output_matching(summary)
@@ -136,7 +136,8 @@ if __name__ == "__main__":
     input_csv = "news_data.csv"  # 입력 파일 경로
 
     # 환경 변수 확인
-    models = ["gpt-4o-mini", "grok", "groq"]
+    models = ["groq"]
+    # models = ["grok", "groq"]
     for model in models:
         output_csv = f"summarized_news_data_{model}.csv"  # 출력 파일 경로
         process_csv(input_csv, output_csv, n=20, model=model)
