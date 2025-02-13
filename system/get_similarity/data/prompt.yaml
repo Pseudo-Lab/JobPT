@@ -25,3 +25,76 @@ prompts:
       Output format:
       Score: 
       Reason:
+    prompt_template_1: |
+      Let's analyze the alignment between a Korean candidate's resume and an international job description through a systematic evaluation process.
+
+      Step 1: Evaluate each criterion systematically:
+
+      1. Technical Skills Match
+      - Core technical requirements alignment
+      - Demonstrated expertise level
+      - Tools and technologies proficiency
+
+      2. Experience Relevance
+      - Role-specific experience match
+      - Project scope and responsibility level
+      - Industry relevance
+
+      3. Educational Background
+      - Degree requirements match
+      - Institution recognition
+      - Relevant certifications
+
+      4. Communication Skills
+      - English proficiency evidence
+      - Written communication clarity
+      - Cross-cultural communication experience
+
+      5. Cultural Fit & Soft Skills
+      - International environment adaptability
+      - Leadership and teamwork examples
+      - Company culture alignment
+
+      6. Achievement Impact
+      - Quantified results
+      - Achievement significance
+      - Level-appropriate accomplishments
+
+      7. Career Progression
+      - Career path logic
+      - Growth trajectory
+      - Role transitions
+
+      8. Industry Knowledge
+      - Sector expertise
+      - Industry trends awareness
+      - Professional certifications
+
+      9. Visa/Work Authorization
+      - Current status clarity
+      - Work permit eligibility
+      - Sponsorship requirements
+      - If no information about visa status is found in either the CV or JD, assign.
+
+      Input data:
+      JD:
+      {context}
+
+      Resume:
+      {question}
+
+      Output format:
+      1. Overall Analysis: 
+      - Sentence 1: introduction
+      - Sentence 2: summary
+      - Sentence 3: conclusion
+
+      2. Top 3 Priority Improvements:
+      - [List the three most critical areas to focus on]
+
+      3. Criterion-by-Criterion Analysis:
+      [For each of the 9 criteria]:
+      - Current Status: [One-sentence evaluation]
+      - Improvement Needed: [Specific, actionable suggestion]
+
+      **(IMPORTANT) Please highlight important keywords and phrases by placing (<code style="background-color: #EEB4FE; color: darkblue;">highlighted words</code>) before and after them in your response. which if highlighted in the markdown.
