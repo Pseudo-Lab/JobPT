@@ -4,7 +4,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
 import yaml
 import pandas as pd
-from configs import RAG_MODEL, PROMPT
+from configs import *
 
 llm = ChatOpenAI(model=RAG_MODEL)
 
@@ -15,12 +15,12 @@ def generation(retriever, resume):
 
     # YAML 로드 부분
     try:
-        with open(PROMPT, "r", encoding="utf-8") as file:
+        with open(PROMPT_YAML, "r", encoding="utf-8") as file:
             prompt_data = yaml.safe_load(file)
             print("YAML 파일 로드 성공")
     except UnicodeDecodeError:
         print("UTF-8 로드 실패, CP949로 시도")
-        with open(PROMPT, "r", encoding="cp949") as file:
+        with open(PROMPT_YAML, "r", encoding="cp949") as file:
             prompt_data = yaml.safe_load(file)
     except Exception as e:
         print("YAML 로드 중 에러:", str(e))
@@ -28,7 +28,7 @@ def generation(retriever, resume):
 
     # Prompt 설정
     task = "resume alignment evaluation"
-    prompt_template = prompt_data["prompts"][task]["prompt_template"]
+    prompt_template = prompt_data["prompts"][task][JD_MATCH_PROMPT]
     print("프롬프트 템플릿:", prompt_template[:100], "...")
     prompt = PromptTemplate.from_template(prompt_template)
 
