@@ -25,9 +25,12 @@
 5. **LLM을 통한 대화형 평가 및 개선 반복** (Todo)
     - LLM과 대화를 통해 평가-개선-재평가 프로세스를 거치며 이력서를 반복적으로 개선합니다. Multi-turn을 활용해 제공받은 개선점을 보완해가며 평가 점수를 높힙니다.
 
-## 시스템 전체 구조도
+## 시스템 구조도 
+### phase 1 | 이력서 기반 JD 추천 기능
+![phase1_pipeline](./assets/phase1_pipeline.png)
 
-![pipeline](./assets/system_pipeline.png)
+### phase 2 | 이력서 수정 제안 기능
+![phase2_pipeline](./assets/phase2_pipeline.png)
 
 ### 주요 기술
 
@@ -39,6 +42,7 @@
     -   회사 정보 및 뉴스 요약에 활용 (Huggingface Qwen2.5 모델 사용)
 -   **Gradio**: 웹서비스 구동용 인터페이스에 활용
 -   **LangChain**: LLM 추론 및 멀티턴 시스템 구현을 위해 사용
+-   **LangGraph**: Agent와 업무 자동화를 위해 사용
 
 ## DB 구조도
 
@@ -46,7 +50,7 @@
 
 ## 서비스 데모
 
-### 시연 영상
+### 시연 영상 - 이력서 기반 JD 추천 기능
 
 -   [데모 유튜브 링크](https://www.youtube.com/watch?v=m6EhfmpShCg)
 
