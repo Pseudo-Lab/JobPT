@@ -1,0 +1,1538 @@
+{
+  "basic_info": {
+    "name": "Joanna Drummond",
+    "email": "jdrummond@cs.toronto.edu",
+    "phone": null,
+    "location": "Rm"
+  },
+  "sections": {},
+  "entities": [
+    {
+      "text": "Joanna Drummond",
+      "label": "PERSON",
+      "start": 0,
+      "end": 15
+    },
+    {
+      "text": "Department of Computer Science\nUniversity of Toronto",
+      "label": "ORG",
+      "start": 16,
+      "end": 68
+    },
+    {
+      "text": "10",
+      "label": "CARDINAL",
+      "start": 101,
+      "end": 103
+    },
+    {
+      "text": "King’s College Road",
+      "label": "ORG",
+      "start": 104,
+      "end": 123
+    },
+    {
+      "text": "Rm",
+      "label": "GPE",
+      "start": 125,
+      "end": 127
+    },
+    {
+      "text": "3302",
+      "label": "DATE",
+      "start": 129,
+      "end": 133
+    },
+    {
+      "text": "Toronto",
+      "label": "GPE",
+      "start": 134,
+      "end": 141
+    },
+    {
+      "text": "Ontario",
+      "label": "GPE",
+      "start": 143,
+      "end": 150
+    },
+    {
+      "text": "3G4",
+      "label": "CARDINAL",
+      "start": 156,
+      "end": 159
+    },
+    {
+      "text": "Canada",
+      "label": "GPE",
+      "start": 160,
+      "end": 166
+    },
+    {
+      "text": "PhD Computer Science",
+      "label": "ORG",
+      "start": 177,
+      "end": 197
+    },
+    {
+      "text": "University of Toronto",
+      "label": "ORG",
+      "start": 199,
+      "end": 220
+    },
+    {
+      "text": "Spring 2017",
+      "label": "DATE",
+      "start": 233,
+      "end": 244
+    },
+    {
+      "text": "Allan Borodin",
+      "label": "PERSON",
+      "start": 259,
+      "end": 272
+    },
+    {
+      "text": "Kate Larson",
+      "label": "PERSON",
+      "start": 274,
+      "end": 285
+    },
+    {
+      "text": "Spring 2015",
+      "label": "DATE",
+      "start": 306,
+      "end": 317
+    },
+    {
+      "text": "Graph Theory",
+      "label": "WORK_OF_ART",
+      "start": 392,
+      "end": 404
+    },
+    {
+      "text": "3.83",
+      "label": "CARDINAL",
+      "start": 493,
+      "end": 497
+    },
+    {
+      "text": "M.S. Computer Science",
+      "label": "ORG",
+      "start": 498,
+      "end": 519
+    },
+    {
+      "text": "University of Toronto",
+      "label": "ORG",
+      "start": 521,
+      "end": 542
+    },
+    {
+      "text": "Spring 2013",
+      "label": "DATE",
+      "start": 544,
+      "end": 555
+    },
+    {
+      "text": "Craig Boutilier",
+      "label": "PERSON",
+      "start": 566,
+      "end": 581
+    },
+    {
+      "text": "Advanced Inference Algorithms",
+      "label": "ORG",
+      "start": 635,
+      "end": 664
+    },
+    {
+      "text": "3.93",
+      "label": "CARDINAL",
+      "start": 710,
+      "end": 714
+    },
+    {
+      "text": "B.S. Computer Science and Mathematics,",
+      "label": "ORG",
+      "start": 715,
+      "end": 753
+    },
+    {
+      "text": "University of Pittsburgh",
+      "label": "ORG",
+      "start": 754,
+      "end": 778
+    },
+    {
+      "text": "December 2010",
+      "label": "DATE",
+      "start": 780,
+      "end": 793
+    },
+    {
+      "text": "Diane Litman",
+      "label": "PERSON",
+      "start": 813,
+      "end": 825
+    },
+    {
+      "text": "Theatre Arts",
+      "label": "ORG",
+      "start": 833,
+      "end": 845
+    },
+    {
+      "text": "Departmental Honors",
+      "label": "ORG",
+      "start": 886,
+      "end": 905
+    },
+    {
+      "text": "Dean",
+      "label": "PERSON",
+      "start": 907,
+      "end": 911
+    },
+    {
+      "text": "Fall 2006",
+      "label": "DATE",
+      "start": 920,
+      "end": 929
+    },
+    {
+      "text": "Spring\n2010",
+      "label": "DATE",
+      "start": 933,
+      "end": 944
+    },
+    {
+      "text": "Dean’s Stars List",
+      "label": "ORG",
+      "start": 946,
+      "end": 963
+    },
+    {
+      "text": "Spring 2007",
+      "label": "DATE",
+      "start": 965,
+      "end": 976
+    },
+    {
+      "text": "Upsilon Pi Epsilon",
+      "label": "PRODUCT",
+      "start": 978,
+      "end": 996
+    },
+    {
+      "text": "Human Language Technologies",
+      "label": "ORG",
+      "start": 1023,
+      "end": 1050
+    },
+    {
+      "text": "Artificial Intelligence",
+      "label": "ORG",
+      "start": 1107,
+      "end": 1130
+    },
+    {
+      "text": "Graduate Course",
+      "label": "ORG",
+      "start": 1201,
+      "end": 1216
+    },
+    {
+      "text": "Algorithm Design",
+      "label": "ORG",
+      "start": 1219,
+      "end": 1235
+    },
+    {
+      "text": "Machine Learning",
+      "label": "ORG",
+      "start": 1237,
+      "end": 1253
+    },
+    {
+      "text": "Intro to Theory of\nComputation\nGPA",
+      "label": "WORK_OF_ART",
+      "start": 1273,
+      "end": 1307
+    },
+    {
+      "text": "3.73",
+      "label": "CARDINAL",
+      "start": 1309,
+      "end": 1313
+    },
+    {
+      "text": "Perrault",
+      "label": "ORG",
+      "start": 1383,
+      "end": 1391
+    },
+    {
+      "text": "A.,Drummond",
+      "label": "PERSON",
+      "start": 1392,
+      "end": 1403
+    },
+    {
+      "text": "J.,Bacchus",
+      "label": "ORG",
+      "start": 1405,
+      "end": 1415
+    },
+    {
+      "text": "the Fifteenth International Conference on Autonomous Agents and Multiagent Systems",
+      "label": "ORG",
+      "start": 1430,
+      "end": 1512
+    },
+    {
+      "text": "2016",
+      "label": "DATE",
+      "start": 1520,
+      "end": 1524
+    },
+    {
+      "text": "132–140",
+      "label": "CARDINAL",
+      "start": 1533,
+      "end": 1540
+    },
+    {
+      "text": "SAT",
+      "label": "ORG",
+      "start": 1542,
+      "end": 1545
+    },
+    {
+      "text": "J., Perrault, A.,",
+      "label": "ORG",
+      "start": 1645,
+      "end": 1662
+    },
+    {
+      "text": "Bacchus",
+      "label": "ORG",
+      "start": 1667,
+      "end": 1674
+    },
+    {
+      "text": "the Twenty-fourth International Joint Conference",
+      "label": "EVENT",
+      "start": 1689,
+      "end": 1737
+    },
+    {
+      "text": "Artificial Intelligence",
+      "label": "ORG",
+      "start": 1741,
+      "end": 1764
+    },
+    {
+      "text": "Preference Elicitation and Interview Minimization",
+      "label": "ORG",
+      "start": 1777,
+      "end": 1826
+    },
+    {
+      "text": "Matchings",
+      "label": "PERSON",
+      "start": 1837,
+      "end": 1846
+    },
+    {
+      "text": "Drummond",
+      "label": "PERSON",
+      "start": 1848,
+      "end": 1856
+    },
+    {
+      "text": "J.",
+      "label": "PERSON",
+      "start": 1858,
+      "end": 1860
+    },
+    {
+      "text": "Boutilier",
+      "label": "PERSON",
+      "start": 1865,
+      "end": 1874
+    },
+    {
+      "text": "C., Proc",
+      "label": "ORG",
+      "start": 1876,
+      "end": 1884
+    },
+    {
+      "text": "the Twenty-eighth",
+      "label": "EVENT",
+      "start": 1889,
+      "end": 1906
+    },
+    {
+      "text": "Conference on Artificial Intelligence",
+      "label": "ORG",
+      "start": 1907,
+      "end": 1944
+    },
+    {
+      "text": "645–653",
+      "label": "CARDINAL",
+      "start": 1962,
+      "end": 1969
+    },
+    {
+      "text": "Joanna Drummond",
+      "label": "PERSON",
+      "start": 1971,
+      "end": 1986
+    },
+    {
+      "text": "2",
+      "label": "CARDINAL",
+      "start": 1987,
+      "end": 1988
+    },
+    {
+      "text": "Drummond",
+      "label": "PERSON",
+      "start": 2060,
+      "end": 2068
+    },
+    {
+      "text": "the Twenty-third International Joint Conference on Artificial Intelligence",
+      "label": "EVENT",
+      "start": 2100,
+      "end": 2174
+    },
+    {
+      "text": "97–105",
+      "label": "CARDINAL",
+      "start": 2193,
+      "end": 2199
+    },
+    {
+      "text": "Forbes-Riley",
+      "label": "ORG",
+      "start": 2333,
+      "end": 2345
+    },
+    {
+      "text": "K.",
+      "label": "NORP",
+      "start": 2347,
+      "end": 2349
+    },
+    {
+      "text": "Litman",
+      "label": "PERSON",
+      "start": 2351,
+      "end": 2357
+    },
+    {
+      "text": "D.",
+      "label": "NORP",
+      "start": 2359,
+      "end": 2361
+    },
+    {
+      "text": "Friedberg",
+      "label": "GPE",
+      "start": 2363,
+      "end": 2372
+    },
+    {
+      "text": "H.",
+      "label": "PERSON",
+      "start": 2374,
+      "end": 2376
+    },
+    {
+      "text": "Drummond",
+      "label": "PERSON",
+      "start": 2382,
+      "end": 2390
+    },
+    {
+      "text": "J.",
+      "label": "NORP",
+      "start": 2392,
+      "end": 2394
+    },
+    {
+      "text": "the 2012 Conference of the North American Chapter of the Association for Computational\nLinguistics",
+      "label": "EVENT",
+      "start": 2405,
+      "end": 2503
+    },
+    {
+      "text": "2012",
+      "label": "DATE",
+      "start": 2511,
+      "end": 2515
+    },
+    {
+      "text": "Dialogue System",
+      "label": "ORG",
+      "start": 2622,
+      "end": 2637
+    },
+    {
+      "text": "Drummond",
+      "label": "PERSON",
+      "start": 2638,
+      "end": 2646
+    },
+    {
+      "text": "J.,andLitman",
+      "label": "ORG",
+      "start": 2648,
+      "end": 2660
+    },
+    {
+      "text": "SIGDIAL",
+      "label": "ORG",
+      "start": 2720,
+      "end": 2727
+    },
+    {
+      "text": "2011",
+      "label": "DATE",
+      "start": 2729,
+      "end": 2733
+    },
+    {
+      "text": "312–318",
+      "label": "CARDINAL",
+      "start": 2752,
+      "end": 2759
+    },
+    {
+      "text": "A State Transition Model for Student Online Discussions",
+      "label": "ORG",
+      "start": 2761,
+      "end": 2816
+    },
+    {
+      "text": "Kang",
+      "label": "PERSON",
+      "start": 2829,
+      "end": 2833
+    },
+    {
+      "text": "Drummond",
+      "label": "PERSON",
+      "start": 2840,
+      "end": 2848
+    },
+    {
+      "text": "J.",
+      "label": "PERSON",
+      "start": 2850,
+      "end": 2852
+    },
+    {
+      "text": "Kim",
+      "label": "PERSON",
+      "start": 2858,
+      "end": 2861
+    },
+    {
+      "text": "17th",
+      "label": "ORDINAL",
+      "start": 2880,
+      "end": 2884
+    },
+    {
+      "text": "Conference on Knowledge Discover and Data Mining",
+      "label": "EVENT",
+      "start": 2885,
+      "end": 2933
+    },
+    {
+      "text": "2011",
+      "label": "DATE",
+      "start": 2946,
+      "end": 2950
+    },
+    {
+      "text": "Graphical Models to Classify Dialogue Transition in Online Q&A Discussions, Seo, S.W.",
+      "label": "WORK_OF_ART",
+      "start": 3011,
+      "end": 3096
+    },
+    {
+      "text": "Kang",
+      "label": "PERSON",
+      "start": 3098,
+      "end": 3102
+    },
+    {
+      "text": "Drummond",
+      "label": "PERSON",
+      "start": 3110,
+      "end": 3118
+    },
+    {
+      "text": "J.",
+      "label": "PERSON",
+      "start": 3120,
+      "end": 3122
+    },
+    {
+      "text": "Kim",
+      "label": "PERSON",
+      "start": 3128,
+      "end": 3131
+    },
+    {
+      "text": "15th",
+      "label": "ORDINAL",
+      "start": 3150,
+      "end": 3154
+    },
+    {
+      "text": "International Conference on Artificial Intelligence",
+      "label": "EVENT",
+      "start": 3155,
+      "end": 3206
+    },
+    {
+      "text": "Education",
+      "label": "ORG",
+      "start": 3210,
+      "end": 3219
+    },
+    {
+      "text": "2011",
+      "label": "DATE",
+      "start": 3226,
+      "end": 3230
+    },
+    {
+      "text": "550–553",
+      "label": "CARDINAL",
+      "start": 3239,
+      "end": 3246
+    },
+    {
+      "text": "RoleofElaboratedAnswersonDegreesofStudentParticipationinanOnlineQuestion-AnswerDiscussion\nForum",
+      "label": "ORG",
+      "start": 3248,
+      "end": 3343
+    },
+    {
+      "text": "Drummond",
+      "label": "PERSON",
+      "start": 3345,
+      "end": 3353
+    },
+    {
+      "text": "J.",
+      "label": "PERSON",
+      "start": 3355,
+      "end": 3357
+    },
+    {
+      "text": "Kim",
+      "label": "PERSON",
+      "start": 3363,
+      "end": 3366
+    },
+    {
+      "text": "J.",
+      "label": "PERSON",
+      "start": 3368,
+      "end": 3370
+    },
+    {
+      "text": "2011",
+      "label": "DATE",
+      "start": 3385,
+      "end": 3389
+    },
+    {
+      "text": "AERA",
+      "label": "ORG",
+      "start": 3455,
+      "end": 3459
+    },
+    {
+      "text": "Drummond",
+      "label": "PERSON",
+      "start": 3547,
+      "end": 3555
+    },
+    {
+      "text": "J.",
+      "label": "ORG",
+      "start": 3557,
+      "end": 3559
+    },
+    {
+      "text": "Litman",
+      "label": "PERSON",
+      "start": 3565,
+      "end": 3571
+    },
+    {
+      "text": "D.",
+      "label": "NORP",
+      "start": 3573,
+      "end": 3575
+    },
+    {
+      "text": "10th",
+      "label": "ORDINAL",
+      "start": 3590,
+      "end": 3594
+    },
+    {
+      "text": "International Conference on Intelligent Tutoring Systems",
+      "label": "EVENT",
+      "start": 3595,
+      "end": 3651
+    },
+    {
+      "text": "2010",
+      "label": "DATE",
+      "start": 3657,
+      "end": 3661
+    },
+    {
+      "text": "306–308",
+      "label": "CARDINAL",
+      "start": 3670,
+      "end": 3677
+    },
+    {
+      "text": "Jordan",
+      "label": "GPE",
+      "start": 3749,
+      "end": 3755
+    },
+    {
+      "text": "D.",
+      "label": "NORP",
+      "start": 3766,
+      "end": 3768
+    },
+    {
+      "text": "Lipschultz",
+      "label": "ORG",
+      "start": 3770,
+      "end": 3780
+    },
+    {
+      "text": "M.,andDrummond",
+      "label": "ORG",
+      "start": 3781,
+      "end": 3795
+    },
+    {
+      "text": "J.,Proc.ofthe14thInternationalConferenceonArtificialIntelligence",
+      "label": "CARDINAL",
+      "start": 3797,
+      "end": 3861
+    },
+    {
+      "text": "Education",
+      "label": "ORG",
+      "start": 3865,
+      "end": 3874
+    },
+    {
+      "text": "2009",
+      "label": "DATE",
+      "start": 3881,
+      "end": 3885
+    },
+    {
+      "text": "125–132",
+      "label": "DATE",
+      "start": 3894,
+      "end": 3901
+    },
+    {
+      "text": "Working Papers",
+      "label": "ORG",
+      "start": 3903,
+      "end": 3917
+    },
+    {
+      "text": "Drummond",
+      "label": "PERSON",
+      "start": 3989,
+      "end": 3997
+    },
+    {
+      "text": "Borodin",
+      "label": "PERSON",
+      "start": 4003,
+      "end": 4010
+    },
+    {
+      "text": "Larson",
+      "label": "ORG",
+      "start": 4020,
+      "end": 4026
+    },
+    {
+      "text": "CoopMAS 2017",
+      "label": "DATE",
+      "start": 4081,
+      "end": 4093
+    },
+    {
+      "text": "8th",
+      "label": "ORDINAL",
+      "start": 4096,
+      "end": 4099
+    },
+    {
+      "text": "Workshop on Cooperative Games",
+      "label": "EVENT",
+      "start": 4100,
+      "end": 4129
+    },
+    {
+      "text": "Microsoft Research PhD Fellowship Program Finalist",
+      "label": "ORG",
+      "start": 4156,
+      "end": 4206
+    },
+    {
+      "text": "2016",
+      "label": "DATE",
+      "start": 4208,
+      "end": 4212
+    },
+    {
+      "text": "Reviewer",
+      "label": "PERSON",
+      "start": 4214,
+      "end": 4222
+    },
+    {
+      "text": "Algorithmica",
+      "label": "PERSON",
+      "start": 4224,
+      "end": 4236
+    },
+    {
+      "text": "2015",
+      "label": "DATE",
+      "start": 4238,
+      "end": 4242
+    },
+    {
+      "text": "SAGT",
+      "label": "ORG",
+      "start": 4254,
+      "end": 4258
+    },
+    {
+      "text": "2015",
+      "label": "DATE",
+      "start": 4259,
+      "end": 4263
+    },
+    {
+      "text": "Ontario Graduate Scholarship",
+      "label": "ORG",
+      "start": 4401,
+      "end": 4429
+    },
+    {
+      "text": "2014",
+      "label": "DATE",
+      "start": 4431,
+      "end": 4435
+    },
+    {
+      "text": "15,000",
+      "label": "MONEY",
+      "start": 4459,
+      "end": 4465
+    },
+    {
+      "text": "Fifth International Workshop on Computational Social Choice",
+      "label": "ORG",
+      "start": 4502,
+      "end": 4561
+    },
+    {
+      "text": "Joanna Drummond",
+      "label": "PERSON",
+      "start": 4564,
+      "end": 4579
+    },
+    {
+      "text": "3",
+      "label": "CARDINAL",
+      "start": 4580,
+      "end": 4581
+    },
+    {
+      "text": "Microsoft Research Graduate Women’s Scholarship Recipient,2012",
+      "label": "ORG",
+      "start": 4582,
+      "end": 4644
+    },
+    {
+      "text": "2013",
+      "label": "DATE",
+      "start": 4661,
+      "end": 4665
+    },
+    {
+      "text": "15,000",
+      "label": "MONEY",
+      "start": 4691,
+      "end": 4697
+    },
+    {
+      "text": "2,000",
+      "label": "MONEY",
+      "start": 4714,
+      "end": 4719
+    },
+    {
+      "text": "Google",
+      "label": "ORG",
+      "start": 4740,
+      "end": 4746
+    },
+    {
+      "text": "Anita Borg Memorial Scholarship Finalist",
+      "label": "PERSON",
+      "start": 4747,
+      "end": 4787
+    },
+    {
+      "text": "2012",
+      "label": "DATE",
+      "start": 4789,
+      "end": 4793
+    },
+    {
+      "text": "Ontario Graduate Scholarship",
+      "label": "ORG",
+      "start": 4795,
+      "end": 4823
+    },
+    {
+      "text": "2012",
+      "label": "DATE",
+      "start": 4825,
+      "end": 4829
+    },
+    {
+      "text": "15,000",
+      "label": "MONEY",
+      "start": 4853,
+      "end": 4859
+    },
+    {
+      "text": "2011",
+      "label": "DATE",
+      "start": 4883,
+      "end": 4887
+    },
+    {
+      "text": "NSF Graduate Research Fellowship Program",
+      "label": "ORG",
+      "start": 4888,
+      "end": 4928
+    },
+    {
+      "text": "Canada",
+      "label": "GPE",
+      "start": 4951,
+      "end": 4957
+    },
+    {
+      "text": "DREURecipient",
+      "label": "PRODUCT",
+      "start": 4959,
+      "end": 4972
+    },
+    {
+      "text": "CRA-W",
+      "label": "ORG",
+      "start": 5050,
+      "end": 5055
+    },
+    {
+      "text": "University of Pittsburgh Department of Computer Science",
+      "label": "ORG",
+      "start": 5085,
+      "end": 5140
+    },
+    {
+      "text": "10th",
+      "label": "ORDINAL",
+      "start": 5141,
+      "end": 5145
+    },
+    {
+      "text": "Research Intern",
+      "label": "ORG",
+      "start": 5195,
+      "end": 5210
+    },
+    {
+      "text": "Microsoft Research",
+      "label": "ORG",
+      "start": 5212,
+      "end": 5230
+    },
+    {
+      "text": "Ian Kash",
+      "label": "PERSON",
+      "start": 5237,
+      "end": 5245
+    },
+    {
+      "text": "Peter Key",
+      "label": "PERSON",
+      "start": 5250,
+      "end": 5259
+    },
+    {
+      "text": "May 2016 to August 2016",
+      "label": "DATE",
+      "start": 5261,
+      "end": 5284
+    },
+    {
+      "text": "University of Toronto",
+      "label": "ORG",
+      "start": 5355,
+      "end": 5376
+    },
+    {
+      "text": "Department of Computer Science",
+      "label": "ORG",
+      "start": 5378,
+      "end": 5408
+    },
+    {
+      "text": "Craig Boutilier",
+      "label": "PERSON",
+      "start": 5414,
+      "end": 5429
+    },
+    {
+      "text": "August 2011 to December 2014",
+      "label": "DATE",
+      "start": 5431,
+      "end": 5459
+    },
+    {
+      "text": "Allan Borodin",
+      "label": "PERSON",
+      "start": 5465,
+      "end": 5478
+    },
+    {
+      "text": "Kate Larson",
+      "label": "PERSON",
+      "start": 5487,
+      "end": 5498
+    },
+    {
+      "text": "January 2015",
+      "label": "DATE",
+      "start": 5500,
+      "end": 5512
+    },
+    {
+      "text": "Bayes-Nash",
+      "label": "ORG",
+      "start": 5539,
+      "end": 5549
+    },
+    {
+      "text": "University of Pittsburgh Department of Computer Science",
+      "label": "ORG",
+      "start": 6163,
+      "end": 6218
+    },
+    {
+      "text": "Diane Litman",
+      "label": "PERSON",
+      "start": 6224,
+      "end": 6236
+    },
+    {
+      "text": "April 2008 to June 2010",
+      "label": "DATE",
+      "start": 6238,
+      "end": 6261
+    },
+    {
+      "text": "September 2010",
+      "label": "DATE",
+      "start": 6263,
+      "end": 6277
+    },
+    {
+      "text": "May 2011",
+      "label": "DATE",
+      "start": 6281,
+      "end": 6289
+    },
+    {
+      "text": "Annotatedspokenintelligenttutoringsystemforstudentincorrectnesscategories(e.g. toovague",
+      "label": "ORG",
+      "start": 6846,
+      "end": 6933
+    },
+    {
+      "text": "DirectedStudy",
+      "label": "ORG",
+      "start": 6941,
+      "end": 6954
+    },
+    {
+      "text": "UniversityofPittsburghDepartmentofComputerScience",
+      "label": "ORG",
+      "start": 6955,
+      "end": 7004
+    },
+    {
+      "text": "KirkPruhs",
+      "label": "PERSON",
+      "start": 7009,
+      "end": 7018
+    },
+    {
+      "text": "September\n2010",
+      "label": "DATE",
+      "start": 7019,
+      "end": 7033
+    },
+    {
+      "text": "December 2010",
+      "label": "DATE",
+      "start": 7037,
+      "end": 7050
+    },
+    {
+      "text": "2",
+      "label": "CARDINAL",
+      "start": 7143,
+      "end": 7144
+    },
+    {
+      "text": "DREU Program",
+      "label": "ORG",
+      "start": 7173,
+      "end": 7185
+    },
+    {
+      "text": "Information Sciences Institute",
+      "label": "ORG",
+      "start": 7187,
+      "end": 7217
+    },
+    {
+      "text": "University of Southern",
+      "label": "ORG",
+      "start": 7219,
+      "end": 7241
+    },
+    {
+      "text": "Jihie Kim",
+      "label": "PERSON",
+      "start": 7260,
+      "end": 7269
+    },
+    {
+      "text": "June 2010",
+      "label": "DATE",
+      "start": 7271,
+      "end": 7280
+    },
+    {
+      "text": "August 2010",
+      "label": "DATE",
+      "start": 7284,
+      "end": 7295
+    },
+    {
+      "text": "Joanna Drummond",
+      "label": "PERSON",
+      "start": 7297,
+      "end": 7312
+    },
+    {
+      "text": "4",
+      "label": "CARDINAL",
+      "start": 7313,
+      "end": 7314
+    },
+    {
+      "text": "Applied HMM’s",
+      "label": "ORG",
+      "start": 7315,
+      "end": 7328
+    },
+    {
+      "text": "University of Toronto Dept",
+      "label": "ORG",
+      "start": 7608,
+      "end": 7634
+    },
+    {
+      "text": "Computer Science",
+      "label": "ORG",
+      "start": 7639,
+      "end": 7655
+    },
+    {
+      "text": "September 2011",
+      "label": "DATE",
+      "start": 7657,
+      "end": 7671
+    },
+    {
+      "text": "Helpingdevelopassignments",
+      "label": "PERSON",
+      "start": 7684,
+      "end": 7709
+    },
+    {
+      "text": "weekly",
+      "label": "DATE",
+      "start": 7801,
+      "end": 7807
+    },
+    {
+      "text": "hours",
+      "label": "TIME",
+      "start": 7931,
+      "end": 7936
+    },
+    {
+      "text": "University of Pittsburgh Dept",
+      "label": "ORG",
+      "start": 8025,
+      "end": 8054
+    },
+    {
+      "text": "September 2007",
+      "label": "DATE",
+      "start": 8072,
+      "end": 8086
+    },
+    {
+      "text": "April 2008",
+      "label": "DATE",
+      "start": 8090,
+      "end": 8100
+    },
+    {
+      "text": "hours",
+      "label": "TIME",
+      "start": 8149,
+      "end": 8154
+    },
+    {
+      "text": "University of Pittsburgh Dept",
+      "label": "ORG",
+      "start": 8180,
+      "end": 8209
+    },
+    {
+      "text": "October 2006",
+      "label": "DATE",
+      "start": 8227,
+      "end": 8239
+    },
+    {
+      "text": "April 2007",
+      "label": "DATE",
+      "start": 8243,
+      "end": 8253
+    },
+    {
+      "text": "Technical Skills\nProgramming Languages:",
+      "label": "ORG",
+      "start": 8331,
+      "end": 8370
+    },
+    {
+      "text": "Java",
+      "label": "GPE",
+      "start": 8391,
+      "end": 8395
+    },
+    {
+      "text": "Julia",
+      "label": "PERSON",
+      "start": 8407,
+      "end": 8412
+    },
+    {
+      "text": "Matlab",
+      "label": "ORG",
+      "start": 8417,
+      "end": 8423
+    },
+    {
+      "text": "Shell Scripting",
+      "label": "ORG",
+      "start": 8430,
+      "end": 8445
+    },
+    {
+      "text": "Operating Systems",
+      "label": "ORG",
+      "start": 8453,
+      "end": 8470
+    },
+    {
+      "text": "Mac OSX",
+      "label": "PERSON",
+      "start": 8491,
+      "end": 8498
+    },
+    {
+      "text": "LATEX",
+      "label": "ORG",
+      "start": 8532,
+      "end": 8537
+    },
+    {
+      "text": "Weka",
+      "label": "GPE",
+      "start": 8539,
+      "end": 8543
+    },
+    {
+      "text": "Allan Borodin",
+      "label": "PERSON",
+      "start": 8555,
+      "end": 8568
+    },
+    {
+      "text": "Computer Science\n",
+      "label": "ORG",
+      "start": 8583,
+      "end": 8600
+    },
+    {
+      "text": "University of Toronto",
+      "label": "ORG",
+      "start": 8600,
+      "end": 8621
+    },
+    {
+      "text": "Kate Larson",
+      "label": "PERSON",
+      "start": 8641,
+      "end": 8652
+    },
+    {
+      "text": "Cheriton School of Computer Science\nUniversity of Waterloo",
+      "label": "ORG",
+      "start": 8675,
+      "end": 8733
+    },
+    {
+      "text": "Craig Boutilier",
+      "label": "PERSON",
+      "start": 8755,
+      "end": 8770
+    },
+    {
+      "text": "Google",
+      "label": "ORG",
+      "start": 8792,
+      "end": 8798
+    },
+    {
+      "text": "Professor of Computer Science",
+      "label": "ORG",
+      "start": 8803,
+      "end": 8832
+    },
+    {
+      "text": "University of Toronto",
+      "label": "ORG",
+      "start": 8844,
+      "end": 8865
+    },
+    {
+      "text": "cebly@cs.toronto.edu",
+      "label": "ORG",
+      "start": 8866,
+      "end": 8886
+    },
+    {
+      "text": "Joanna Drummond",
+      "label": "PERSON",
+      "start": 8887,
+      "end": 8902
+    },
+    {
+      "text": "5",
+      "label": "CARDINAL",
+      "start": 8903,
+      "end": 8904
+    },
+    {
+      "text": "Diane Litman",
+      "label": "PERSON",
+      "start": 8905,
+      "end": 8917
+    },
+    {
+      "text": "Computer Science",
+      "label": "ORG",
+      "start": 8932,
+      "end": 8948
+    },
+    {
+      "text": "Research Scientist with Learning Research and Development Center",
+      "label": "ORG",
+      "start": 8950,
+      "end": 9014
+    },
+    {
+      "text": "University of Pittsburgh",
+      "label": "ORG",
+      "start": 9016,
+      "end": 9040
+    }
+  ],
+  "skills": [
+    "python",
+    "java"
+  ],
+  "education": [
+    {
+      "text": "University of Toronto",
+      "dates": [],
+      "context": "Department of Computer Science\nUniversity of Toronto\nEmail: jdrummond@cs.toronto.edu"
+    },
+    {
+      "text": "10 King’s College Road, Rm. 3302",
+      "dates": [],
+      "context": "Email: jdrummond@cs.toronto.edu\n10 King’s College Road, Rm. 3302\nToronto, Ontario, M5S 3G4 Canada"
+    },
+    {
+      "text": "PhD Computer Science, University of Toronto, (expected) Spring 2017.",
+      "dates": [],
+      "context": "Education\nPhD Computer Science, University of Toronto, (expected) Spring 2017.\nCo-advisors: Allan Borodin, Kate Larson"
+    },
+    {
+      "text": "M.S. Computer Science, University of Toronto, Spring 2013.",
+      "dates": [],
+      "context": "GPA: 3.83\nM.S. Computer Science, University of Toronto, Spring 2013.\nAdvisor: Craig Boutilier"
+    },
+    {
+      "text": "B.S. Computer Science and Mathematics, University of Pittsburgh, December 2010.",
+      "dates": [],
+      "context": "GPA: 3.93\nB.S. Computer Science and Mathematics, University of Pittsburgh, December 2010.\nResearch Advisor: Diane Litman"
+    },
+    {
+      "text": "Microsoft Research PhD Fellowship Program Finalist, 2016.",
+      "dates": [],
+      "context": "tems).\nMicrosoft Research PhD Fellowship Program Finalist, 2016.\nReviewer, Algorithmica, 2015."
+    },
+    {
+      "text": "Best Undergraduate Poster, University of Pittsburgh Department of Computer Science 10th Annual",
+      "dates": [],
+      "context": "by CRA-W).\nBest Undergraduate Poster, University of Pittsburgh Department of Computer Science 10th Annual\nComputer Science Day."
+    },
+    {
+      "text": "Research Assistant, University of Toronto, Department of Computer Science, Dr. Craig Boutilier,",
+      "dates": [],
+      "context": "Investigated simple pricing for cloud computing.\nResearch Assistant, University of Toronto, Department of Computer Science, Dr. Craig Boutilier,\nAugust 2011 to December 2014; Dr. Allan Borodin and Dr. Kate Larson, January 2015 to Present."
+    },
+    {
+      "text": "Research Assistant, University of Pittsburgh Department of Computer Science, Dr. Diane Litman,",
+      "dates": [],
+      "context": "regarding agents’ preferences over alternatives.\nResearch Assistant, University of Pittsburgh Department of Computer Science, Dr. Diane Litman,\nApril 2008 to June 2010; September 2010 to May 2011."
+    },
+    {
+      "text": "Research Assistant, DREU Program, Information Sciences Institute, University of Southern Cali-",
+      "dates": [],
+      "context": "Analyzed and proved properties about an algorithm for dividing n indivisible objects among 2 people.\nResearch Assistant, DREU Program, Information Sciences Institute, University of Southern Cali-\nfornia, Dr. Jihie Kim, June 2010 to August 2010."
+    },
+    {
+      "text": "Teaching Assistant, University of Toronto Dept. of Computer Science, September 2011 to Present.",
+      "dates": [],
+      "context": "Teaching Experience\nTeaching Assistant, University of Toronto Dept. of Computer Science, September 2011 to Present.\nHelpingdevelopassignments,createdmarkingschemesandmarkedexamsandassignmentsforaupper"
+    },
+    {
+      "text": "Teaching Assistant, University of Pittsburgh Dept. of Mathematics, September 2007 to April 2008.",
+      "dates": [],
+      "context": "in Python.\nTeaching Assistant, University of Pittsburgh Dept. of Mathematics, September 2007 to April 2008.\nTaught College Algebra Recitation, held office hours, graded homework."
+    },
+    {
+      "text": "Taught College Algebra Recitation, held office hours, graded homework.",
+      "dates": [],
+      "context": "Teaching Assistant, University of Pittsburgh Dept. of Mathematics, September 2007 to April 2008.\nTaught College Algebra Recitation, held office hours, graded homework.\nTutor, University of Pittsburgh Dept. of Mathematics, October 2006 to April 2007."
+    },
+    {
+      "text": "Tutor, University of Pittsburgh Dept. of Mathematics, October 2006 to April 2007.",
+      "dates": [],
+      "context": "Taught College Algebra Recitation, held office hours, graded homework.\nTutor, University of Pittsburgh Dept. of Mathematics, October 2006 to April 2007.\nIndividual and Group Tutor, Subjects: College Algebra through Calculus III."
+    },
+    {
+      "text": "Individual and Group Tutor, Subjects: College Algebra through Calculus III.",
+      "dates": [],
+      "context": "Tutor, University of Pittsburgh Dept. of Mathematics, October 2006 to April 2007.\nIndividual and Group Tutor, Subjects: College Algebra through Calculus III.\nTechnical Skills"
+    },
+    {
+      "text": "University of Toronto",
+      "dates": [],
+      "context": "Professor of Computer Science\nUniversity of Toronto\nbor@cs.toronto.edu"
+    },
+    {
+      "text": "Cheriton School of Computer Science",
+      "dates": [],
+      "context": "Associate Professor,\nCheriton School of Computer Science\nUniversity of Waterloo"
+    },
+    {
+      "text": "University of Waterloo",
+      "dates": [],
+      "context": "Cheriton School of Computer Science\nUniversity of Waterloo\nklarson@uwaterloo.ca"
+    },
+    {
+      "text": "University of Toronto",
+      "dates": [],
+      "context": "and Professor of Computer Science (on leave)\nUniversity of Toronto\ncebly@cs.toronto.edu"
+    },
+    {
+      "text": "University of Pittsburgh",
+      "dates": [],
+      "context": "Research Scientist with Learning Research and Development Center,\nUniversity of Pittsburgh\nlitman@cs.pitt.edu"
+    }
+  ],
+  "experience": [
+    {
+      "text": "Research Experience",
+      "dates": [],
+      "context": "Computer Science Day.\nResearch Experience\nResearch Intern, Microsoft Research, with Ian Kash and Peter Key, May 2016 to August 2016."
+    },
+    {
+      "text": "Teaching Experience",
+      "dates": [],
+      "context": "Annotated students’ online forum data.\nTeaching Experience\nTeaching Assistant, University of Toronto Dept. of Computer Science, September 2011 to Present."
+    }
+  ],
+  "metadata": {
+    "parsed_date": "2024-11-05T09:13:45.823110",
+    "file_name": "joannadrummond-cv.pdf",
+    "file_format": "pdf"
+  }
+}

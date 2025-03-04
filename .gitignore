@@ -1,0 +1,14 @@
+cache/
+resume_JD_similarity/data/** 
+.env
+*.pyc
+!resume_JD_similarity/data/prompt.yaml
+!resume_JD_similarity/data/sample_resume.txt
+*.jpg
+*.png
+*.DS_Store*
+**OmniParser_v1.zip**
+**chroma_db**
+**__pycache__**
+**weights**
+!/assets/*png

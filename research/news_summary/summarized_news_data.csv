@@ -1,0 +1,73 @@
+company_name,published_date,title,description,url,origin,summary
+Google,2024-10-24,"Google Pixel 10, Pixel 11 With Tensor G5 and Tensor G6 Chips to Offer Improved Efficiency: Report","Google Pixel 10 and Pixel 11 will reportedly be equipped with Tensor G5 and Tensor G6 chips, respectively, offering improved efficiency in comparison to the Tensor G4 that powers the current-generation Pixel 9 series. The upcoming Tensor G5 and Tensor G6 chip…",https://www.gadgets360.com/mobiles/news/pixel-10-11-google-tensor-chip-efficiency-upgrade-report-6861376,NewsAPI,"```json
+[
+    {
+        ""Missing_Entities"": ""Google Pixel 10; Google Pixel 11; Tensor G4"",
+        ""Denser_Summary"": ""This article discusses the future Google Pixel 10 and Pixel 11 smartphones, which are expected to feature the new Tensor G5 and Tensor G6 chips, respectively. These chips promise enhanced efficiency compared to the Tensor G4 chip currently used in the Pixel 9 series. The introduction of the Tensor G5 and G6 is anticipated to offer significant performance improvements, making the upcoming Pixel models even more appealing to consumers. Overall, the advancements in chip technology are noteworthy.""
+    },
+    {
+        ""Missing_Entities"": ""Tensor G5; Tensor G6; Pixel 9 series"",
+        ""Denser_Summary"": ""The future Google Pixel 10 and Pixel 11 smartphones are set to utilize Tensor G5 and Tensor G6 chips, respectively, promising improved efficiency over the Tensor G4 found in the Pixel 9 series. These advancements in chip technology are expected to enhance performance and user experience significantly. As the Pixel lineup evolves, the introduction of these new chips may attract more consumers seeking cutting-edge technology in their devices. The upcoming models are highly anticipated.""
+    },
+    {
+        ""Missing_Entities"": ""Tensor G4; improved efficiency; upcoming models"",
+        ""Denser_Summary"": ""Google's Pixel 10 and Pixel 11 will feature Tensor G5 and Tensor G6 chips, respectively, offering improved efficiency compared to the Tensor G4 used in the Pixel 9 series. These advancements are expected to significantly enhance performance and user experience. With the introduction of these upcoming models, Google aims to attract consumers looking for the latest technology in smartphones. The evolution of the Pixel lineup continues to generate excitement in the tech community.""
+    },
+    {
+        ""Missing_Entities"": ""Tensor G5; Tensor G6; Pixel lineup"",
+        ""Denser_Summary"": ""The Pixel 10 and Pixel 11 will incorporate Tensor G5 and Tensor G6 chips, respectively, enhancing efficiency beyond the Tensor G4 found in the Pixel 9 series. These new chips are designed to improve overall performance and user experience. With the evolution of the Pixel lineup, Google aims to capture consumer interest in advanced smartphone technology. Anticipation for these upcoming models is building within the tech community.""
+    },
+    {
+        ""Missing_Entities"": ""Pixel 10; Pixel 11; upcoming models"",
+        ""Denser_Summary"": ""The Pixel 10 and Pixel 11 will utilize Tensor G5 and Tensor G6 chips, respectively, promising efficiency improvements over the Tensor G4 in the Pixel 9 series. These advancements are designed to enhance performance and user experience significantly. As Google continues to evolve its Pixel lineup, anticipation for these upcoming models grows among consumers seeking cutting-edge technology. The introduction of new chips is a key factor in this excitement.""
+    }
+]
+```"
+Google,2024-10-24,Google's Pixel Tablet is cheaper than ever right now,"Tablets might be a cheaper alternative to laptops but they can still cost a good chunk of money. Sales make all the difference and, right now, the 128GB Google Pixel Tablet is available for $275, down from $399. The 31 percent discount brings this tablet to a…",http://www.madshrimps.be/news/item/233860,NewsAPI,"```json
+[
+    {
+        ""Missing_Entities"": ""Google Pixel Tablet; 31 percent discount"",
+        ""Denser_Summary"": ""This article discusses the cost-effectiveness of tablets compared to laptops, highlighting the current sale on the 128GB Google Pixel Tablet. Priced at $275, this represents a significant reduction from its original price of $399. The sale reflects a notable 31 percent discount, making it an attractive option for consumers seeking a budget-friendly device. Tablets may still require a considerable investment, but such discounts can enhance their appeal in the marketplace.""
+    },
+    {
+        ""Missing_Entities"": ""$275; $399"",
+        ""Denser_Summary"": ""The 128GB Google Pixel Tablet is currently available for $275, down from its original price of $399. This sale represents a significant 31 percent discount, making the tablet a more appealing option for consumers looking for cost-effective devices. While tablets generally offer a more affordable alternative to laptops, they can still represent a considerable expense. This current pricing makes the Google Pixel Tablet particularly attractive during this promotional period.""
+    },
+    {
+        ""Missing_Entities"": ""31 percent discount"",
+        ""Denser_Summary"": ""Currently, the 128GB Google Pixel Tablet is priced at $275, reduced from $399, reflecting a substantial discount. This 31 percent discount enhances its appeal to consumers seeking budget-friendly alternatives to laptops. Although tablets can be costly, this sale makes the Google Pixel Tablet an attractive option. The promotional pricing allows potential buyers to consider investing in a tablet without overspending compared to traditional laptops.""
+    },
+    {
+        ""Missing_Entities"": ""128GB; Google Pixel"",
+        ""Denser_Summary"": ""The Google Pixel Tablet, with 128GB storage, is on sale for $275, down from $399, offering a significant 31 percent discount. This pricing makes the tablet a compelling choice for those looking for a budget-friendly alternative to laptops. While tablets often require a notable investment, this promotion enhances the attractiveness of the Google Pixel Tablet. Such discounts can influence consumer decisions, making it a viable option in today's market.""
+    },
+    {
+        ""Missing_Entities"": ""tablet; laptops"",
+        ""Denser_Summary"": ""The Google Pixel Tablet, featuring 128GB storage, is now available for $275, reduced from $399, showcasing a 31 percent discount. This pricing positions the tablet as an appealing alternative to traditional laptops for budget-conscious consumers. While tablets can be a significant financial commitment, this current promotion enhances the Google Pixel Tablet's attractiveness. Discounts like these can sway potential buyers seeking cost-effective computing solutions.""
+    }
+]
+```"
+Google,2024-10-24,akippa株式会社Google 検索やGoogle マップからアキッパ駐車場が予約可能に,Reserve with Google への連携を開始[画像1: https://prcdn.freetls.fastly.net/release_image/16205/490/16205-490-d9416f61b216be5facf3b1b9762428f3-1920x1280.jpg?width=536&quality=85%2C75&format=jpeg&auto=webp&fit=bounds&bg-color=fff ]駐車場予約アプリ「アキッパ（akippa）」（以下、ア...,https://japan.cnet.com/release/31047570/,NewsAPI,"```json
+[
+    {
+        ""Missing_Entities"": ""アキッパ; Google; 駐車場予約アプリ"",
+        ""Denser_Summary"": ""This article discusses the recent collaboration between the parking reservation app, Akippa, and Google. This partnership aims to enhance user experience by allowing seamless reservations through Google services. Akippa, a prominent player in the parking reservation market, is set to streamline the booking process for users. The integration is expected to provide greater convenience and accessibility for customers seeking parking solutions in various locations.""
+    },
+    {
+        ""Missing_Entities"": ""ユーザー体験; 予約プロセス; 便利さ"",
+        ""Denser_Summary"": ""The collaboration between Akippa and Google enhances user experience by streamlining the parking reservation process. Akippa aims to provide greater convenience and accessibility through this integration, allowing users to make reservations seamlessly via Google services. This partnership positions Akippa as a key player in the parking reservation market, catering to customer needs effectively. The collaboration is expected to significantly improve how users find and book parking spaces.""
+    },
+    {
+        ""Missing_Entities"": ""市場; 顧客ニーズ; 予約機能"",
+        ""Denser_Summary"": ""Akippa's collaboration with Google significantly improves the parking reservation process, catering to evolving customer needs. This partnership enhances the reservation function, making it easier for users to find and book parking spaces. Positioned as a leader in the parking market, Akippa's integration with Google services aims to deliver convenience and accessibility. This collaboration is poised to transform the way customers interact with parking solutions.""
+    },
+    {
+        ""Missing_Entities"": ""顧客; 予約; 変革"",
+        ""Denser_Summary"": ""Akippa's partnership with Google transforms the parking reservation landscape, enhancing user convenience and accessibility. The collaboration focuses on improving the reservation capabilities to better serve customer needs. By leveraging Google services, Akippa aims to streamline how users find and book parking spaces. This strategic alliance positions Akippa as a leader in the parking market, promising significant changes in customer interaction with parking solutions.""
+    },
+    {
+        ""Missing_Entities"": ""提携; 駐車場; 利用者"",
+        ""Denser_Summary"": ""Akippa's strategic alliance with Google revolutionizes parking reservations, enhancing user convenience. This partnership focuses on improving how users book parking spaces, addressing customer needs effectively. Leveraging Google services, Akippa aims to streamline the parking process for users. This collaboration positions Akippa at the forefront of the parking market, promising transformative changes for users seeking efficient parking solutions.""
+    }
+]
+```"
