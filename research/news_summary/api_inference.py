@@ -95,7 +95,6 @@ def summarize_text(input_text, model="gpt-4o-mini"):
         # 요약된 텍스트 반환
         summary = response.choices[0].message.content
         summary = output_matching(summary)
-        summary = output_matching(summary)
         print(model)
         print(summary)
 

@@ -28,7 +28,7 @@ ai_msg = chain.invoke(
 )
 print(ai_msg.content)
 
-history_list = []
+history_list = [] 
 while(True):
     user_input = input()
     if user_input == "종료": break
