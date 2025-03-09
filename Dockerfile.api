@@ -1,0 +1,28 @@
+# Python 3.11 이미지 기반
+FROM python:3.11
+
+# 작업 디렉터리 설정
+WORKDIR /app
+
+# 필요한 패키지 설치
+RUN apt-get update && apt-get install -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# 의존성 파일 복사 및 설치
+COPY system/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# OmniParser 압축 해제 (이미 압축 해제된 경우 건너뜀)
+COPY system/OmniParser_v1.zip /app/system/
+RUN cd /app/system && \
+    if [ -f OmniParser_v1.zip ] && [ ! -d OmniParser_v1 ]; then \
+        unzip OmniParser_v1.zip && \
+        rm OmniParser_v1.zip; \
+    fi
+
+# system 폴더만 복사
+COPY system/ /app/system/
+COPY data/ /app/data/
+
+# API 서버 실행
+CMD ["python", "system/main.py"]

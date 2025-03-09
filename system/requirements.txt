@@ -8,7 +8,6 @@ torchvision
 openai
 azure-identity
 opencv-python-headless
-gradio
 dill
 accelerate
 timm

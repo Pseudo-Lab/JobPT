@@ -1,0 +1,45 @@
+version: '3'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    image: ${DOCKER_USERNAME:-username}/jobpt:api
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./data:/app/data
+      - ./system:/app/system
+    command: sh -c "python system/insert_chunks.py && python system/main.py"
+    networks:
+      - jobpt-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    image: ${DOCKER_USERNAME:-username}/jobpt:web
+    ports:
+      - "7860:7860"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./ui:/app/ui
+      - ./data:/app/data
+    depends_on:
+      - api
+    networks:
+      - jobpt-network
+
+networks:
+  jobpt-network:
+    driver: bridge
