@@ -41,7 +41,7 @@ _“스스로 문제를 정의하고 체계적인 실험을 통해 주도적으�
 | **Project Manager** | 김민아 | ![Python](https://img.shields.io/badge/Python-Expert-3776AB) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C) | LLM 검증 시스템 / Agent / 최적화 |
 | **Member** | 최재강 | ![Python](https://img.shields.io/badge/Python-Expert-3776AB) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C) | LLM 서빙 시스템 / 추론 최적화 / LLM 기반 평가 |
 | **Member** | 김민우 | ![Python](https://img.shields.io/badge/Python-Expert-3776AB) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C) | 파운데이션모델 / 경량화 / 강화학습 |
-| **Member** | 채병철 |  |  |
+| **Member** | 채병철 | ![Python](https://img.shields.io/badge/Python-Expert-3776AB) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C) | LLM 최적화 / 경량화 |
 | **Member** |  |  |  |
 
 ## 🛠️ 우리의 개발 문화 (Our Development Culture)
