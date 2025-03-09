@@ -1,0 +1,12 @@
+numpy
+fastapi
+pillow
+gradio
+dill
+timm
+pytesseract
+spacy
+supervision==0.18.0
+ultralytics==8.1.24
+einops==0.8.0
+frontend

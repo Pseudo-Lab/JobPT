@@ -1,0 +1,20 @@
+# Python 3.11 이미지 기반
+FROM python:3.11
+
+# 작업 디렉터리 설정
+WORKDIR /app
+
+# 필요한 패키지 설치
+RUN apt-get update && apt-get install -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# 의존성 파일 복사 및 설치
+COPY ui/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ui 폴더만 복사
+COPY ui/ /app/ui/
+COPY data/ /app/data/
+
+# Gradio 앱 실행
+CMD ["python", "ui/gradioapp.py"]
