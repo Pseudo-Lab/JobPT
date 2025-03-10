@@ -1,4 +1,6 @@
 numpy
+fitz
+cython
 fastapi
 torch
 transformers
@@ -7,7 +9,7 @@ easyocr
 torchvision
 openai
 azure-identity
-opencv-python-headless
+gradio
 dill
 accelerate
 timm
@@ -15,7 +17,6 @@ paddlepaddle
 paddleocr
 pdf2image
 pytesseract
-spacy
 supervision==0.18.0
 ultralytics==8.1.24
 einops==0.8.0

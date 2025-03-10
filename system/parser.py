@@ -1,21 +1,13 @@
 import numpy as np
 import torch
-import logging
-import json
 import os
 import re
 from datetime import datetime
 from pathlib import Path
 
-import pdfplumber
 from pdf2image import convert_from_path
-import pytesseract
 
-import cv2
 import fitz  # PyMuPDF
-
-import spacy
-from transformers import pipeline
 
 print(np.__version__)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

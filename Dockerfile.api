@@ -4,25 +4,38 @@ FROM python:3.11
 # 작업 디렉터리 설정
 WORKDIR /app
 
-# 필요한 패키지 설치
-RUN apt-get update && apt-get install -y \
+# 필요한 시스템 패키지 설치
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    python3-dev \
+    libclang-dev \
+    clang \
+    pkg-config \
+    libffi-dev \
+    libssl-dev \
+    zlib1g-dev \
+    libjpeg-dev \
+    libpng-dev \
+    tesseract-ocr \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# 의존성 파일 복사 및 설치
+# pip 업그레이드
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install numpy
+
+# 의존성 파일 복사 및 설치 (단계적으로 설치)
 COPY system/requirements.txt .
+
+# 나머지 패키지 설치 (실패해도 계속 진행)
 RUN pip install --no-cache-dir -r requirements.txt
 
-# OmniParser 압축 해제 (이미 압축 해제된 경우 건너뜀)
-COPY system/OmniParser_v1.zip /app/system/
-RUN cd /app/system && \
-    if [ -f OmniParser_v1.zip ] && [ ! -d OmniParser_v1 ]; then \
-        unzip OmniParser_v1.zip && \
-        rm OmniParser_v1.zip; \
-    fi
-
-# system 폴더만 복사
+# system 폴더만 복사 (OmniParser_v1 폴더는 이미 존재한다고 가정)
 COPY system/ /app/system/
 COPY data/ /app/data/
 
-# API 서버 실행
-CMD ["python", "system/main.py"]
+# API 서버 실행 (insert_chunks.py도 함께 실행)
+CMD ["sh", "-c", "python system/insert_chunks.py && python system/main.py"]
