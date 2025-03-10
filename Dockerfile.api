@@ -33,6 +33,8 @@ COPY system/requirements.txt .
 # 나머지 패키지 설치 (실패해도 계속 진행)
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN mkdir -p /app/static
+
 # system 폴더만 복사 (OmniParser_v1 폴더는 이미 존재한다고 가정)
 COPY system/ /app/system/
 COPY data/ /app/data/

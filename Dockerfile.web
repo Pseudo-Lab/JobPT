@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # pip 업그레이드
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN mkdir -p /app/static
 
 # 의존성 파일 복사 및 설치 (단계적으로 설치)
 COPY ui/requirements.txt .
