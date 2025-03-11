@@ -29,15 +29,22 @@ RUN pip install numpy
 
 # 의존성 파일 복사 및 설치 (단계적으로 설치)
 COPY system/requirements.txt .
+RUN mkdir -p /app/static
+# 먼저 PyMuPDF를 명시적으로 설치
+RUN pip install --no-cache-dir pymupdf
 
-# 나머지 패키지 설치 (실패해도 계속 진행)
+# 나머지 패키지 설치
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN mkdir -p /app/static
+# 설치 확인
+RUN python -c "import fitz; print('PyMuPDF successfully installed')"
 
 # system 폴더만 복사 (OmniParser_v1 폴더는 이미 존재한다고 가정)
 COPY system/ /app/system/
 COPY data/ /app/data/
+
+
+
 
 # API 서버 실행 (insert_chunks.py도 함께 실행)
 CMD ["sh", "-c", "python system/insert_chunks.py && python system/main.py"]

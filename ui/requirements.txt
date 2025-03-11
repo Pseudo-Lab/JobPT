@@ -12,3 +12,5 @@ frontend
 python-docx
 markdown2
 fitz
+pymupdf
+tools

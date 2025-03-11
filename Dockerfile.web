@@ -16,15 +16,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # pip 업그레이드
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-RUN mkdir -p /app/static
 
 # 의존성 파일 복사 및 설치 (단계적으로 설치)
 COPY ui/requirements.txt .
 
+# 먼저 PyMuPDF를 명시적으로 설치
+RUN pip install --no-cache-dir pymupdf
+RUN mkdir -p /app/static
+# 나머지 패키지 설치
 RUN pip install --no-cache-dir -r requirements.txt
+
+# 설치 확인
+RUN python -c "import fitz; print('PyMuPDF successfully installed')"
+
 # ui 폴더만 복사
 COPY ui/ /app/ui/
 COPY data/ /app/data/
+
 
 # Gradio 앱 실행
 CMD ["python", "ui/gradioapp.py"]

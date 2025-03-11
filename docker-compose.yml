@@ -9,7 +9,6 @@ services:
             - OPENAI_API_KEY=${OPENAI_API_KEY}
         volumes:
             - ./data:/app/data
-        command: sh -c "python system/insert_chunks.py && python system/main.py"
 
     web:
         image: ${DOCKER_USERNAME}/jobpt:web
