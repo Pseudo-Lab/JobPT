@@ -1,5 +1,5 @@
 numpy
-pymupdf
+PyMuPDF==1.25.1
 fastapi
 pillow
 gradio
@@ -12,6 +12,3 @@ einops==0.8.0
 frontend
 python-docx
 markdown2
-fitz
-pymupdf
-tools
