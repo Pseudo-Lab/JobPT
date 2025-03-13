@@ -6,7 +6,6 @@ WORKDIR /app
 
 # 필요한 시스템 패키지 설치
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    tesseract-ocr \
     libgl1-mesa-glx \
     libglib2.0-0 \
     build-essential \
@@ -20,8 +19,6 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 # 의존성 파일 복사 및 설치 (단계적으로 설치)
 COPY ui/requirements.txt .
 
-# 먼저 PyMuPDF를 명시적으로 설치
-RUN pip install --no-cache-dir pymupdf
 RUN mkdir -p /app/static
 # 나머지 패키지 설치
 RUN pip install --no-cache-dir -r requirements.txt

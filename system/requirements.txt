@@ -2,15 +2,15 @@ numpy
 fitz
 tools
 cython
+pymupdf
 fastapi
-torch
+torch==2.5.0
 transformers
 pillow
 easyocr
 torchvision
 openai
 azure-identity
-gradio
 dill
 accelerate
 timm

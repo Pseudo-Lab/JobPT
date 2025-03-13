@@ -18,7 +18,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g-dev \
     libjpeg-dev \
     libpng-dev \
-    tesseract-ocr \
     libgl1-mesa-glx \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
@@ -30,9 +29,6 @@ RUN pip install numpy
 # 의존성 파일 복사 및 설치 (단계적으로 설치)
 COPY system/requirements.txt .
 RUN mkdir -p /app/static
-# 먼저 PyMuPDF를 명시적으로 설치
-RUN pip install --no-cache-dir pymupdf
-
 # 나머지 패키지 설치
 RUN pip install --no-cache-dir -r requirements.txt
 
