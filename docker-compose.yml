@@ -3,8 +3,7 @@ version: "3"
 services:
     api:
         image: ${DOCKER_USERNAME}/jobpt:api
-        ports:
-            - "8000:8000"
+        network_mode: "host"
         environment:
             - OPENAI_API_KEY=${OPENAI_API_KEY}
         volumes:
@@ -12,10 +11,6 @@ services:
 
     web:
         image: ${DOCKER_USERNAME}/jobpt:web
-        ports:
-            - "7860:7860"
-        environment:
-            - OPENAI_API_KEY=${OPENAI_API_KEY}
+        network_mode: "host"
         volumes:
-            - ./ui:/app/ui
             - ./data:/app/data
