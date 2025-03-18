@@ -73,10 +73,12 @@ export DOCKER_USERNAME=jaeghangchoi
 ```
 
 2. Docker 컨테이너 실행
-- docker-compose.yml 파일이 있는 경로로 이동
+
+-   docker-compose.yml 파일이 있는 경로로 이동
 
 ```bash
-mkdir -p data  # PDF 변환을 위한 디렉토리
+mkdir -p data/jd_origin
+mkdir -p data/chroma_db
 docker compose up -d
 ```
 
