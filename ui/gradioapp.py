@@ -399,4 +399,4 @@ with gr.Blocks(title="JobPT", css=custom_css, elem_id="cv-analysis-tool") as dem
             fn=analyze_from_url, inputs=[url_textbox], outputs=[output_JD_url, output_text_url, link_url, comopany_name_url]
         ).then(fn=lambda: "Complete!", outputs=url_status_text, queue=False)
 
-    demo.launch(show_api=False)
+    demo.launch(server_name="0.0.0.0", show_api=False)
