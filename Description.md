@@ -25,11 +25,14 @@
 5. **LLM을 통한 대화형 평가 및 개선 반복** (Todo)
     - LLM과 대화를 통해 평가-개선-재평가 프로세스를 거치며 이력서를 반복적으로 개선합니다. Multi-turn을 활용해 제공받은 개선점을 보완해가며 평가 점수를 높힙니다.
 
-## 시스템 구조도 
+## 시스템 구조도
+
 ### phase 1 | 이력서 기반 JD 추천 기능
+
 ![phase1_pipeline](./assets/phase1_pipeline.png)
 
 ### phase 2 | 이력서 수정 제안 기능
+
 ![phase2_pipeline](./assets/phase2_pipeline.png)
 
 ### 주요 기술
@@ -59,6 +62,27 @@
 <img src="./assets/demo1.png" width="50%" height="50%"/>
 <img src="./assets/demo2.png" width="50%" height="50%"/>
 <img src="./assets/demo3.png" width="50%" height="50%"/>
+
+## Docker 기반 시스템 구동 방법
+
+1. 환경 변수 설정
+
+```bash
+export OPENAI_API_KEY=your_api_key
+export DOCKER_USERNAME=jaeghangchoi
+```
+
+2. Docker 컨테이너 실행
+- docker-compose.yml 파일이 있는 경로로 이동
+
+```bash
+mkdir -p data  # PDF 변환을 위한 디렉토리
+docker compose up -d
+```
+
+### 접속
+
+-   http://localhost:7860
 
 ## 시스템 구동 방법
 
