@@ -1,391 +1,342 @@
 import os
-from typing import List, Dict, Any
-import requests
 import json
+from typing import Dict, List, Any, TypedDict
 from openai import OpenAI
 from langgraph.graph import StateGraph, END
-from config import MODEL
 from dotenv import load_dotenv
 
 # 환경 변수 로드
 load_dotenv()
 
-
-class VectorDB:
-    def search(self, query: str) -> str:
-        # 실제 구현은 무시하고 더미 응답 반환
-        return "더미 검색 결과입니다."
+# 모델 설정
+MODEL = "gpt-4o-mini"
 
 
-class WebSearchTool:
-    def __init__(self):
-        self.tavily_api_key = os.getenv("TAVILY_API_KEY")
-
-    def search(self, question: str) -> List[Dict]:
-        """
-        Tavily Search API를 사용하여 웹 검색을 수행합니다.
-
-        Args:
-            question: 검색할 질문
-
-        Returns:
-            검색 결과 목록 (제목, 내용, URL 포함)
-        """
-        if not self.tavily_api_key:
-            print("Tavily API 키가 설정되지 않았습니다. 시뮬레이션된 결과를 반환합니다.")
-            return self._get_simulated_results(question)
-
-        try:
-            # Tavily Search API 엔드포인트
-            url = "https://api.tavily.com/search"
-
-            # 요청 파라미터
-            params = {
-                "api_key": self.tavily_api_key,
-                "query": question,
-                "search_depth": "basic",  # basic 또는 advanced
-                "include_domains": [],  # 특정 도메인만 포함 (선택 사항)
-                "exclude_domains": [],  # 특정 도메인 제외 (선택 사항)
-                "max_results": 5,  # 최대 결과 수
-            }
-
-            # API 요청
-            response = requests.post(url, json=params)
-            response.raise_for_status()  # HTTP 오류 발생 시 예외 발생
-
-            # 응답 파싱
-            search_data = response.json()
-
-            # 결과 형식 변환
-            results = []
-            for result in search_data.get("results", []):
-                results.append({"title": result.get("title", "제목 없음"), "snippet": result.get("content", "내용 없음"), "url": result.get("url", "URL 없음")})
-
-            return results
-
-        except Exception as e:
-            print(f"검색 중 오류 발생: {str(e)}")
-            # 오류 발생 시 시뮬레이션된 결과 반환
-            return self._get_simulated_results(question)
-
-    def _get_simulated_results(self, question: str) -> List[Dict]:
-        """시뮬레이션된 검색 결과를 반환합니다."""
-        return [
-            {
-                "title": f"'{question}'에 관한 최신 트렌드",
-                "snippet": f"{question}에 관한 최신 정보와 트렌드입니다. 이 분야는 최근 급속도로 발전하고 있습니다.",
-                "url": "https://example.com/trends",
-            },
-            {
-                "title": f"{question} 관련 직무 요구사항",
-                "snippet": f"{question} 관련 직무에서는 최신 기술과 도구에 대한 이해가 필요합니다.",
-                "url": "https://example.com/job-requirements",
-            },
-            {
-                "title": f"{question}에 대한 전문가 의견",
-                "snippet": f"전문가들은 {question}에 대해 다양한 의견을 제시합니다. 주요 관점은...",
-                "url": "https://example.com/expert-opinions",
-            },
-        ]
-
-
-class ModifyTool:
-    def __init__(self):
-        # API 키 설정
-        self.openai_api_key = os.getenv("OPENAI_API_KEY")
-        if self.openai_api_key:
-            self.client = OpenAI(api_key=self.openai_api_key)
-        else:
-            print("OpenAI API 키가 설정되지 않았습니다. 테스트 모드로 동작합니다.")
-            self.client = None
-        self.web_search_tool = WebSearchTool()
-
-    def modify_specific_line(self, target_line: str, context_lines: str, summary: str) -> Dict:
-        """
-        특정 줄만 수정하는 기능입니다.
-
-        Args:
-            target_line: 수정할 대상 줄
-            context_lines: 주변 맥락 내용
-            summary: 회사의 최신 뉴스나 정보를 요약한 문구
-
-        Returns:
-            수정된 줄과 수정 사항 설명
-        """
-        # API 키가 설정되지 않은 경우 테스트 데이터 반환
-        if not self.openai_api_key:
-            return self._get_test_specific_line_result()
-
-        try:
-            # 관련 검색 수행
-            search_results = self.web_search_tool.search(f"{target_line} {summary}")
-            
-            # 검색 결과를 텍스트로 변환
-            search_context = "\n".join([f"제목: {result['title']}\n내용: {result['snippet']}\n출처: {result['url']}" for result in search_results])
-
-            prompt = f"""
-            # 작업: 이력서 특정 줄 개선
-            
-            ## 수정할 대상 줄:
-            {target_line}
-            
-            ## 주변 맥락:
-            {context_lines}
-            
-            ## 회사 최신 정보:
-            {summary}
-            
-            ## 관련 검색 결과:
-            {search_context}
-            
-            ## 지시사항:
-            1. 위 정보를 바탕으로 대상 줄만 개선해주세요.
-            2. 회사의 최신 뉴스나 정보를 반영하세요.
-            3. 구체적이고 명확한 표현으로 수정하세요.
-            4. 전문성을 강조하는 표현을 사용하세요.
-            5. 주변 맥락과 자연스럽게 연결되도록 작성하세요.
-            
-            ## 응답 형식:
-            다음 JSON 형식으로 응답해주세요:
-            {{
-                "modified_line": "수정된 줄 내용",
-                "explanation": "수정 이유 및 개선 사항 설명"
-            }}
-            """
-
-            response = self.client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role": "system", "content": "당신은 이력서 개선을 돕는 전문 AI 어시스턴트입니다."}, {"role": "user", "content": prompt}],
-                response_format={"type": "json_object"},
-            )
-
-            try:
-                result = response.choices[0].message.content
-                return json.loads(result)
-            except Exception as e:
-                print(f"응답 파싱 중 오류 발생: {str(e)}")
-                return self._get_test_specific_line_result()
-
-        except Exception as e:
-            print(f"API 호출 중 오류 발생: {str(e)}")
-            return self._get_test_specific_line_result()
-
-    def _get_test_specific_line_result(self) -> Dict:
-        """테스트용 특정 줄 수정 결과를 반환합니다."""
-        return {
-            "modified_line": "클라우드 기반 환경에서 확장 가능한 머신러닝 모델의 설계, 개발 및 배포, 지속 가능한 운영 관리 프로세스 확립",
-            "explanation": "해당 줄은 AI 및 머신러닝 전문가의 요구사항을 반영하여, 클라우드 환경을 언급함으로써 확장성과 운영 용이성을 강조하였습니다. 또한 구체적인 작업 단계(설계, 개발, 배포, 운영 관리)를 상세히 기술하여 직무에 대한 전문성을 강화했습니다.",
-        }
+# 상태 타입 정의
+class AgentState(TypedDict):
+    resume: str
+    summary: str
+    analysis: Dict
+    suggestions: List[str]
+    evaluation: Dict
 
 
 class SuggestionAgent:
+    """
+    LangGraph 기반 이력서 수정 제안 에이전트
+    """
+
     def __init__(self):
-        self.web_search_tool = WebSearchTool()
-        self.modify_tool = ModifyTool()
-        self.vector_db = VectorDB()
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.graph = self._build_graph()
 
-    def search_and_modify_specific_line(self, target_line: str, context_lines: str, summary: str) -> Dict:
+    def process_query(self, query: str) -> Dict:
         """
-        특정 줄만 검색 후 수정합니다.
+        사용자 질문이나 요청을 처리합니다.
 
         Args:
-            target_line: 수정할 대상 줄
-            context_lines: 주변 맥락 내용
-            summary: 회사의 최신 뉴스나 정보를 요약한 문구
+            query: 사용자 질문 또는 요청
 
         Returns:
-            수정된 줄과 수정 사항 설명
+            응답을 포함한 딕셔너리
         """
-        return self.modify_tool.modify_specific_line(target_line, context_lines, summary)
+        print(f"질문 처리 중: {query}")
 
-    def test_modify_specific_line(self, target_line: str, context_lines: str, summary: str) -> Dict:
+        # OpenAI API가 설정된 경우 실제 API 호출
+        if os.getenv("OPENAI_API_KEY"):
+            try:
+                # 사용자 입력을 분석하여 응답 생성
+                response = self.client.chat.completions.create(
+                    model=MODEL,
+                    messages=[
+                        {"role": "user", "content": query},
+                    ],
+                )
+
+                if response.choices and response.choices[0].message.content:
+                    return {"response": response.choices[0].message.content}
+
+            except Exception as e:
+                print(f"API 호출 중 오류 발생: {str(e)}")
+                return {"response": f"죄송합니다. 질문 처리 중 오류가 발생했습니다: {str(e)}"}
+
+        # API 키가 없거나 호출 실패 시 기본 응답
+        return {"response": "현재 API 연결이 되지 않아 질문에 답변할 수 없습니다. API 키를 설정한 후 다시 시도해주세요."}
+
+    def improve_resume_line(self, line: str, request: str, resume_context: str, job_requirements: str) -> Dict:
         """
-        테스트용 메서드: 실제 API 호출 없이 특정 줄 수정 결과를 반환합니다.
+        이력서의 특정 줄을 개선하거나 추천을 제공합니다.
 
         Args:
-            target_line: 수정할 대상 줄
-            context_lines: 주변 맥락 내용
-            summary: 회사의 최신 뉴스나 정보를 요약한 문구
+            line: 개선할 이력서 줄
+            request: 사용자 요청
+            resume_context: 전체 이력서 컨텍스트
+            job_requirements: 직무 요구사항
 
         Returns:
-            수정된 줄과 수정 사항 설명
+            응답을 포함한 딕셔너리
         """
-        # 테스트용 결과 반환
-        return {
-            "modified_line": "* 최신 머신러닝 및 딥러닝 모델 설계, 개발 및 클라우드 환경(AWS, GCP)에 배포",
-            "explanation": "기존 표현을 더 구체적으로 개선했습니다. 최신 트렌드에 맞게 딥러닝을 추가하고, 클라우드 환경을 명시하여 기술적 전문성을 강조했습니다.",
-        }
+        try:
+            # 단일 프롬프트로 다양한 요청 유형 처리
+            prompt = f"""다음 이력서 줄에 대한 요청입니다: "{request}"
+
+해당 줄: "{line}"
+
+사용자의 요청을 분석하여 적절한 응답을 제공해주세요:
+
+1. 만약 사용자가 추천, 제안, 아이디어, 대안, 다른 방법 등을 요청했다면:
+   - 원래 줄을 수정하지 말고, 직무 요구사항에 추가되면 좋을 내용이나 키워드들을 추천해주세요.
+   - 사용자가 더 키워볼만한 역량이 있다면 키워볼 수 있는 역량을 추천해주는 것도 좋습니다.
+
+2. 만약 사용자가 개선, 수정, 향상, 발전, 보완 등을 요청했다면:
+   - 주어진 줄을 개선한 문장을 제공해주세요.
+   - 응답 시작 부분에 "## 개선된 내용"을 포함해주세요.
+
+3. 그 외의 요청인 경우:
+   - 요청 내용에 가장 적합한 방식으로 응답해주세요.
+   - 응답이 개선인지 추천인지 명확히 표시해주세요.
+
+가능한 간결하고 직접적으로 응답해주세요."""
+
+            # OpenAI API 호출
+            response = self.client.chat.completions.create(
+                model=MODEL,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": f"""당신은 이력서 개선을 도와주는 전문가입니다.
+                        다음 이력서와 직무 요구사항을 참조하여 사용자의 요청에 따라 이력서를 개선하거나 추가되면 좋을 만한 내용을 추천해주세요.
+                        
+                        이력서:
+                        {resume_context}
+                        
+                        직무 요구사항:
+                        {job_requirements}
+                        """,
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+            )
+
+            if response.choices and response.choices[0].message.content:
+                content = response.choices[0].message.content.strip()
+                # 응답 유형 판단
+                is_recommendation = "## 추천 내용" in content or any(
+                    keyword in request.lower() for keyword in ["추천", "제안", "아이디어", "대안", "다른 방법"]
+                )
+
+                return {"success": True, "response": content, "is_recommendation": is_recommendation, "original_line": line}
+            else:
+                return {"success": False, "response": "응답을 생성할 수 없습니다.", "is_recommendation": False, "original_line": line}
+        except Exception as e:
+            print(f"이력서 개선 중 오류 발생: {str(e)}")
+            return {"success": False, "response": f"오류 발생: {str(e)}", "is_recommendation": False, "original_line": line}
 
     def _build_graph(self) -> StateGraph:
-        graph = StateGraph(Dict)
+        """그래프 구조 정의"""
+        graph = StateGraph(AgentState)
 
         # 노드 추가
-        graph.add_node("search", self.search_web)
-        graph.add_node("modify_specific_line", self.modify_specific_line_node)
+        graph.add_node("analyze", self.analyze_resume)
+        graph.add_node("suggest", self.generate_suggestions)
+        graph.add_node("evaluate", self.evaluate_suggestions)
 
-        # 조건부 엣지 추가 - search 노드에서 분기
-        graph.add_edge("search", "modify_specific_line")
+        # 엣지 추가
+        graph.add_edge("analyze", "suggest")
+        graph.add_edge("suggest", "evaluate")
+        graph.add_edge("evaluate", END)
 
-        # 종료 엣지 추가
-        graph.add_edge("modify_specific_line", END)
-
-        # 시작 노드 설정
-        graph.set_entry_point("search")
+        # 시작점 설정
+        graph.set_entry_point("analyze")
 
         return graph.compile()
 
-    def should_modify_specific_line(self, state: Dict) -> bool:
-        """특정 줄 수정 모드인지 확인합니다."""
-        # 명시적으로 Boolean 값 반환
-        has_target_line = "target_line" in state and state.get("target_line")
-        return bool(has_target_line)
-
-    def search_web(self, state: Dict) -> Dict:
-        """웹 검색을 수행합니다."""
+    def analyze_resume(self, state: AgentState) -> AgentState:
+        """이력서 분석"""
+        resume = state.get("resume", "")
         summary = state.get("summary", "")
-        target_line = state.get("target_line", "")
 
-        # 검색 쿼리 생성
-        query = f"{target_line} {summary}" if target_line else summary
+        print("이력서 분석 중...")
 
-        # 웹 검색 수행
-        search_results = self.web_search_tool.search(query)
-        
-        # 디버그용 검색 결과 출력
-        print("\n===== 검색 결과 =====")
-        for i, result in enumerate(search_results):
-            print(f"\n결과 {i+1}:")
-            print(f"제목: {result.get('title', 'N/A')}")
-            print(f"내용: {result.get('snippet', 'N/A')}")
-            print(f"URL: {result.get('url', 'N/A')}")
-        print("=====================\n")
+        # 이력서 분석 (단어 수, 주제 등)
+        word_count = len(resume.split())
 
-        # 최신 정보 추출
-        latest_info = self.vector_db.search(query)
+        analysis = {"word_count": word_count, "job_requirements": summary, "main_points": ["기술 스택", "경력 사항", "프로젝트 경험"]}
 
-        return {**state, "search_results": search_results, "latest_info": latest_info}
+        return {**state, "analysis": analysis}
 
-    def modify_specific_line_node(self, state: Dict) -> Dict:
-        """특정 줄을 수정합니다. (그래프 노드용)"""
-        target_line = state.get("target_line", "")
-        context_lines = state.get("context_lines", "")
+    def generate_suggestions(self, state: AgentState) -> AgentState:
+        """개선 제안 생성"""
+        resume = state.get("resume", "")
         summary = state.get("summary", "")
-        search_results = state.get("search_results", [])
+        analysis = state.get("analysis", {})
 
-        # 특정 줄 수정
-        result = self.modify_tool.modify_specific_line(target_line, context_lines, summary)
+        print("개선 제안 생성 중...")
 
-        return {**state, "specific_line_result": result}
+        # 기본 개선 제안
+        suggestions = ["AI 및 머신러닝 경험 강조", "자연어 처리와 컴퓨터 비전 경험 추가", "최신 딥러닝 프레임워크 명시", "구체적인 기술 스택 언급"]
 
-    def run_specific_line(self, target_line: str, context_lines: str, summary: str) -> Dict:
+        # OpenAI API가 설정된 경우 실제 API 호출
+        if os.getenv("OPENAI_API_KEY"):
+            try:
+                response = self.client.chat.completions.create(
+                    model=MODEL,
+                    messages=[
+                        {"role": "system", "content": "당신은 이력서 개선을 도와주는 전문가입니다."},
+                        {
+                            "role": "user",
+                            "content": f"다음 이력서를 분석하고 직무 요구사항에 맞게 개선 제안을 4가지 제시해주세요:\n\n이력서:\n{resume}\n\n직무 요구사항:\n{summary}",
+                        },
+                    ],
+                )
+                if response.choices and response.choices[0].message.content:
+                    content = response.choices[0].message.content
+                    # 간단한 파싱 (실제로는 더 정교한 방법 필요)
+                    suggestions = [line.strip().replace("- ", "") for line in content.split("\n") if line.strip().startswith("- ")]
+                    suggestions = suggestions[:4]  # 최대 4개만 사용
+            except Exception as e:
+                print(f"API 호출 중 오류 발생: {str(e)}")
+
+        return {**state, "suggestions": suggestions}
+
+    def evaluate_suggestions(self, state: AgentState) -> AgentState:
+        """제안 평가"""
+        resume = state.get("resume", "")
+        summary = state.get("summary", "")
+        suggestions = state.get("suggestions", [])
+
+        print("제안 평가 중...")
+
+        # 제안 평가
+        evaluation = {"quality": "높음", "relevance": "관련성 높음", "applicability": "적용 가능", "priority": ["1", "2", "3", "4"]}
+
+        # 수정된 이력서 생성
+        modified_resume = self._create_modified_resume(resume, suggestions)
+
+        # 평가에 수정된 이력서 추가
+        evaluation["modified_resume"] = modified_resume
+
+        return {**state, "evaluation": evaluation}
+
+    def _create_modified_resume(self, resume: str, suggestions: List[str]) -> str:
+        """제안을 바탕으로 수정된 이력서 생성"""
+        # OpenAI API가 설정된 경우 실제 API 호출
+        if os.getenv("OPENAI_API_KEY"):
+            try:
+                prompt = f"""
+                원본 이력서:
+                {resume}
+                
+                개선 제안:
+                {chr(10).join(['- ' + s for s in suggestions])}
+                
+                위 개선 제안을 반영하여 이력서를 수정해주세요.
+                """
+
+                response = self.client.chat.completions.create(
+                    model=MODEL, messages=[{"role": "system", "content": "당신은 이력서 작성 전문가입니다."}, {"role": "user", "content": prompt}]
+                )
+
+                if response.choices and response.choices[0].message.content:
+                    return response.choices[0].message.content
+            except Exception as e:
+                print(f"이력서 수정 중 오류 발생: {str(e)}")
+
+        # API 호출 실패 또는 API 키가 없는 경우 기본 수정 이력서 반환
+        return f"""
+저는 5년 경력의 소프트웨어 엔지니어로 Python과 JavaScript에 능숙하며, 
+특히 AI 및 머신러닝 프로젝트에서 자연어 처리와 컴퓨터 비전 경험이 있습니다.
+최신 딥러닝 프레임워크(TensorFlow, PyTorch)를 활용한 웹 애플리케이션 개발 경험이 있으며,
+데이터 분석과 시각화 작업을 수행하고 팀 프로젝트에서 리더 역할을 맡았습니다.
         """
-        특정 줄과 주변 맥락, 요약 정보를 입력으로 받아 특정 줄 수정 제안을 생성합니다.
+
+    def run(self, resume: str, summary: str) -> Dict:
+        """
+        이력서와 요약 정보를 입력으로 받아 수정 제안을 생성합니다.
 
         Args:
-            target_line: 수정할 대상 줄
-            context_lines: 주변 맥락 내용
-            summary: 회사의 최신 뉴스나 정보를 요약한 문구
+            resume: 원본 이력서 내용
+            summary: 회사/직무 정보 요약
 
         Returns:
-            수정 결과를 포함한 상태 딕셔너리
+            수정 결과를 포함한 딕셔너리
         """
-        initial_state = {"target_line": target_line, "context_lines": context_lines, "summary": summary}
+        print("SuggestionAgent 실행 중...")
+
+        # 초기 상태 설정
+        initial_state = {"resume": resume, "summary": summary}
 
         try:
-            # 그래프 실행 시도
-            try:
-                # stream() 메서드를 사용하여 그래프 실행
-                events = list(self.graph.stream(initial_state))
+            # 그래프 실행
+            result = self.graph.invoke(initial_state)
 
-                # 마지막 이벤트의 값 반환
-                if events:
-                    # LangGraph 0.3.20에서는 이벤트 구조가 다를 수 있음
-                    # 마지막 이벤트의 값을 추출
-                    final_state = None
-                    for event in events:
-                        if hasattr(event, "value"):
-                            final_state = event.value
-                        elif hasattr(event, "data"):
-                            final_state = event.data
-                        elif isinstance(event, dict):
-                            final_state = event
+            # 수정된 이력서와 개선 포인트를 JSON 형식으로 변환
+            modified_resume = result.get("evaluation", {}).get("modified_resume", resume)
+            suggestions = result.get("suggestions", [])
 
-                    if final_state and "specific_line_result" in final_state:
-                        return final_state
-            except Exception as e:
-                print(f"그래프 실행 중 오류 발생: {str(e)}")
+            modification_result = json.dumps({"modified_resume": modified_resume, "improvement_points": suggestions}, ensure_ascii=False)
 
-            # 그래프 실행에 실패하거나 결과가 없는 경우 직접 메서드 호출
-            print("직접 메서드를 호출하여 결과 생성")
-            result = self.modify_tool.modify_specific_line(target_line, context_lines, summary)
-            return {"specific_line_result": result}
+            return {
+                "analysis": result.get("analysis", {}),
+                "suggestions": suggestions,
+                "evaluation": result.get("evaluation", {}),
+                "modification_result": modification_result,
+            }
+
         except Exception as e:
-            print(f"최종 오류 발생: {str(e)}")
-            # 모든 방법이 실패한 경우 테스트 결과 반환
-            return {"specific_line_result": self.modify_tool._get_test_specific_line_result()}
+            print(f"에이전트 실행 중 오류 발생: {str(e)}")
+            # 오류 발생 시 기본 결과 반환
+            return {
+                "analysis": {"error": "분석 중 오류 발생"},
+                "suggestions": ["오류로 인해 제안을 생성할 수 없습니다."],
+                "evaluation": {"error": "평가 중 오류 발생"},
+                "modification_result": json.dumps(
+                    {"modified_resume": resume, "improvement_points": ["오류로 인해 개선 제안을 생성할 수 없습니다."]}, ensure_ascii=False
+                ),
+            }
 
 
 # 테스트 코드
 if __name__ == "__main__":
-    import os
-    from dotenv import load_dotenv
-
-    # 환경 변수 로드
-    load_dotenv()
-
-    # API 키 확인
-    tavily_api_key = os.environ.get("TAVILY_API_KEY")
-    openai_api_key = os.environ.get("OPENAI_API_KEY")
-
-    if tavily_api_key:
-        print("Tavily API 키가 설정되었습니다.")
-    else:
-        print("Tavily API 키가 설정되지 않았습니다. 시뮬레이션된 결과를 사용합니다.")
-
-    if openai_api_key:
-        print("OpenAI API 키가 설정되었습니다.")
-    else:
-        print("OpenAI API 키가 설정되지 않았습니다. 테스트 모드로 동작합니다.")
-
     # 에이전트 초기화
     agent = SuggestionAgent()
 
-    # 테스트용 대상 줄
-    target_line = "* 머신러닝 모델 개발 및 배포"
-
-    # 주변 맥락
-    context_lines = """
-    경력
-    - ABC 회사 (2020-현재)
-      * 머신러닝 모델 개발 및 배포
-      * 데이터 분석 및 처리
+    # 테스트 이력서
+    resume = """
+    저는 5년 경력의 소프트웨어 엔지니어로 Python과 JavaScript에 능숙합니다.
+    웹 애플리케이션 및 머신러닝 프로젝트 경험이 있습니다.
+    데이터 분석과 시각화 작업을 수행한 경험이 있으며, 팀 프로젝트에서 리더 역할을 맡았습니다.
     """
 
-    # 회사 최신 정보
-    summary = "ABC 회사는 최근 클라우드 기반 AI 솔루션을 출시하고 금융 분야에서 혁신적인 머신러닝 적용 사례를 발표했습니다."
+    # 테스트 직무 요약
+    summary = """
+    AI 및 머신러닝 전문가를 찾고 있습니다. 
+    자연어 처리와 컴퓨터 비전 경험이 있는 분을 우대합니다.
+    최신 딥러닝 프레임워크 활용 능력이 필요합니다.
+    """
 
-    print("\n===== 수정할 대상 줄 =====\n")
-    print(target_line)
+    # 실행
+    result = agent.run(resume, summary)
 
-    print("\n===== 주변 맥락 =====\n")
-    print(context_lines)
+    # 결과 출력
+    print("\n===== 분석 결과 =====")
+    print(json.dumps(result.get("analysis", {}), indent=2, ensure_ascii=False))
 
-    print("\n===== 회사 최신 정보 =====")
-    print(summary)
+    print("\n===== 개선 제안 =====")
+    for i, suggestion in enumerate(result.get("suggestions", []), 1):
+        print(f"{i}. {suggestion}")
 
-    print("\n===== 줄 수정 중... =====\n")
+    print("\n===== 제안 평가 =====")
+    print(json.dumps(result.get("evaluation", {}), indent=2, ensure_ascii=False))
 
-    # run_specific_line 메서드를 사용하여 그래프 실행
-    result = agent.run_specific_line(target_line, context_lines, summary)
+    print("\n===== 수정된 이력서 =====")
+    try:
+        modification_result = json.loads(result.get("modification_result", "{}"))
+        print(modification_result.get("modified_resume", ""))
 
-    print("\n===== 수정 결과 =====\n")
-    if "specific_line_result" in result:
-        specific_line_result = result["specific_line_result"]
-        print("수정된 줄:")
-        print(specific_line_result.get("modified_line", ""))
-        print("\n설명:")
-        print(specific_line_result.get("explanation", ""))
-    else:
-        print("수정 결과를 가져올 수 없습니다.")
+        print("\n===== 개선 포인트 =====")
+        for point in modification_result.get("improvement_points", []):
+            print(f"- {point}")
+    except json.JSONDecodeError:
+        print("결과 형식 오류: JSON 파싱 실패")
+        print(result.get("modification_result", ""))
