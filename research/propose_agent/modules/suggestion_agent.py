@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # 모델 설정
-MODEL = "gpt-4o-mini"
+MODEL = "gpt-4.1-mini"
 
 
 # 상태 타입 정의
