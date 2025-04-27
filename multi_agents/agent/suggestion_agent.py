@@ -12,21 +12,14 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, AnyMessage
 from langgraph.graph import StateGraph, add_messages
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from states.states import State
 
 # 환경 변수 로드
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MODEL = "gpt-4.1-mini"
 
-
-@dataclass
-class State:
-    messages: Annotated[Sequence[AnyMessage], add_messages] = field(default_factory=list)
-    summary: str = field(default="")
-    user_text: str = field(default="")
-
-
-async def suggest(state: State):
+async def suggest_agent(state: State):
     """
     이력서와 요약 정보를 바탕으로 개선 제안 생성
     """
@@ -42,11 +35,12 @@ async def suggest(state: State):
 - 실질적으로 이력서에 추가하거나 개선하면 좋은 점을 구체적으로 제시하세요.
 
 [이력서]
-{state.user_text}
+{state.user_resume}
 
 [직무 요약]
-{state.summary}
+{state.company_summary}
 """
+    print(state)
     model = ChatOpenAI(model=MODEL, temperature=0, api_key=OPENAI_API_KEY)
 
     async with MultiServerMCPClient() as client:
@@ -56,25 +50,4 @@ async def suggest(state: State):
 
         response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
 
-    return {"messages": [response["messages"][-1]]}
-
-
-async def main(query: str):
-
-    builder = StateGraph(State)
-    builder.add_node("call_model", suggest)
-
-    builder.add_edge("__start__", "call_model")
-    builder.add_edge("call_model", "__end__")
-
-    graph = builder.compile()
-
-    result = await graph.ainvoke({"messages": [HumanMessage(content=query)]})
-    return result
-
-
-if __name__ == "__main__":
-    query = "The company name is Intel"
-
-    summary_result = asyncio.run(main(query))
-    print(summary_result)
+    return {"messages": [response["messages"][-1]], "agent_name": "suggestion_agent"}
