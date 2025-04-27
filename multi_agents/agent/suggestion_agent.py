@@ -1,21 +1,37 @@
+import os
+import asyncio
+
 from openai import OpenAI
+from typing_extensions import Annotated
+from dataclasses import dataclass, field
+from typing import Dict, List, cast, Annotated, Sequence
 from dotenv import load_dotenv
+
+from langgraph.prebuilt import create_react_agent
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, AnyMessage
+from langgraph.graph import StateGraph, add_messages
+from langchain_mcp_adapters.client import MultiServerMCPClient
 
 # 환경 변수 로드
 load_dotenv()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MODEL = "gpt-4.1-mini"
 
-class SuggestionAgent:
-    def __init__(self):
-        self.client = OpenAI()
 
-    def suggest(self, resume: str, summary: str):
-        """
-        이력서와 요약 정보를 바탕으로 개선 제안 생성
-        """
-        suggestions = []
-        # OpenAI API 사용
-        prompt = f"""
+@dataclass
+class State:
+    messages: Annotated[Sequence[AnyMessage], add_messages] = field(default_factory=list)
+    summary: str = field(default="")
+    user_text: str = field(default="")
+
+
+async def suggest(state: State):
+    """
+    이력서와 요약 정보를 바탕으로 개선 제안 생성
+    """
+    # OpenAI API 사용
+    system_message = f"""
 당신은 이력서 개선을 도와주는 전문가입니다.
 아래 이력서와 직무(회사) 요약 정보를 참고하여, 다음 조건에 따라 3~5개의 구체적이고 실질적인 개선 제안을 생성하세요.
 
@@ -24,40 +40,41 @@ class SuggestionAgent:
 - 이력서와 직무 요약을 모두 반영하세요.
 - 직무 요구사항에 부합하는 경험, 기술, 성과, 프로젝트, 리더십, 최신 트렌드 반영 등 다양한 관점에서 제안하세요.
 - 실질적으로 이력서에 추가하거나 개선하면 좋은 점을 구체적으로 제시하세요.
-- 제안은 번호 목록(1. 2. 3...)으로 출력하세요.
 
 [이력서]
-{resume}
+{state.user_text}
 
 [직무 요약]
-{summary}
+{state.summary}
 """
-        response = self.client.chat.completions.create(
-            model=MODEL,
-            messages=[
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": "위 조건을 반드시 지켜서 이력서 개선 제안을 작성해 주세요."},
-            ],
-        )
-        if response.choices and response.choices[0].message.content:
-            # 여러 줄 제안 분리
-            suggestions = [s.strip("-• ").strip() for s in response.choices[0].message.content.strip().split("\n") if s.strip()]
+    model = ChatOpenAI(model=MODEL, temperature=0, api_key=OPENAI_API_KEY)
 
-        return suggestions
+    async with MultiServerMCPClient() as client:
+        agent = create_react_agent(model, client.get_tools())
+
+        messages = [SystemMessage(content=system_message), *state.messages]
+
+        response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
+
+    return {"messages": [response["messages"][-1]]}
+
+
+async def main(query: str):
+
+    builder = StateGraph(State)
+    builder.add_node("call_model", suggest)
+
+    builder.add_edge("__start__", "call_model")
+    builder.add_edge("call_model", "__end__")
+
+    graph = builder.compile()
+
+    result = await graph.ainvoke({"messages": [HumanMessage(content=query)]})
+    return result
 
 
 if __name__ == "__main__":
-    agent = SuggestionAgent()
-    resume = """
-    저는 5년 경력의 소프트웨어 엔지니어로 Python과 JavaScript에 능숙합니다.
-    웹 애플리케이션 및 머신러닝 프로젝트 경험이 있습니다.
-    데이터 분석과 시각화 작업을 수행한 경험이 있으며, 팀 프로젝트에서 리더 역할을 맡았습니다.
-    """
-    summary = """
-    AI 및 머신러닝 전문가를 찾고 있습니다.
-    자연어 처리와 컴퓨터 비전 경험이 있는 분을 우대합니다.
-    최신 딥러닝 프레임워크 활용 능력이 필요합니다.
-    """
-    print("개선 제안:")
-    for idx, res in enumerate(agent.suggest(resume, summary), 1):
-        print(res)
+    query = "The company name is Intel"
+
+    summary_result = asyncio.run(main(query))
+    print(summary_result)
