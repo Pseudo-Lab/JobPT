@@ -10,10 +10,7 @@ from langgraph.graph import StateGraph, add_messages
 from typing_extensions import Annotated
 from typing import Dict, List, cast, Annotated, Sequence
 from dotenv import load_dotenv
-
-# 로깅 설정
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+from states.states import State
 
 # 환경 변수 로드
 load_dotenv()
@@ -22,12 +19,6 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY가 환경 변수에 설정되어 있지 않습니다.")
-
-@dataclass
-class State:
-    messages: Annotated[Sequence[AnyMessage], add_messages] = field(
-            default_factory=list
-    )
 
 async def call_model(
     state: State
@@ -40,17 +31,6 @@ async def call_model(
     )
 
     async with MultiServerMCPClient({
-        # "youtube-data-mcp-server": {
-        #     "command": "npx",
-        #     "args": [
-        #     "-y", 
-        #     "@smithery/cli@latest",
-        #     "run",
-        #     "@icraft2170/youtube-data-mcp-server",
-        #     "--key",
-        #     "f9a4f6dd-ddff-4eeb-8e40-49a298c7e817"
-        #     ]
-        # },
         "tavily-mcp": {
             "command": "npx",
             "args": [
@@ -59,7 +39,7 @@ async def call_model(
             "run",
             "@tavily-ai/tavily-mcp",
             "--key",
-            "f9a4f6dd-ddff-4eeb-8e40-49a298c7e817"
+            "smithery_api_key"
             ]
         }
     }) as client:
@@ -102,22 +82,22 @@ async def call_model(
         
         return {"messages": [response["messages"][-1]]}
     
-async def main(query: str):
+# async def main(query: str):
     
-    builder = StateGraph(State)
-    builder.add_node("call_model", call_model)
+#     builder = StateGraph(State)
+#     builder.add_node("call_model", call_model)
 
-    builder.add_edge("__start__", "call_model")
-    builder.add_edge("call_model", "__end__")
+#     builder.add_edge("__start__", "call_model")
+#     builder.add_edge("call_model", "__end__")
 
-    graph = builder.compile()
+#     graph = builder.compile()
     
-    result = await graph.ainvoke({"messages": [HumanMessage(content=query)]})
-    return result
+#     result = await graph.ainvoke({"messages": [HumanMessage(content=query)]})
+#     return result
 
 
-if __name__ == "__main__":
-    query = "The company name is Intel"
+# if __name__ == "__main__":
+#     query = "The company name is Intel"
 
-    summary_result = asyncio.run(main(query))
-    print(summary_result)
+#     summary_result = asyncio.run(main(query))
+#     print(summary_result)
