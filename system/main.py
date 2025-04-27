@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException
 import uvicorn
 from pydantic import BaseModel
-
 from parser import run_parser, convert_pdf_to_jpg
 from get_similarity.main import matching
 
@@ -27,10 +26,11 @@ async def run(data: Request):
     resume_content = []
     for image_path in image_paths:
         resume = run_parser(image_path)
-        resume_content.append(resume)
+        #0: resume_content(markdown), 1:coordinata per resume_content, 2: entire content(text)
+        resume_content.append(resume[0])
 
     resume_content = "".join(resume_content)
-    print(resume_content)
+    print(f"Resume content: {resume_content}")
     ### resume matching
     # sample resume load
     # resume_path = './resume_JD_similarity/data/sample_resume.txt'
