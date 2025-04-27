@@ -20,7 +20,7 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY가 환경 변수에 설정되어 있지 않습니다.")
 
-async def call_model(
+async def summary_agent(
     state: State
 ) -> Dict[str, List[AIMessage]]:
     
@@ -39,7 +39,7 @@ async def call_model(
             "run",
             "@tavily-ai/tavily-mcp",
             "--key",
-            "smithery_api_key"
+            "a6fef92b-ac50-4301-b5af-4d236f49522f"
             ]
         }
     }) as client:
@@ -79,25 +79,6 @@ async def call_model(
         ]
         
         response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
-        
-        return {"messages": [response["messages"][-1]]}
+        print(response["messages"][-1].content)
+        return {"messages": [response["messages"][-1]], "agent_name": "summary_agent", "company_summary": response["messages"][-1].content}
     
-# async def main(query: str):
-    
-#     builder = StateGraph(State)
-#     builder.add_node("call_model", call_model)
-
-#     builder.add_edge("__start__", "call_model")
-#     builder.add_edge("call_model", "__end__")
-
-#     graph = builder.compile()
-    
-#     result = await graph.ainvoke({"messages": [HumanMessage(content=query)]})
-#     return result
-
-
-# if __name__ == "__main__":
-#     query = "The company name is Intel"
-
-#     summary_result = asyncio.run(main(query))
-#     print(summary_result)

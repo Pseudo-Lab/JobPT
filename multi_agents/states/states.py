@@ -11,3 +11,5 @@ class State:
     agent_name: str = field(default="")
     job_description: str = field(default="")
     resume: str = field(default="")
+    company_summary: str = field(default="")
+    user_resume: str = field(default="")
