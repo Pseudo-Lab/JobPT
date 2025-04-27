@@ -39,7 +39,7 @@ async def summary_agent(
             "run",
             "@tavily-ai/tavily-mcp",
             "--key",
-            "a6fef92b-ac50-4301-b5af-4d236f49522f"
+            os.getenv("SMITHERY_API_KEY")
             ]
         }
     }) as client:
