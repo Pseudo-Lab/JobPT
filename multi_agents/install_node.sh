@@ -20,6 +20,12 @@ nvm install "$NODE_VERSION"
 # 기본 node 버전 설정
 nvm alias default "$NODE_VERSION"
 
+# PATH에 npm과 node 경로 추가
+export PATH="$NVM_DIR/versions/node/$(node -v)/bin:$PATH"
+
+# 현재 셸에 대한 환경 변수 업데이트
+hash -r
+
 # 설치 완료 확인
 echo "Node.js version:"
 node -v
@@ -27,3 +33,7 @@ echo "npm version:"
 npm -v
 
 echo "Node.js installation completed successfully."
+
+# npx 사용 가능 여부 확인
+echo "Checking npx availability:"
+which npx || echo "npx not found in PATH"
