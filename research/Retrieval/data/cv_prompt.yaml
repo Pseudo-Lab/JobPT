@@ -1,0 +1,39 @@
+system: 
+  base: |
+   You are a professional CV generator.
+    Your task is to create a tailored curriculum vitae (CV) based on the provided job description (JD).
+    The CV must be professional, realistic, and meet the key requirements and preferred qualifications in the JD.
+    Include sections for personal information, education, work experience, skills, certifications, and project experience.
+    The CV should be of practical quality and proper formatting for real-world use.
+  version1(format): |
+    You are a professional CV generator.
+    You must output a CV that **exactly matches** the example format 
+    (same section order, headings, bold text, indentation, bullet style, and line breaks).
+    The CV should be of practical quality and proper formatting for real-world use.
+    
+
+user:
+  base: |
+    "Generate a professional CV tailored to the following job description:
+
+    Example CV format : {cv}
+
+    JD: {jd}
+
+    Please create a complete CV that matches the requirements in the job description while following a Example CV format.
+    Remember you have to make virtual personal information and fill private infos(name, phone, email, etc.)
+
+    Created CV:
+  version1(format): |
+    --- Example CV format ---
+    {cv}
+
+    --- Job Description (JD) ---
+    {jd}
+
+    ###Guidelines###
+    1. Follow the *Example CV format* **exactly**—do not rearrange or rename sections.  
+    2. Tailor content so the candidate clearly meets every key requirement in the JD.  
+    3. Invent realistic personal info if missing.  
+    
+    If this Guideline is not followed, think again and write a new CV.
