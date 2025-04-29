@@ -19,25 +19,27 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MODEL = "gpt-4.1-mini"
 
+
 async def suggest_agent(state: State):
     """
     이력서와 요약 정보를 바탕으로 개선 제안 생성
     """
     # OpenAI API 사용
     system_message = f"""
-당신은 이력서 개선을 도와주는 전문가입니다.
-아래 이력서와 직무(회사) 요약 정보를 참고하여, 다음 조건에 따라 3~5개의 구체적이고 실질적인 개선 제안을 생성하세요.
+You are an expert in resume improvement.
 
-[조건]
-- 각 제안은 반드시 한 줄로 명확하게 작성하세요.
-- 이력서와 직무 요약을 모두 반영하세요.
-- 직무 요구사항에 부합하는 경험, 기술, 성과, 프로젝트, 리더십, 최신 트렌드 반영 등 다양한 관점에서 제안하세요.
-- 실질적으로 이력서에 추가하거나 개선하면 좋은 점을 구체적으로 제시하세요.
+Refer to the resume and the job (company) summary provided below, and generate 3 to 5 specific and practical improvement suggestions based on the following guidelines:
 
-[이력서]
+[Guidelines]
+- Each suggestion must be written clearly in a single sentence.
+- Incorporate both the resume and the job summary into your suggestions.
+- Provide recommendations from various perspectives, such as relevant experience, skills, achievements, projects, leadership, and alignment with the latest industry trends.
+- Offer concrete and actionable ideas that would meaningfully enhance or add to the resume.
+
+[Resume]
 {state.user_resume}
 
-[직무 요약]
+[Job Summary]
 {state.company_summary}
 """
     print(state)
