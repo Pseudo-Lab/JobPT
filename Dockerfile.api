@@ -1,0 +1,46 @@
+# Python 3.11 이미지 기반
+FROM python:3.11
+
+# 작업 디렉터리 설정
+WORKDIR /app
+
+# 필요한 시스템 패키지 설치
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    python3-dev \
+    libclang-dev \
+    clang \
+    pkg-config \
+    libffi-dev \
+    libssl-dev \
+    zlib1g-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# pip 업그레이드
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install numpy
+
+# 의존성 파일 복사 및 설치 (단계적으로 설치)
+COPY system/requirements.txt .
+RUN mkdir -p /app/static
+# 나머지 패키지 설치
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 설치 확인
+RUN python -c "import fitz; print('PyMuPDF successfully installed')"
+
+# system 폴더만 복사 (OmniParser_v1 폴더는 이미 존재한다고 가정)
+COPY system/ /app/system/
+COPY data/ /app/data/
+
+
+
+
+# API 서버 실행 (insert_chunks.py도 함께 실행)
+CMD ["sh", "-c", "python system/insert_chunks.py && python system/main.py"]

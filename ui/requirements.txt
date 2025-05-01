@@ -1,0 +1,14 @@
+numpy
+PyMuPDF==1.25.1
+fastapi
+pillow
+gradio
+dill
+timm
+pytesseract
+supervision==0.18.0
+ultralytics==8.1.24
+einops==0.8.0
+frontend
+python-docx
+markdown2

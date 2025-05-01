@@ -8,6 +8,7 @@ resume_JD_similarity/data/**
 *.png
 *.DS_Store*
 **OmniParser_v1.zip**
+**OmniParser_v1**
 **chroma_db**
 **__pycache__**
 **weights**

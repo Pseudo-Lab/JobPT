@@ -1,0 +1,35 @@
+# Python 3.11 이미지 기반 (slim 대신 더 안정적인 기본 이미지 사용)
+FROM python:3.11
+
+# 작업 디렉터리 설정
+WORKDIR /app
+
+# 필요한 시스템 패키지 설치
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    build-essential \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# pip 업그레이드
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# 의존성 파일 복사 및 설치 (단계적으로 설치)
+COPY ui/requirements.txt .
+
+RUN mkdir -p /app/static
+# 나머지 패키지 설치
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 설치 확인
+RUN python -c "import fitz; print('PyMuPDF successfully installed')"
+
+# ui 폴더만 복사
+COPY ui/ /app/ui/
+COPY data/ /app/data/
+
+
+# Gradio 앱 실행
+CMD ["python", "ui/gradioapp.py"]

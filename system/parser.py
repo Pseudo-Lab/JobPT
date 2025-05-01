@@ -1,21 +1,15 @@
 import numpy as np
 import torch
-import logging
-import json
 import os
 import re
 from datetime import datetime
 from pathlib import Path
+from configs import UPSTAGE_API_KEY
+import requests
 
-import pdfplumber
 from pdf2image import convert_from_path
-import pytesseract
 
-import cv2
 import fitz  # PyMuPDF
-
-import spacy
-from transformers import pipeline
 
 print(np.__version__)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -34,10 +28,10 @@ import base64
 import os
 import matplotlib.pyplot as plt
 
-from OmniParser_v1.utils import check_ocr_box, get_yolo_model, get_caption_model_processor, get_som_labeled_img
+# from OmniParser_v1.utils import check_ocr_box, get_yolo_model, get_caption_model_processor, get_som_labeled_img
 
-yolo_model = get_yolo_model(model_path="system/OmniParser_v1/weights/icon_detect/best.pt")
-caption_model_processor = get_caption_model_processor(model_name="florence2", model_name_or_path="system/OmniParser_v1/weights/icon_caption_florence")
+# yolo_model = get_yolo_model(model_path="system/OmniParser_v1/weights/icon_detect/best.pt")
+# caption_model_processor = get_caption_model_processor(model_name="florence2", model_name_or_path="system/OmniParser_v1/weights/icon_caption_florence")
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -110,74 +104,95 @@ def convert_pdf_to_jpg(pdf_path, output_folder):
         print(f"에러가 발생했습니다: {str(e)}")
 
 
+# def run_parser(image_path):
+#     print("image_path")
+#     print(image_path)
+#     box_threshold = 0.05
+#     iou_threshold = 0.1
+#     use_paddleocr = True
+#     imgsz = 640
+
+#     # image_path = "../data/sample_page_2.jpg"
+#     image_input = Image.open(image_path).convert("RGB")
+
+#     output_image, parsed_content = process(image_input, box_threshold, iou_threshold, use_paddleocr, imgsz)
+
+#     print("Parsed Screen Elements:")
+#     print(parsed_content)
+
+#     # plt.figure(figsize=(10, 10))
+#     # plt.imshow(output_image)
+#     # plt.axis("off")
+#     # plt.show()
+
+#     print("현재 위치:", os.getcwd())
+
+#     # if str(os.getcwd()[-10:]) == "OmniParser":
+#     #     os.chdir("..")
+#     #     print("변경된 위치:", os.getcwd())
+
+#     lines = parsed_content.split("\n")
+
+#     texts = []
+#     for line in lines:
+#         if ":" in line:
+#             text = line.split(":", 1)[1].strip()
+#             texts.append(text)
+
+#     processed_texts = []
+#     i = 0
+#     while i < len(texts):
+#         text = texts[i]
+#         if text.endswith("-"):
+#             text = text[:-1]
+#             if i + 1 < len(texts):
+#                 text += texts[i + 1]
+#                 i += 1
+#         processed_texts.append(text)
+#         i += 1
+
+#     combined_text = " ".join(processed_texts)
+
+#     sentence_endings = re.compile(r"(?<=[.!?]) +")
+#     sentences = sentence_endings.split(combined_text)
+
+#     paragraphs = []
+#     current_paragraph = ""
+#     for sentence in sentences:
+#         headings = ["Education", "Publications", "Honors", "Relevant Courses", "GPA", "Advisor", "Minor", "Email", "Research Advisor"]
+#         if any(heading in sentence for heading in headings):
+#             if current_paragraph:
+#                 paragraphs.append(current_paragraph.strip())
+#             current_paragraph = sentence.strip() + " "
+#         else:
+#             current_paragraph += sentence.strip() + " "
+
+#     if current_paragraph:
+#         paragraphs.append(current_paragraph.strip())
+
+#     for para in paragraphs:
+#         print(para)
+#         print("\n")
+
+#     return "\n".join(paragraphs)
+
 def run_parser(image_path):
-    print("image_path")
-    print(image_path)
-    box_threshold = 0.05
-    iou_threshold = 0.1
-    use_paddleocr = True
-    imgsz = 640
+    api_key = UPSTAGE_API_KEY  # ex: up_xxxYYYzzzAAAbbbCCC
+    filename = image_path  # ex: ./image.png
+    
+    url = "https://api.upstage.ai/v1/document-digitization"
+    headers = {"Authorization": f"Bearer {api_key}"}
+    files = {"document": open(filename, "rb")}
+    data = {"ocr": "force", "base64_encoding": "['table']", "model": "document-parse",
+            "output_formats":"['markdown', 'text']"}
+    response = requests.post(url, headers=headers, files=files, data=data)
+    coordinates=[]
+    contents=[]
 
-    # image_path = "../data/sample_page_2.jpg"
-    image_input = Image.open(image_path).convert("RGB")
+    for i in response.json()['elements']:
+        coordinates.append(i['coordinates'])
+        contents.append(i['content']['markdown'])
+    full_contents = response.json()['content']['text']
+    contents = "\n".join(contents)
+    return contents, coordinates, full_contents
 
-    output_image, parsed_content = process(image_input, box_threshold, iou_threshold, use_paddleocr, imgsz)
-
-    print("Parsed Screen Elements:")
-    print(parsed_content)
-
-    # plt.figure(figsize=(10, 10))
-    # plt.imshow(output_image)
-    # plt.axis("off")
-    # plt.show()
-
-    print("현재 위치:", os.getcwd())
-
-    # if str(os.getcwd()[-10:]) == "OmniParser":
-    #     os.chdir("..")
-    #     print("변경된 위치:", os.getcwd())
-
-    lines = parsed_content.split("\n")
-
-    texts = []
-    for line in lines:
-        if ":" in line:
-            text = line.split(":", 1)[1].strip()
-            texts.append(text)
-
-    processed_texts = []
-    i = 0
-    while i < len(texts):
-        text = texts[i]
-        if text.endswith("-"):
-            text = text[:-1]
-            if i + 1 < len(texts):
-                text += texts[i + 1]
-                i += 1
-        processed_texts.append(text)
-        i += 1
-
-    combined_text = " ".join(processed_texts)
-
-    sentence_endings = re.compile(r"(?<=[.!?]) +")
-    sentences = sentence_endings.split(combined_text)
-
-    paragraphs = []
-    current_paragraph = ""
-    for sentence in sentences:
-        headings = ["Education", "Publications", "Honors", "Relevant Courses", "GPA", "Advisor", "Minor", "Email", "Research Advisor"]
-        if any(heading in sentence for heading in headings):
-            if current_paragraph:
-                paragraphs.append(current_paragraph.strip())
-            current_paragraph = sentence.strip() + " "
-        else:
-            current_paragraph += sentence.strip() + " "
-
-    if current_paragraph:
-        paragraphs.append(current_paragraph.strip())
-
-    for para in paragraphs:
-        print(para)
-        print("\n")
-
-    return "\n".join(paragraphs)
