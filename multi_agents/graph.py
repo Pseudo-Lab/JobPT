@@ -20,64 +20,83 @@ async def create_graph():
 
     # Supervisor가 유저 입력 보고 결정
     def route_supervisor(state: State):
-        # supervisor가 반환한 마지막 메시지에서 'sequence' 값을 추출
         import json
 
         msg = state.messages[-1].content
         try:
-            # JSON 파싱 시도 (예: {"sequence": "summary"})
             if isinstance(msg, str) and msg.strip().startswith("{"):
                 seq = json.loads(msg).get("sequence", "")
             else:
                 seq = msg
         except Exception:
             seq = msg
-        # 만약 분기 조건에 없는 값이면 "END"로 fallback
         if seq not in {"summary", "suggestion", "summary_suggestion", "END"}:
             seq = "END"
-        state.route_decision = seq  # state에 저장(필수)
+        state.route_decision = seq
         return seq
 
-    # Supervisor 분기
     builder.add_conditional_edges(
         source="supervisor",
         path=route_supervisor,
         path_map={
             "summary": "summary_agent",
             "suggestion": "suggestion_agent",
-            "summary_suggestion": "summary_agent",  # 일단 summary로 가고, summary 끝나면 suggestion으로
-            "END": "__end__",
+            "summary_suggestion": "summary_agent",
+            "END": "refine_answer",  # END도 refine_answer로
         },
     )
 
-    # summary_agent 끝나고 next
     def route_after_summary(state: State):
         if state.route_decision == "summary_suggestion":
             return "suggestion_agent"
         else:
-            return "__end__"
+            return "refine_answer"
 
     builder.add_conditional_edges(
         source="summary_agent",
         path=route_after_summary,
         path_map={
             "suggestion_agent": "suggestion_agent",
-            "__end__": "__end__",
+            "refine_answer": "refine_answer",
         },
     )
 
-    # Compile
-    graph = builder.compile()
+    # suggestion_agent 끝나고 refine_answer로
+    builder.add_edge("suggestion_agent", "refine_answer")
+    # refine_answer 끝나고 항상 종료
+    builder.add_edge("refine_answer", "__end__")
 
-    return graph
+    return builder.compile()
 
 
 async def main():
     graph = await create_graph()
-    query = "The company name is Intel"
-
-    result = await graph.ainvoke({"messages": [HumanMessage(content=query)]})
-    print(result)
+    test_cases = [
+        {"desc": "END", "messages": "Hi", "user_resume": ""},
+        {
+            "desc": "summary",
+            "messages": "Summary this company",
+            "user_resume": "Acme Corp is a global leader in financial technology, providing innovative payment solutions and digital banking platforms to millions of users worldwide. Founded in 2001, Acme has offices in 20 countries and is recognized for its strong commitment to security and customer service.",
+            "job_description": ""
+        },
+        {
+            "desc": "summary_suggestion",
+            "messages": "Suggest this resume with company information",
+            "user_resume": "Experienced software engineer with a demonstrated history of working in the fintech industry. Skilled in Python, machine learning, and cloud infrastructure. Passionate about building scalable solutions.",
+        },
+        {
+            "desc": "suggestion",
+            "messages": "Suggest this resume",
+            "user_resume": "Creative marketing specialist with 5+ years of experience in digital campaigns, brand strategy, and content creation. Proven track record of increasing engagement and conversion rates.",
+        },
+    ]
+    for case in test_cases:
+        print(f"\n==== {case['desc']} CASE ====")
+        state = {"messages": case["messages"], "user_resume": case["user_resume"]}
+        result = await graph.ainvoke(state)
+        print(result)
+        if "messages" in result and len(result["messages"]) > 0:
+            print(" -", result["messages"][-1].content)
 
 
 if __name__ == "__main__":
