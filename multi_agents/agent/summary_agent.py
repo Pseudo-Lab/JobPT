@@ -25,11 +25,7 @@ async def summary_agent(state: State) -> Dict[str, List[AIMessage]]:
 
     model = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=OPENAI_API_KEY)
 
-    async with MultiServerMCPClient(
-        {
-            "tavily-mcp": {}
-        }
-    ) as client:
+    async with MultiServerMCPClient({"tavily-mcp": {}}) as client:
         agent = create_react_agent(model, client.get_tools())
 
         system_message = """You are an assistant specialized in gathering and summarizing company-related information. 
