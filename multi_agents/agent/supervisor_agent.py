@@ -12,6 +12,7 @@ from typing import Dict, List, cast, Annotated, Sequence
 from states.states import State
 import os
 import json
+import re
 
 load_dotenv()
 MODEL = "gpt-4.1-mini"
@@ -64,9 +65,9 @@ Example each output:
         response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
 
         result = response["messages"][-1].content
-        import re
 
         result = re.sub(r"(\w+):", r'"\1":', result)
+        state.route_decision = json.loads(result).get("sequence")
         response["messages"][-1].content = json.loads(result).get("sequence")
         return {"messages": [response["messages"][-1]]}
 
