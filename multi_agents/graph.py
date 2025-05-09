@@ -1,4 +1,4 @@
-from states.states import State
+from states.states import State, get_session_state, end_session
 from agent.summary_agent import summary_agent
 from agent.suggestion_agent import suggest_agent
 from agent.supervisor_agent import router, refine_answer
@@ -182,6 +182,7 @@ Technical Skills
             """,
             "resume": base_resume,
             "job_description": jd,
+            "company_summary": "",
         },
         {
             "messages": "병렬환경(GPU 등), 대규모 분산 환경 관련 경험 강조",
@@ -272,10 +273,18 @@ Technical Skills
         print(f"유저 질문: {case['messages']}")
         print(f"유저 선택 부분: {case['user_resume']}")
 
-        state = {"messages": case["messages"], "user_resume": case["user_resume"]}
+        state = {
+            "messages": case["messages"],
+            "user_resume": case["user_resume"],
+            "job_description": case["job_description"],
+            "company_summary": case["company_summary"],
+            "resume": case["resume"],
+        }
         result = await graph.ainvoke(state)
         print("최종 답변")
         print(result["messages"][-1].content)
+        print()
+        print("========================================")
 
 
 if __name__ == "__main__":

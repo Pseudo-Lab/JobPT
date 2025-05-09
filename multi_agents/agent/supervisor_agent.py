@@ -57,7 +57,7 @@ Example each output:
     sequence: "suggestion"
 }}
 """
-        system_message = system_message.format(user_input=state.messages[-1].content, user_resume=state.user_resume)
+        system_message = system_message.format(user_input=state.messages, user_resume=state.user_resume)
 
         messages = [SystemMessage(content=system_message), *state.messages]
 
@@ -94,41 +94,3 @@ If the assistant's reply is already clear and appropriate, return it unchanged.
 
         response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
         return {"messages": [response["messages"][-1]]}
-
-
-# # supervisor 실행 예시
-# def supervisor_run(message):
-#     supervisor = SupervisorAgent()
-#     user_input = message["user_input"]
-#     user_text = message["user_text"]
-#     # 1. route로 시퀀스 결정
-#     sequence = supervisor.route(state)
-#     print(sequence)
-
-#     state = defaultdict(str)  # agent_outputs를 담을 state
-#     # 2. 각 agent 실행 결과를 state에 저장
-#     for agent_type in sequence:
-#         if agent_type == "END":
-#             break
-
-#         # ==================== 실제 Agent 실행 시작 =======================
-
-#         # ==================== 실제 Agent 실행 종료 =======================
-
-#         output = f"{agent_type} 실행 결과"  # 실제로는 해당 agent 함수 호출
-#         state[agent_type] = output
-#     # 3. refine_answer 호출 (state를 agent_outputs로 전달)
-#     final_answer = supervisor.refine_answer(user_input, state)
-#     return final_answer
-
-
-# if __name__ == "__main__":
-#     # message 예시
-#     messages = [
-#         {"user_input": "내 이력서에 대한 구체적인 개선점을 알려줘.", "user_text": ""},
-#         {"user_input": "내 이력서에 대해 관련한 회사 정보와 함께 추가될 내용을 추천해줘.", "user_text": ""},
-#         {"user_input": "안녕하세요", "user_text": ""},
-#     ]
-#     for message in messages:
-#         result = supervisor_run(message)
-#         print(result)

@@ -68,6 +68,4 @@ Your task is to revise the **Selected Resume** section to improve clarity, impac
         messages = [SystemMessage(content=system_message), *state.messages]
 
         response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
-    print("수정 제안 답변")
-    print(response["messages"][-1].content)
     return {"messages": [response["messages"][-1]], "agent_name": "suggestion_agent"}
