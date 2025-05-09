@@ -57,9 +57,6 @@ Example each output:
     sequence: "suggestion"
 }}
 """
-        print("==============test================")
-        print(state.messages)
-        print(state.user_resume)
         system_message = system_message.format(user_input=state.messages[-1].content, user_resume=state.user_resume)
 
         messages = [SystemMessage(content=system_message), *state.messages]
@@ -80,15 +77,22 @@ async def refine_answer(state: State):
     async with MultiServerMCPClient() as client:
         agent = create_react_agent(model, client.get_tools())
         system_message = f"""
-Below are the user input and the results from each agent.
-User Input: {state.messages[0].content}
-Agent Outputs: {state.messages[-1].content}
-Based on all the provided information, write a response that is concise, clear, and focuses only on the key points for the user.
+You are an assistant helping to finalize a user-facing response.
+
+Below are the original user input and the assistant's draft reply:
+- User Input: {state.messages[0].content}
+- Assistant Draft Response: {state.messages[-1].content}
+
+Your task is to **lightly polish the draft** without changing its meaning, tone, or structure. Keep all key details intact. 
+Focus only on improving clarity, grammar, or flow if necessary.
+
+Do NOT remove important information or rephrase in a way that could alter the intent.
+
+If the assistant's reply is already clear and appropriate, return it unchanged.
 """
         messages = [SystemMessage(content=system_message), *state.messages]
 
         response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
-
         return {"messages": [response["messages"][-1]]}
 
 
