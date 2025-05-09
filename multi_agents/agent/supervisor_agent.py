@@ -9,6 +9,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, AnyM
 from langgraph.graph import StateGraph, add_messages
 from typing_extensions import Annotated
 from typing import Dict, List, cast, Annotated, Sequence
+from states.states import State
 import os
 import json
 
@@ -19,14 +20,6 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI()
 
 
-@dataclass
-class State:
-    messages: Annotated[Sequence[AnyMessage], add_messages] = field(default_factory=list)
-    user_input: str = field(default="")
-    user_text: str = field(default="")
-    agent_outputs: str = field(default="")
-
-
 async def router(state: State):
     model = ChatOpenAI(model=MODEL, temperature=0, api_key=OPENAI_API_KEY)
 
@@ -35,7 +28,7 @@ async def router(state: State):
 
         system_message = """
 user_input: {user_input}
-user_text: {user_text}
+user_resume: {user_resume}
 ---
 This system uses a Summary Agent and a Suggestion Agent to help improve resumes.
 
@@ -44,33 +37,40 @@ Suggestion Agent: Based on the user's specified part of the resume and the summa
 
 Please select one of the following agent execution sequences and output it in a single line (choose exactly one of the options below):
 
-1. END: When the input is a simple question that does not require the Summary or Suggestion Agents, or when user_text is empty.
+1. END: When the input is a simple question that does not require the Summary or Suggestion Agents, or when user_resume is empty.
 2. summary: When only the Summary Agent is needed.
 3. summary_suggestion: When the user wants to improve their resume using both the Summary and Suggestion Agents.
 4. suggestion: When only the Suggestion Agent is needed, without requiring company summary information.
 
 For each request, output the result in JSON format.
-Example output:
+Example each output:
 {{
     sequence: "END"
 }}
+{{
+    sequence: "summary"
+}}
+{{
+    sequence: "summary_suggestion"
+}}
+{{
+    sequence: "suggestion"
+}}
 """
-        system_message = system_message.format(user_input=state.user_input, user_text=state.user_text)
+        print("==============test================")
+        print(state.messages)
+        print(state.user_resume)
+        system_message = system_message.format(user_input=state.messages[-1].content, user_resume=state.user_resume)
 
         messages = [SystemMessage(content=system_message), *state.messages]
 
         response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
-        print(response)
 
         result = response["messages"][-1].content
-        print("test")
-        print(result)
         import re
 
         result = re.sub(r"(\w+):", r'"\1":', result)
-        print("test2")
         response["messages"][-1].content = json.loads(result).get("sequence")
-        print(response)
         return {"messages": [response["messages"][-1]]}
 
 
@@ -81,8 +81,8 @@ async def refine_answer(state: State):
         agent = create_react_agent(model, client.get_tools())
         system_message = f"""
 Below are the user input and the results from each agent.
-User Input: {state.user_input}
-Agent Outputs: {state.agent_outputs}
+User Input: {state.messages[0].content}
+Agent Outputs: {state.messages[-1].content}
 Based on all the provided information, write a response that is concise, clear, and focuses only on the key points for the user.
 """
         messages = [SystemMessage(content=system_message), *state.messages]

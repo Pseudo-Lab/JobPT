@@ -16,19 +16,10 @@ from states.states import State
 load_dotenv()
 
 # API 키 확인
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY가 환경 변수에 설정되어 있지 않습니다.")
 
-async def summary_agent(
-    state: State
-) -> Dict[str, List[AIMessage]]:
-    
-    model = ChatOpenAI(
-        model="gpt-4o-mini",  
-        temperature=0,
-        api_key=OPENAI_API_KEY
-    )
 
     async with MultiServerMCPClient({
         "tavily-mcp": {
@@ -42,9 +33,9 @@ async def summary_agent(
             os.getenv("SMITHERY_API_KEY")
             ]
         }
-    }) as client:
+    ) as client:
         agent = create_react_agent(model, client.get_tools())
-        
+
         system_message = """You are an assistant specialized in gathering and summarizing company-related information. 
         Given a company name as input, your task is to search the web and relevant platforms (including news articles, company websites, blogs, and YouTube) to collect and summarize key insights about the company.
 
@@ -73,12 +64,8 @@ async def summary_agent(
         Use available tools such as web search and YouTube search to find the most relevant and up-to-date information.
         """
 
-        messages = [
-            SystemMessage(content=system_message),
-            *state.messages
-        ]
-        
+        messages = [SystemMessage(content=system_message), *state.messages]
+
         response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
         print(response["messages"][-1].content)
         return {"messages": [response["messages"][-1]], "agent_name": "summary_agent", "company_summary": response["messages"][-1].content}
-    
