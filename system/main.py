@@ -12,6 +12,9 @@ from get_similarity.main import matching
 from openai import OpenAI
 import uvicorn
 
+from multiturn.states.states import get_session_state, end_session, add_user_input_to_state, add_assistant_response_to_state
+from multiturn.graph import create_graph
+
 # 캐시 저장소
 resume_cache = {}
 analysis_cache = {}
@@ -35,13 +38,9 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # /upload - 파일 업로드 및 경로 반환
 from fastapi import Form
 
+
 @app.post("/upload")
-async def upload_resume(
-    file: UploadFile = File(...),
-    location: str = Form(""),
-    remote: str = Form("any"),
-    job_type: str = Form("any")
-):
+async def upload_resume(file: UploadFile = File(...), location: str = Form(""), remote: str = Form("any"), job_type: str = Form("any")):
     try:
         file_ext = os.path.splitext(file.filename)[-1]
         file_id = f"{uuid.uuid4()}{file_ext}"
@@ -72,8 +71,7 @@ async def run(data: Request):
     resume_content = []
     for image_path in image_paths:
         resume = run_parser(image_path)
-        resume_content.append(resume[0]) 
-
+        resume_content.append(resume[0])
 
     resume_content_text = "".join(resume_content)
 
@@ -83,20 +81,10 @@ async def run(data: Request):
 
     res, job_description, job_url, c_name = matching(resume_content_text)
 
-    analysis_cache[resume_path] = {
-        "output": res,
-        "JD": job_description,
-        "JD_url": job_url,
-        "name": c_name
-    }
+    analysis_cache[resume_path] = {"output": res, "JD": job_description, "JD_url": job_url, "name": c_name}
     print(f"분석 결과가 캐시에 저장됨: {resume_path}")
 
-    return {
-        "JD": job_description,
-        "JD_url": job_url,
-        "output": res,
-        "name": c_name
-    }
+    return {"JD": job_description, "JD_url": job_url, "output": res, "name": c_name}
 
 
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답
@@ -107,7 +95,36 @@ class ChatRequest(BaseModel):
     jd: Optional[str] = None
 
 
+langfuse_handler = CallbackHandler(
+    public_key="pk-lf-ce2e725b-703f-450c-a734-1b8a9274b9e1", secret_key="sk-lf-f2495882-bceb-4b46-ac59-65da8dd8b251", host="https://cloud.langfuse.com"
+)
+
+
 @app.post("/chat")
+async def chat(request: Request):
+    data = await request.json()
+    session_id = data["session_id"]
+    user_input = data["messages"]
+
+    state = get_session_state(
+        session_id,
+        agent_name=data.get("agent_name", ""),
+        job_description=data.get("job_description", ""),
+        resume=data.get("resume", ""),
+        company_summary=data.get("company_summary", ""),
+        user_resume=data.get("user_resume", ""),
+        route_decision=data.get("route_decision", ""),
+    )
+    add_user_input_to_state(state, user_input)
+    graph = await create_graph()
+    # result = await graph.ainvoke(state, config={"callbacks": [langfuse_handler]})
+    result = await graph.ainvoke(state)
+    answer = result["messages"][-1].content
+    add_assistant_response_to_state(state, answer)
+    return JSONResponse({"answer": answer, "session_id": session_id})
+
+
+@app.post("/mock_chat")
 async def chat(request_data: dict = Body(...)):
     message = request_data.get("message", "")
     resume_path = request_data.get("resume_path", "")
@@ -169,10 +186,7 @@ async def chat(request_data: dict = Body(...)):
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ],
+            messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
             max_tokens=800,
             temperature=0.7,
         )
@@ -186,10 +200,12 @@ async def chat(request_data: dict = Body(...)):
 from ats_analyzer_improved import ATSAnalyzer
 from fastapi.responses import JSONResponse
 
+
 class EvaluateRequest(BaseModel):
     resume_path: str
     jd_text: str
     model: int = 1
+
 
 @app.post("/evaluate")
 async def evaluate(request: EvaluateRequest):
@@ -203,6 +219,7 @@ async def evaluate(request: EvaluateRequest):
     except Exception as e:
         print(f"ATS 분석 오류: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # 개발용 실행 명령
 if __name__ == "__main__":
