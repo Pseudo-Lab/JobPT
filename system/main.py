@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Body
+from fastapi import FastAPI, UploadFile, File, HTTPException, Body, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -12,8 +12,8 @@ from get_similarity.main import matching
 from openai import OpenAI
 import uvicorn
 
-from multiturn.states.states import get_session_state, end_session, add_user_input_to_state, add_assistant_response_to_state
-from multiturn.graph import create_graph
+from multi_agents.states.states import get_session_state, end_session, add_user_input_to_state, add_assistant_response_to_state
+from multi_agents.graph import create_graph
 
 # 캐시 저장소
 resume_cache = {}
@@ -58,12 +58,12 @@ async def upload_resume(file: UploadFile = File(...), location: str = Form(""), 
 
 
 # /matching - 이력서 분석 및 JD 매칭
-class Request(BaseModel):
+class MatchRequest(BaseModel):
     resume_path: str
 
 
 @app.post("/matching")
-async def run(data: Request):
+async def run(data: MatchRequest):
     resume_path = data.resume_path
     output_folder = "data"
 
@@ -95,6 +95,9 @@ class ChatRequest(BaseModel):
     jd: Optional[str] = None
 
 
+from langfuse import Langfuse
+from langfuse.callback import CallbackHandler
+
 langfuse_handler = CallbackHandler(
     public_key="pk-lf-ce2e725b-703f-450c-a734-1b8a9274b9e1", secret_key="sk-lf-f2495882-bceb-4b46-ac59-65da8dd8b251", host="https://cloud.langfuse.com"
 )
@@ -113,12 +116,10 @@ async def chat(request: Request):
         resume=data.get("resume", ""),
         company_summary=data.get("company_summary", ""),
         user_resume=data.get("user_resume", ""),
-        route_decision=data.get("route_decision", ""),
     )
     add_user_input_to_state(state, user_input)
     graph = await create_graph()
-    # result = await graph.ainvoke(state, config={"callbacks": [langfuse_handler]})
-    result = await graph.ainvoke(state)
+    result = await graph.ainvoke(state, config={"callbacks": [langfuse_handler]})
     answer = result["messages"][-1].content
     add_assistant_response_to_state(state, answer)
     return JSONResponse({"answer": answer, "session_id": session_id})
