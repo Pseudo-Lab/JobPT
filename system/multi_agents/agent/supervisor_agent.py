@@ -6,12 +6,10 @@ from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, AnyMessage
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import PromptTemplate
 from langgraph.graph import StateGraph, add_messages
 from typing_extensions import Annotated
 from typing import Dict, List, cast, Annotated, Sequence
-from states.states import State
+from multi_agents.states.states import State
 import os
 import json
 import re
@@ -46,6 +44,7 @@ Please select one of the following agent execution sequences and output it in a 
 4. suggestion: When only the Suggestion Agent is needed, without requiring company summary information.
 
 For each request, output the result in JSON format.
+Only return key of 'sequence', don't return any other key.
 Example each output:
 {{
     sequence: "END"
@@ -67,7 +66,8 @@ Example each output:
         response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
 
         result = response["messages"][-1].content
-
+        print("=============router=============")
+        print(result)
         result = re.sub(r"(\w+):", r'"\1":', result)
         state.route_decision = json.loads(result).get("sequence")
         response["messages"][-1].content = json.loads(result).get("sequence")
