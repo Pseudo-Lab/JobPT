@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import uvicorn
+import os
 
 from states.states import get_session_state, end_session, add_user_input_to_state, add_assistant_response_to_state
 from graph import create_graph
@@ -10,15 +11,11 @@ app = FastAPI()
 from langfuse import Langfuse
 from langfuse.callback import CallbackHandler
 
-# langfuse = Langfuse(
-#     secret_key="sk-lf-f2495882-bceb-4b46-ac59-65da8dd8b251", public_key="pk-lf-ce2e725b-703f-450c-a734-1b8a9274b9e1", host="https://cloud.langfuse.com"
-# )
-
-
 langfuse_handler = CallbackHandler(
-    public_key="pk-lf-ce2e725b-703f-450c-a734-1b8a9274b9e1", secret_key="sk-lf-f2495882-bceb-4b46-ac59-65da8dd8b251", host="https://cloud.langfuse.com"
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"), 
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY"), 
+    host="https://cloud.langfuse.com"
 )
-
 
 @app.post("/chat")
 async def chat(request: Request):

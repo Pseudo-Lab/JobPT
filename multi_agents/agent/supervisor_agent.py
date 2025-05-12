@@ -6,6 +6,8 @@ from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, AnyMessage
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
 from langgraph.graph import StateGraph, add_messages
 from typing_extensions import Annotated
 from typing import Dict, List, cast, Annotated, Sequence
@@ -71,18 +73,15 @@ Example each output:
         response["messages"][-1].content = json.loads(result).get("sequence")
         return {"messages": [response["messages"][-1]]}
 
-
-async def refine_answer(state: State):
+def refine_answer(state: State) -> State:
     model = ChatOpenAI(model=MODEL, temperature=0, api_key=OPENAI_API_KEY)
 
-    async with MultiServerMCPClient() as client:
-        agent = create_react_agent(model, client.get_tools())
-        system_message = f"""
+    system_message = """
 You are an assistant helping to finalize a user-facing response.
 
 Below are the original user input and the assistant's draft reply:
-- User Input: {state.messages[0].content}
-- Assistant Draft Response: {state.messages[-1].content}
+- User Input: {user_input}
+- Assistant Draft Response: {assistant_response}
 
 Your task is to **lightly polish the draft** without changing its meaning, tone, or structure. Keep all key details intact. 
 Focus only on improving clarity, grammar, or flow if necessary.
@@ -91,7 +90,8 @@ Do NOT remove important information or rephrase in a way that could alter the in
 
 If the assistant's reply is already clear and appropriate, return it unchanged.
 """
-        messages = [SystemMessage(content=system_message), *state.messages]
-
-        response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
-        return {"messages": [response["messages"][-1]]}
+    prompt = PromptTemplate.from_template(system_message)
+    chain = prompt | model | StrOutputParser()
+    answer = chain.invoke({"user_input": state.messages[0].content, "assistant_response": state.messages[-1].content})
+    print(answer)
+    return {"messages": [AIMessage(content=answer)]}
