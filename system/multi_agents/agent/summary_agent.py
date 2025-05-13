@@ -10,7 +10,7 @@ from langgraph.graph import StateGraph, add_messages
 from typing_extensions import Annotated
 from typing import Dict, List, cast, Annotated, Sequence
 from dotenv import load_dotenv
-from states.states import State
+from multi_agents.states.states import State
 
 # 환경 변수 로드
 load_dotenv()

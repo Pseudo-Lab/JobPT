@@ -12,7 +12,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, AnyMessage
 from langgraph.graph import StateGraph, add_messages
 from langchain_mcp_adapters.client import MultiServerMCPClient
-from states.states import State
+from multi_agents.states.states import State
 
 # 환경 변수 로드
 load_dotenv()

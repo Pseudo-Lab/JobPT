@@ -13,3 +13,5 @@ resume_JD_similarity/data/**
 **__pycache__**
 **weights**
 !/assets/*png
+**uploaded_resumes**
+**html**

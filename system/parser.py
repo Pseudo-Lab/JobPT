@@ -6,6 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from configs import UPSTAGE_API_KEY
 import requests
+from dotenv import load_dotenv
+load_dotenv()
 
 from pdf2image import convert_from_path
 
@@ -176,23 +178,51 @@ def convert_pdf_to_jpg(pdf_path, output_folder):
 
 #     return "\n".join(paragraphs)
 
+import requests
+
 def run_parser(image_path):
-    api_key = UPSTAGE_API_KEY  # ex: up_xxxYYYzzzAAAbbbCCC
-    filename = image_path  # ex: ./image.png
+    api_key = UPSTAGE_API_KEY
+    filename = image_path
     
     url = "https://api.upstage.ai/v1/document-digitization"
     headers = {"Authorization": f"Bearer {api_key}"}
     files = {"document": open(filename, "rb")}
-    data = {"ocr": "force", "base64_encoding": "['table']", "model": "document-parse",
-            "output_formats":"['markdown', 'text']"}
-    response = requests.post(url, headers=headers, files=files, data=data)
-    coordinates=[]
-    contents=[]
+    data = {
+        "ocr": "force",
+        "base64_encoding": "['table']",
+        "model": "document-parse",
+        "output_formats": "['markdown', 'text']"
+    }
 
-    for i in response.json()['elements']:
+    response = requests.post(url, headers=headers, files=files, data=data)
+
+    # ✅ 응답 검사
+    try:
+        response_data = response.json()
+    except Exception as e:
+        print(" JSON 파싱 실패:", e)
+        print("응답 원문:", response.text)
+        raise Exception("Upstage API 응답이 JSON 형식이 아닙니다")
+
+    if response.status_code != 200:
+        print("Upstage API 요청 실패")
+        print("Status Code:", response.status_code)
+        print("응답:", response_data)
+        raise Exception("Upstage API 요청 실패")
+
+    if 'elements' not in response_data:
+        print("'elements' 키가 응답에 없음:", response_data)
+        raise Exception("Upstage 응답에 elements 키 없음")
+
+    coordinates = []
+    contents = []
+
+    for i in response_data['elements']:
         coordinates.append(i['coordinates'])
-        contents.append(i['content']['markdown'])
-    full_contents = response.json()['content']['text']
+        contents.append(i['content'].get('markdown', ''))
+
+    full_contents = response_data.get('content', {}).get('text', '')
     contents = "\n".join(contents)
+
     return contents, coordinates, full_contents
 
