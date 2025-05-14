@@ -12,8 +12,16 @@ api_key = OPENAI_API_KEY
 pinecone_key = PINECONE_API_KEY
 pinecone_index = PINECONE_INDEX
 
-def matching(resume):
+def matching(resume, location, remote, jobtype):
     load_dotenv()
+    search_filter = {}
+    if location:
+        search_filter["location"] = location
+    if remote :
+        search_filter["is_remote"] = remote
+    if jobtype:
+        search_filter["job_type"] = jobtype
+    print("search_filter", search_filter)
 
     emb_model = OpenAIEmbeddings()
     print(">>>>"*30)
@@ -29,7 +37,7 @@ def matching(resume):
         db = PineconeVectorStore(index=index, embedding=emb_model)
         check_db_status(index, "pinecone", index)
 
-    retriever = retrieveral(db)
+    retriever = retrieveral(db, filter = search_filter)
 
     # resume_path = './data/CV/ml_engineer_CV_3.txt'
     # prompt_path = './data/prompt.yaml'
