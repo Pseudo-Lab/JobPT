@@ -12,6 +12,7 @@ from io import BytesIO
 import base64
 from datetime import datetime
 from dotenv import load_dotenv
+from configs import OPENAI_API_KEY, GROQ_API_KEY
 
 class ATSAnalyzer:
     """
@@ -1172,7 +1173,7 @@ class ATSAnalyzer:
 
             if model == 1:
                 # Get OpenAI API key from environment variables
-                openai_api_key = os.getenv("OPENAI_API_KEY")
+                openai_api_key = OPENAI_API_KEY
                 if not openai_api_key or openai_api_key == "your_openai_api_key_here":
                     print("Error: OpenAI API key not found or not set in .env file")
                     print(f"Please edit {env_file_path} and add your OpenAI API key")
@@ -1207,7 +1208,7 @@ class ATSAnalyzer:
                     return self.call_llm(prompt, model=1)
 
                 # Get Groq API key from environment variables
-                groq_api_key = os.getenv("GROQ_API_KEY")
+                groq_api_key = GROQ_API_KEY
                 if not groq_api_key or groq_api_key == "your_groq_api_key_here":
                     print("Error: Groq API key not found or not set in .env file")
                     print(f"Please edit {env_file_path} and add your Groq API key")
@@ -1392,84 +1393,84 @@ class ATSAnalyzer:
         print("============================\n")
 
 
-if __name__ == "__main__":
-    cv_path = "../JobPT_Test/pdf/Minwoo.pdf" 
-    model = 1  # 1=OpenAI, 2=Groq
-    advanced = False 
-    generate_html = True  
+# if __name__ == "__main__":
+#     cv_path = "../JobPT_Test/pdf/Minwoo.pdf" 
+#     model = 1  # 1=OpenAI, 2=Groq
+#     advanced = False 
+#     generate_html = True  
 
-    jd_text = """
-Responsibilities:
+#     jd_text = """
+# Responsibilities:
 
-Shape Zoom AI's future via groundbreaking research. Incubate AI models, algorithms, and techniques for next generation business applications by collaborating with experienced researchers and engineers;
-Join AI projects, work with diverse teams, and achieve exciting results;
-The AI incubation team is dedicated to Incubate AI breakthroughs, including foundational AI techniques and AI native applications that will largely improve people's work productivity;
-Incubate foundation techniques for AGI, including new model structure, optimization techniques and distributed learning algorithms;
-Incubate game-changing AI applications which will create huge potential business impact;
-Collaborate with cross-functional teams to solve unique product problem;
-Communicate technical concepts clearly in team discussions and presentations for technical and nontechnical audiences;
-Foster growth in the AI research community by contributing to research papers for conferences and journals; and
-Receive mentorship and providing insights drive innovation with experienced researchers and team members.
-
-
+# Shape Zoom AI's future via groundbreaking research. Incubate AI models, algorithms, and techniques for next generation business applications by collaborating with experienced researchers and engineers;
+# Join AI projects, work with diverse teams, and achieve exciting results;
+# The AI incubation team is dedicated to Incubate AI breakthroughs, including foundational AI techniques and AI native applications that will largely improve people's work productivity;
+# Incubate foundation techniques for AGI, including new model structure, optimization techniques and distributed learning algorithms;
+# Incubate game-changing AI applications which will create huge potential business impact;
+# Collaborate with cross-functional teams to solve unique product problem;
+# Communicate technical concepts clearly in team discussions and presentations for technical and nontechnical audiences;
+# Foster growth in the AI research community by contributing to research papers for conferences and journals; and
+# Receive mentorship and providing insights drive innovation with experienced researchers and team members.
 
 
-What we're looking for:
-
-Requires a Master's degree in Computer Science, Intelligent Information Systems, a related field, or a foreign degree equivalent;
-Must have 1 year of experience in job offered or related occupation;
-Must have 1 year of experience in experience in AI research or engineering practice in large scale distributed systems;
-Must have 1 year of experience in developing distributed deep learning training system;
-Must have 1 year of experience in optimizing efficiency of distributed training system;
-Must have 1 year of experience in optimizing robustness of distributed training system;
-Must have 1 year of experience in one of the programming languages: Python/C/C++/CUDA, and deep learning frameworks, such as PyTorch, Transformers and Deepspeed;
-Must have 1 year of experience in Python Coding;
-Must have 1 year of experience in developing new deep learning model to solve product problems;
-Must have 1 year of experience in optimizing model parameters for better accuracy; and
-Must have 1 year of experience in building AI solutions with deep learning models.
-Salary Range or On Target Earnings:
-
-Minimum:
-
-$180,000.00
-Maximum:
-
-$255,400.00
-In addition to the base salary and/or OTE listed Zoom has a Total Direct Compensation philosophy that takes into consideration; base salary, bonus and equity value.
-
-Note: Starting pay will be based on a number of factors and commensurate with qualifications & experience.
-
-We also have a location based compensation structure;  there may be a different range for candidates in this and other locations.
-
-Ways of Working
-Our structured hybrid approach is centered around our offices and remote work environments. The work style of each role, Hybrid, Remote, or In-Person is indicated in the job description/posting.
-
-Benefits
-As part of our award-winning workplace culture and commitment to delivering happiness, our benefits program offers a variety of perks, benefits, and options to help employees maintain their physical, mental, emotional, and financial health; support work-life balance; and contribute to their community in meaningful ways. Click Learn for more information.
-
-About Us
-Zoomies help people stay connected so they can get more done together. We set out to build the best collaboration platform for the enterprise, and today help people communicate better with products like Zoom Contact Center, Zoom Phone, Zoom Events, Zoom Apps, Zoom Rooms, and Zoom Webinars.
-We're problem-solvers, working at a fast pace to design solutions with our customers and users in mind. Here, you'll work across teams to deliver impactful projects that are changing the way people communicate and enjoy opportunities to advance your career in a diverse, inclusive environment.
 
 
-Our Commitment​
-We believe that the unique contributions of all Zoomies is the driver of our success. To make sure that our products and culture continue to incorporate everyone's perspectives and experience we never discriminate on the basis of race, religion, national origin, gender identity or expression, sexual orientation, age, or marital, veteran, or disability status. Zoom is proud to be an equal opportunity workplace and is an affirmative action employer. All your information will be kept confidential according to EEO guidelines.
+# What we're looking for:
 
-We welcome people of different backgrounds, experiences, abilities and perspectives including qualified applicants with arrest and conviction records and any qualified applicants requiring reasonable accommodations in accordance with the law.
+# Requires a Master's degree in Computer Science, Intelligent Information Systems, a related field, or a foreign degree equivalent;
+# Must have 1 year of experience in job offered or related occupation;
+# Must have 1 year of experience in experience in AI research or engineering practice in large scale distributed systems;
+# Must have 1 year of experience in developing distributed deep learning training system;
+# Must have 1 year of experience in optimizing efficiency of distributed training system;
+# Must have 1 year of experience in optimizing robustness of distributed training system;
+# Must have 1 year of experience in one of the programming languages: Python/C/C++/CUDA, and deep learning frameworks, such as PyTorch, Transformers and Deepspeed;
+# Must have 1 year of experience in Python Coding;
+# Must have 1 year of experience in developing new deep learning model to solve product problems;
+# Must have 1 year of experience in optimizing model parameters for better accuracy; and
+# Must have 1 year of experience in building AI solutions with deep learning models.
+# Salary Range or On Target Earnings:
 
-If you need assistance navigating the interview process due to a medical disability, please submit an Accommodations Request Form and someone from our team will reach out soon. This form is solely for applicants who require an accommodation due to a qualifying medical disability. Non-accommodation-related requests, such as application follow-ups or technical issues, will not be addressed.
+# Minimum:
 
-Think of this opportunity as a marathon, not a sprint! We're building a strong team at Zoom, and we're looking for talented individuals to join us for the long haul. No need to rush your application – take your time to ensure it's a good fit for your career goals. We continuously review applications, so submit yours whenever you're ready to take the next step.
+# $180,000.00
+# Maximum:
 
-    """
+# $255,400.00
+# In addition to the base salary and/or OTE listed Zoom has a Total Direct Compensation philosophy that takes into consideration; base salary, bonus and equity value.
 
-    analyzer = ATSAnalyzer(cv_path, jd_text, model=model)
-    result = analyzer.run_full_analysis(advanced=advanced, generate_html=generate_html)
+# Note: Starting pay will be based on a number of factors and commensurate with qualifications & experience.
 
-    if not generate_html:
-        print(result)
-    else:
-        print(f"\n분석 완료! 보고서가 저장된 경로: {result}")
-        print("웹 브라우저에서 HTML 파일을 열어 전체 보고서를 확인하세요.")
+# We also have a location based compensation structure;  there may be a different range for candidates in this and other locations.
 
-# %%
+# Ways of Working
+# Our structured hybrid approach is centered around our offices and remote work environments. The work style of each role, Hybrid, Remote, or In-Person is indicated in the job description/posting.
+
+# Benefits
+# As part of our award-winning workplace culture and commitment to delivering happiness, our benefits program offers a variety of perks, benefits, and options to help employees maintain their physical, mental, emotional, and financial health; support work-life balance; and contribute to their community in meaningful ways. Click Learn for more information.
+
+# About Us
+# Zoomies help people stay connected so they can get more done together. We set out to build the best collaboration platform for the enterprise, and today help people communicate better with products like Zoom Contact Center, Zoom Phone, Zoom Events, Zoom Apps, Zoom Rooms, and Zoom Webinars.
+# We're problem-solvers, working at a fast pace to design solutions with our customers and users in mind. Here, you'll work across teams to deliver impactful projects that are changing the way people communicate and enjoy opportunities to advance your career in a diverse, inclusive environment.
+
+
+# Our Commitment​
+# We believe that the unique contributions of all Zoomies is the driver of our success. To make sure that our products and culture continue to incorporate everyone's perspectives and experience we never discriminate on the basis of race, religion, national origin, gender identity or expression, sexual orientation, age, or marital, veteran, or disability status. Zoom is proud to be an equal opportunity workplace and is an affirmative action employer. All your information will be kept confidential according to EEO guidelines.
+
+# We welcome people of different backgrounds, experiences, abilities and perspectives including qualified applicants with arrest and conviction records and any qualified applicants requiring reasonable accommodations in accordance with the law.
+
+# If you need assistance navigating the interview process due to a medical disability, please submit an Accommodations Request Form and someone from our team will reach out soon. This form is solely for applicants who require an accommodation due to a qualifying medical disability. Non-accommodation-related requests, such as application follow-ups or technical issues, will not be addressed.
+
+# Think of this opportunity as a marathon, not a sprint! We're building a strong team at Zoom, and we're looking for talented individuals to join us for the long haul. No need to rush your application – take your time to ensure it's a good fit for your career goals. We continuously review applications, so submit yours whenever you're ready to take the next step.
+
+#     """
+
+#     analyzer = ATSAnalyzer(cv_path, jd_text, model=model)
+#     result = analyzer.run_full_analysis(advanced=advanced, generate_html=generate_html)
+
+#     if not generate_html:
+#         print(result)
+#     else:
+#         print(f"\n분석 완료! 보고서가 저장된 경로: {result}")
+#         print("웹 브라우저에서 HTML 파일을 열어 전체 보고서를 확인하세요.")
+
+# # %%
