@@ -11,3 +11,4 @@ PROMPT_YAML = "system/get_similarity/data/prompt.yaml"
 JD_MATCH_PROMPT = "prompt_template_1"
 JD_PATH = "/app/data/jd_origin"
 COLLECTION = "semantic_0"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
