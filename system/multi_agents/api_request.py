@@ -1,7 +1,7 @@
 import requests
 import uuid
 
-API_URL = "http://localhost:8080/chat"
+API_URL = "http://localhost:8000/chat"
 SESSION_ID = str(uuid.uuid4())
 
 base_resume = (

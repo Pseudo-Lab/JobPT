@@ -124,7 +124,7 @@ async def chat(request: Request):
     result = await graph.ainvoke(state, config={"callbacks": [langfuse_handler]})
     answer = result["messages"][-1].content
     add_assistant_response_to_state(state, answer)
-    return JSONResponse({"answer": answer, "session_id": session_id})
+    return {"response": answer}
 
 
 @app.post("/mock_chat")
@@ -226,4 +226,4 @@ async def evaluate(request: EvaluateRequest):
 
 # 개발용 실행 명령
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8080)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)

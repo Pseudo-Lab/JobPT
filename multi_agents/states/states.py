@@ -28,12 +28,9 @@ def start_session(session_id: str, **kwargs):
         session_id=session_id,
         messages=[],
         chat_history=[],
-        agent_name=kwargs.get("agent_name", ""),
         job_description=kwargs.get("job_description", ""),
         resume=kwargs.get("resume", ""),
-        company_summary=kwargs.get("company_summary", ""),
         user_resume=kwargs.get("user_resume", ""),
-        route_decision=kwargs.get("route_decision", ""),
     )
     session_states[session_id] = state
 
