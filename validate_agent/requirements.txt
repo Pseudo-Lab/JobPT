@@ -1,0 +1,11 @@
+# Core Libraries
+numpy==1.26.3
+openai==1.57.2     
+python-dotenv==1.0.1    
+
+# File Processing
+PyPDF2==3.0.1           
+python-docx==1.1.2   
+
+# Visualization
+matplotlib==3.9.3            
