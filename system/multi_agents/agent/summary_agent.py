@@ -40,8 +40,10 @@ async def summary_agent(state: State) -> Dict[str, List[AIMessage]]:
     }) as client:
         agent = create_react_agent(model, client.get_tools())
 
-        system_message = """You are an assistant specialized in gathering and summarizing company-related information. 
+        system_message = f"""You are an assistant specialized in gathering and summarizing company-related information. 
         Given a company name as input, your task is to search the web and relevant platforms (including news articles, company websites, blogs, and YouTube) to collect and summarize key insights about the company.
+
+        Company Name: {state.company_name}
 
         Focus on the following aspects:
         Industry & Domain
