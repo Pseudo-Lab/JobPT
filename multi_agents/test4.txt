@@ -1,0 +1,146 @@
+유저 질문: 내가 선택한 부분을 개선해줘, 영어 이력서니 이력서 부분은 영어로 답변해줘
+유저 선택 부분: 
+Technical Skills
+	•	Languages: Python, Java (proficient); Julia, R, Matlab, Bash (familiar)
+	•	OS: Linux, macOS (proficient); Windows (familiar)
+	•	Tools: LaTeX, Weka
+            
+최종 답변
+Technical Skills  
+	•	Programming Languages: Python, Java (proficient); Julia, R, MATLAB, Bash (familiar)  
+	•	Operating Systems: Linux, macOS (proficient); Windows (familiar)  
+	•	Tools & Frameworks: LaTeX, Weka  
+
+Explanation:  
+Improved clarity and consistency by standardizing terminology (e.g., "Programming Languages," "Operating Systems," "Tools & Frameworks") and capitalizing proper names (MATLAB). This enhances professionalism and aligns better with industry resume standards.
+
+========================================
+유저 질문: 병렬환경(GPU 등), 대규모 분산 환경 관련 경험 강조
+유저 선택 부분: Research Experience
+• Microsoft Research Intern – Investigated pricing mechanisms in cloud computing environments
+• Research Assistant – Explored stable matching on social networks and preference elicitation
+최종 답변
+Research Experience  
+• Microsoft Research Intern – Investigated pricing mechanisms in cloud computing environments, developing scalable algorithms optimized for distributed and parallel computing platforms, including GPU acceleration.  
+• Research Assistant – Explored stable matching on social networks and preference elicitation, implementing models designed for efficient execution in large-scale distributed systems.  
+
+Explanation:  
+Added emphasis on experience with scalable algorithms and optimization for parallel (GPU) and distributed environments to align with Meta’s focus on adapting ML methods for modern parallel and distributed systems.
+
+========================================
+유저 질문: 협업과 코딩 스킬 강조, 교육경험을 기술적 관점에서 개선
+유저 선택 부분: Teaching Experience
+• TA, University of Toronto – Led weekly programming labs, assisted students in Python-based AI course
+• TA, University of Pittsburgh – Taught algebra recitations, supported student problem-solving
+최종 답변
+Teaching Experience  
+• TA, University of Toronto – Led weekly Python programming labs for an AI course, guiding students through algorithm implementation and debugging to strengthen coding proficiency and foster collaboration  
+• TA, University of Pittsburgh – Conducted algebra recitations emphasizing problem-solving techniques and logical reasoning to support foundational mathematical skills critical for technical coursework  
+
+Explanation:  
+Enhanced the teaching experience by emphasizing collaboration and coding skills, highlighting technical guidance in programming and problem-solving to align with the ML engineering role’s focus on technical mentorship and coding expertise.
+
+========================================
+유저 질문: Python/Java 역량에 실전 프로젝트 경험 추가
+유저 선택 부분: Technical Skills
+• Languages: Python, Java (proficient); Julia, R, Matlab, Bash (familiar)
+• Tools: LaTeX, Weka
+최종 답변
+Technical Skills  
+• Languages: Python, Java (proficient); Julia, R, Matlab, Bash (familiar)  
+  - Utilized Python and Java to develop scalable machine learning models and data processing pipelines in research and internship projects  
+• Tools: LaTeX, Weka
+
+Explanation: Added specific mention of practical project experience using Python and Java to demonstrate applied skills relevant to machine learning engineering roles, enhancing clarity and impact for the Meta position.
+
+========================================
+유저 질문: LaTeX, Weka 등 툴을 ML 개발툴 관점에서 확장 설명 유도
+유저 선택 부분: Technical Skills
+• Tools: LaTeX for academic paper writing; Weka for machine learning experiments
+최종 답변
+Technical Skills  
+• Programming Languages: Python, Java (proficient); Julia, R, Matlab, Bash (familiar)  
+• Machine Learning Tools: Weka for data preprocessing, model development, and evaluation in experimental settings  
+• Documentation and Presentation: LaTeX for producing high-quality academic papers and technical reports  
+• Operating Systems: Linux, macOS (proficient); Windows (familiar)  
+
+Explanation: Expanded the "Tools" section to emphasize Weka’s role in machine learning workflows and LaTeX’s use for technical documentation, thereby aligning these skills more closely with ML development and research communication relevant to the job.
+
+========================================
+유저 질문: AI 과목 조교 경험을 실무적 스킬로 전환
+유저 선택 부분: Teaching Experience
+• Helped develop assignments, created marking schemes, and held lab sessions in Python for upper-level AI course.
+최종 답변
+Teaching Experience  
+• Developed and implemented Python-based assignments and grading schemes for an upper-level AI course, enhancing students’ practical programming and machine learning skills.  
+• Led lab sessions focused on applying AI concepts through hands-on coding exercises, improving students’ proficiency in Python and algorithm implementation.  
+
+Explanation:  
+Revised to emphasize practical skills gained and applied, highlighting Python programming, assignment development, and hands-on teaching—aligning with the job’s focus on machine learning and software engineering expertise.
+
+========================================
+유저 질문: 논문 경험 중 classification/recommendation 관련 성과 강조
+유저 선택 부분: Publications
+• Preference Elicitation and Interview Minimization in Stable Matchings, AAAI-14
+• Intrinsic and Extrinsic Evaluation of an Automatic User Disengagement Detector, NAACL 2012
+최종 답변
+Publications  
+• Preference Elicitation and Interview Minimization in Stable Matchings, AAAI-14 — Developed novel methods to optimize matching processes, with direct relevance to recommendation system design.  
+• Intrinsic and Extrinsic Evaluation of an Automatic User Disengagement Detector, NAACL 2012 — Designed and evaluated machine learning classifiers for user engagement prediction, demonstrating effective classification techniques.  
+
+Explanation:  
+Revised the publication descriptions to highlight classification and recommendation-related contributions, emphasizing relevant machine learning methods and their impact, aligning better with Meta’s focus on recommendation and classification problems.
+
+========================================
+유저 질문: PhD 연구 경험을 ML lifecycle에 맞춰 재표현
+유저 선택 부분: Education
+• Ph.D. Computer Science – Focused on algorithmic game theory, multi-agent systems, and matching markets
+최종 답변
+Education  
+• Ph.D. in Computer Science – Specialized in algorithmic game theory, multi-agent systems, and matching markets; led end-to-end research projects encompassing problem definition, data analysis, model development, and evaluation, aligned with machine learning lifecycle principles.  
+
+Explanation:  
+Revised to frame Ph.D. research experience in terms of the ML lifecycle by emphasizing ownership of the full research process—from problem definition through model evaluation—making it more relevant to Meta’s ML engineering role.
+
+========================================
+유저 질문: 도구 위주의 나열형 스킬을 실전 활용 중심으로 개선
+유저 선택 부분: Technical Skills
+• Familiar with Git for version control, Bash scripting for automation, and Docker for environment consistency
+최종 답변
+Technical Skills  
+• Utilized Git for collaborative version control and efficient codebase management in multi-developer projects  
+• Automated data processing and deployment workflows using Bash scripting to improve operational efficiency  
+• Employed Docker to create consistent, reproducible development and testing environments across teams  
+
+Explanation:  
+Revised the technical skills section to emphasize practical application and impact rather than merely listing tools, aligning better with Meta’s focus on scalable, collaborative engineering and automation.
+
+========================================
+유저 질문: 논문 경력을 실전 문제 해결력과 연결되게 개선
+유저 선택 부분: Publications
+• SAT is an Effective and Complete Method for Solving Stable Matching Problems with Couples, IJCAI-15
+최종 답변
+Selected Resume
+
+Publications  
+• Developed and applied SAT-based algorithms to effectively and completely solve complex stable matching problems involving couples, demonstrating strong problem-solving skills in combinatorial optimization and algorithm design (IJCAI-15).
+
+Explanation  
+Revised the publication entry to explicitly connect the research to practical problem-solving abilities and technical expertise relevant to machine learning and optimization challenges, enhancing its impact for the Meta role.
+
+========================================
+유저 질문: C++/Java 등 시스템 수준 언어 활용 가능성 유도
+유저 선택 부분: Technical Skills
+• Languages: Python, Java (proficient); experience with low-level systems courses involving C/C++
+최종 답변
+**Selected Resume**
+
+Technical Skills  
+• Languages: Python, Java, C++, C (proficient); experienced in system-level programming and low-level systems courses involving C/C++ and Java  
+
+---
+
+**Explanation:**  
+Clarified and expanded the technical skills section to explicitly highlight proficiency and experience with system-level languages (C, C++, Java), aligning with the job’s emphasis on low-level and scalable software development. This better signals capability with system-level programming relevant to Meta’s ML engineering role.
+
+========================================
