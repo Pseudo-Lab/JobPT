@@ -19,6 +19,10 @@ from multi_agents.graph import create_graph
 resume_cache = {}
 analysis_cache = {}
 
+location_cache = ""         #['USA' 'Germany' 'UK']
+remote_cache = ""            #[ True False]
+job_type_cache = ""    #['fulltime' 'parttime']
+
 app = FastAPI()
 
 # CORS 설정
@@ -51,6 +55,9 @@ async def upload_resume(file: UploadFile = File(...), location: str = Form(""), 
 
         # 로그 또는 활용 예시
         print(f"[UPLOAD] location={location}, remote={remote}, job_type={job_type}")
+        location_cache = location
+        remote_cache = remote
+        job_type_cache = job_type
 
         return JSONResponse(content={"resume_path": file_path})
     except Exception as e:
@@ -79,7 +86,7 @@ async def run(data: MatchRequest):
     resume_cache[resume_path] = resume_content_text
     print(f"이력서 내용이 캐시에 저장됨: {resume_path}")
 
-    res, job_description, job_url, c_name = matching(resume_content_text)
+    res, job_description, job_url, c_name = matching(resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache)
 
     analysis_cache[resume_path] = {"output": res, "JD": job_description, "JD_url": job_url, "name": c_name}
     print(f"분석 결과가 캐시에 저장됨: {resume_path}")

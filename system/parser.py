@@ -1,5 +1,5 @@
 import numpy as np
-import torch
+# import torch
 import os
 import re
 from datetime import datetime
@@ -14,8 +14,8 @@ from pdf2image import convert_from_path
 import fitz  # PyMuPDF
 
 print(np.__version__)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"사용하는 장치: {device}")
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# print(f"사용하는 장치: {device}")
 
 import os
 
@@ -23,7 +23,7 @@ print("현재 위치:", os.getcwd())
 
 from typing import Optional
 import numpy as np
-import torch
+# import torch
 from PIL import Image
 import io
 import base64
@@ -35,7 +35,7 @@ import matplotlib.pyplot as plt
 # yolo_model = get_yolo_model(model_path="system/OmniParser_v1/weights/icon_detect/best.pt")
 # caption_model_processor = get_caption_model_processor(model_name="florence2", model_name_or_path="system/OmniParser_v1/weights/icon_caption_florence")
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def process(image_input, box_threshold=0.05, iou_threshold=0.1, use_paddleocr=True, imgsz=640) -> Optional[Image.Image]:
