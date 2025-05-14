@@ -1,7 +1,7 @@
 import requests
 import uuid
 
-API_URL = "http://localhost:8000/chat"
+API_URL = "http://localhost:8080/chat"
 SESSION_ID = str(uuid.uuid4())
 
 base_resume = (
@@ -10,6 +10,7 @@ Contact
 Joanna Drummond
 Department of Computer Science, University of Toronto
 Email: jdrummond@cs.toronto.edu
+Blog: www.naver.com
 
 Education
 	•	Ph.D. Computer Science, University of Toronto (expected Spring 2017)

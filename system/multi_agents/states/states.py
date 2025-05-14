@@ -15,6 +15,7 @@ class State:
     company_summary: str = field(default="")
     user_resume: str = field(default="")
     route_decision: str = field(default="")
+    company_name: str = field(default="")
 
 
 # 세션별 State 인스턴스를 저장하는 딕셔너리

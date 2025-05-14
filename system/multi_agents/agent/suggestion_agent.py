@@ -13,11 +13,21 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, AnyM
 from langgraph.graph import StateGraph, add_messages
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from multi_agents.states.states import State
+from langchain_core.tools import tool
+
 
 # 환경 변수 로드
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MODEL = "gpt-4.1-mini"
+
+
+@tool
+def search(url: str) -> str:
+    """
+    blog url을 기반으로 웹에서 서칭해주는 tool
+    """
+    return "search tool"
 
 
 async def suggest_agent(state: State):
@@ -40,6 +50,9 @@ Your task is to revise the **Selected Resume** section to improve clarity, impac
 
 - Use the same language as the original resume. For example, if the resume is written in English, your revisions must also be in English—even if the user query or instructions are in another language.
 
+- If you find a blog address (URL) in the resume or user message, always call the search tool with that blog address as input.
+
+
 [Job Description]
 {state.job_description}
 
@@ -54,17 +67,9 @@ Your task is to revise the **Selected Resume** section to improve clarity, impac
 """
     model = ChatOpenAI(model=MODEL, temperature=0, api_key=OPENAI_API_KEY)
 
-    async with MultiServerMCPClient(
-        # {
-        #     "github-search": {
-        #         "url": "https://server.smithery.ai/@vaebe/github-search",
-        #         "config": {"GithubToken": os.getenv("GITHUB_TOKEN")},
-        #         "api_key": os.getenv("SMITHERY_API_KEY"),
-        #     }
-        # }
-    ) as client:
-        agent = create_react_agent(model, client.get_tools())
-
+    async with MultiServerMCPClient() as client:
+        tools = client.get_tools() + [search]
+        agent = create_react_agent(model, tools)
         messages = [SystemMessage(content=system_message), *state.messages]
 
         response = cast(AIMessage, await agent.ainvoke({"messages": messages}))

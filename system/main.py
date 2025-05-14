@@ -114,16 +114,18 @@ langfuse_handler = CallbackHandler(
 async def chat(request: Request):
     data = await request.json()
     session_id = data["session_id"]
-    user_input = data["messages"]
+    user_input = data["message"]
+    company_name = data.get("company_name", "")
+    resume_path = data.get("resume_path", "")
 
     state = get_session_state(
         session_id,
-        agent_name=data.get("agent_name", ""),
-        job_description=data.get("job_description", ""),
-        resume=data.get("resume", ""),
-        company_summary=data.get("company_summary", ""),
+        job_description=data.get("jd", ""),
+        resume=resume_cache.get(resume_path, ""),
+        company_name=company_name,
         user_resume=data.get("user_resume", ""),
     )
+
     add_user_input_to_state(state, user_input)
     graph = await create_graph()
     result = await graph.ainvoke(state, config={"callbacks": [langfuse_handler]})
@@ -231,4 +233,4 @@ async def evaluate(request: EvaluateRequest):
 
 # 개발용 실행 명령
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8080)
