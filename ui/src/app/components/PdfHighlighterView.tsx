@@ -40,7 +40,7 @@ const PdfHighlighterView: React.FC<{ pdfUrl: string }> = ({ pdfUrl }) => {
           <PdfHighlighter
             pdfDocument={pdfDocument}
             highlights={[]}
-            scrollRef={scrollRef}
+            scrollRef={scrollRef as React.RefObject<HTMLElement>}
             enableAreaSelection={() => false}
             onScrollChange={() => {}}
             highlightTransform={() => null}

@@ -25,9 +25,9 @@ async def router(state: State):
     model = ChatOpenAI(model='gpt-4o', temperature=0, api_key=OPENAI_API_KEY)
 
     async with MultiServerMCPClient() as client:
-        agent = create_react_agent(model, client.get_tools())
+    agent = create_react_agent(model, client.get_tools())
 
-        system_message = """
+    system_message = """
 user_input: {user_input}
 user_resume: {user_resume}
 ---
@@ -59,19 +59,19 @@ Example each output:
     sequence: "suggestion"
 }}
 """
-        system_message = system_message.format(user_input=state.messages, user_resume=state.user_resume)
+    system_message = system_message.format(user_input=state.messages, user_resume=state.user_resume)
 
-        messages = [SystemMessage(content=system_message), *state.messages]
+    messages = [SystemMessage(content=system_message), *state.messages]
 
-        response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
+    response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
 
-        result = response["messages"][-1].content
-        print("=============router=============")
-        print(result)
-        result = re.sub(r"(\w+):", r'"\1":', result)
-        state.route_decision = json.loads(result).get("sequence")
-        response["messages"][-1].content = json.loads(result).get("sequence")
-        return {"messages": [response["messages"][-1]]}
+    result = response["messages"][-1].content
+    print("=============router=============")
+    print(result)
+    result = re.sub(r"(\w+):", r'"\1":', result)
+    state.route_decision = json.loads(result).get("sequence")
+    response["messages"][-1].content = json.loads(result).get("sequence")
+    return {"messages": [response["messages"][-1]]}
 
 def refine_answer(state: State) -> State:
     model = ChatOpenAI(model='gpt-4.1-mini', temperature=0, api_key=OPENAI_API_KEY)

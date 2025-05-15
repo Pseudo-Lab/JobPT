@@ -10,12 +10,13 @@ interface UploadViewProps {
   handleAnalyze: () => void;
   handleDrop: (e: React.DragEvent<HTMLDivElement>) => void;
   setIsDragging: (dragging: boolean) => void;
-  location: string;
-  remote: string;
-  jobType: string;
-  setLocation: (val: string) => void;
-  setRemote: (val: string) => void;
-  setJobType: (val: string) => void;
+  location: string[];
+  remote: boolean[];
+  jobType: string[];
+  setLocation: (val: string[]) => void;
+  setRemote: (val: boolean[]) => void;
+  setJobType: (val: string[]) => void;
+  handleManualJD: () => void;
 }
 
 import Link from 'next/link';
@@ -34,7 +35,8 @@ const UploadView: React.FC<UploadViewProps> = ({
   jobType,
   setLocation,
   setRemote,
-  setJobType
+  setJobType,
+  handleManualJD
 }) => {
   const [noPreference, setNoPreference] = useState(location === "");
   return (
@@ -86,30 +88,36 @@ const UploadView: React.FC<UploadViewProps> = ({
         <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">📍 선호 지역</label>
-          <div className="mt-1 flex items-center gap-2">
-            <input
-              type="text"
-              value={noPreference ? "" : location}
-              onChange={(e) => {
-                setLocation(e.target.value);
-                if (noPreference && e.target.value !== "") setNoPreference(false);
-              }}
-              placeholder="예: 서울"
-              className="flex-1 rounded-md border-gray-300 shadow-sm"
-              disabled={noPreference}
-            />
-            <label className="flex items-center space-x-1 text-sm text-gray-600">
+          <div className="mt-1 flex gap-4">
+            <label className="flex items-center gap-1">
               <input
-                type="checkbox"
-                checked={noPreference}
-                onChange={(e) => {
-                  setNoPreference(e.target.checked);
-                  if (e.target.checked) {
-                    setLocation(""); // 상관없음이면 location 비움
-                  }
-                }}
+                type="radio"
+                name="location-category"
+                value="USA"
+                checked={location[0] === 'USA'}
+                onChange={() => setLocation(['USA'])}
               />
-              <span>상관없음</span>
+              USA
+            </label>
+            <label className="flex items-center gap-1">
+              <input
+                type="radio"
+                name="location-category"
+                value="Germany"
+                checked={location[0] === 'Germany'}
+                onChange={() => setLocation(['Germany'])}
+              />
+              Germany
+            </label>
+            <label className="flex items-center gap-1">
+              <input
+                type="radio"
+                name="location-category"
+                value="UK"
+                checked={location[0] === 'UK'}
+                onChange={() => setLocation(['UK'])}
+              />
+              UK
             </label>
           </div>
         </div>
@@ -118,28 +126,60 @@ const UploadView: React.FC<UploadViewProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700">💻 원격 근무</label>
-            <select
-              value={remote}
-              onChange={(e) => setRemote(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-            >
-              <option value="any">상관없음</option>
-              <option value="yes">희망</option>
-              <option value="no">비희망</option>
-            </select>
+            <div className="flex gap-4 mt-1">
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={remote.includes(true)}
+                  onChange={e => {
+                    if (e.target.checked) setRemote(Array.from(new Set([...remote, true])));
+                    else setRemote(remote.filter(r => r !== true));
+                  }}
+                />
+                희망
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={remote.includes(false)}
+                  onChange={e => {
+                    if (e.target.checked) setRemote(Array.from(new Set([...remote, false])));
+                    else setRemote(remote.filter(r => r !== false));
+                  }}
+                />
+                비희망
+              </label>
+            </div>
+            <span className="text-xs text-gray-400">복수선택 가능</span>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700">🕒 고용 형태</label>
-            <select
-              value={jobType}
-              onChange={(e) => setJobType(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-            >
-              <option value="any">상관없음</option>
-              <option value="full-time">풀타임</option>
-              <option value="part-time">파트타임</option>
-            </select>
+            <div className="flex gap-4 mt-1">
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={jobType.includes('fulltime')}
+                  onChange={e => {
+                    if (e.target.checked) setJobType(Array.from(new Set([...jobType, 'fulltime'])));
+                    else setJobType(jobType.filter(j => j !== 'fulltime'));
+                  }}
+                />
+                풀타임
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={jobType.includes('parttime')}
+                  onChange={e => {
+                    if (e.target.checked) setJobType(Array.from(new Set([...jobType, 'parttime'])));
+                    else setJobType(jobType.filter(j => j !== 'parttime'));
+                  }}
+                />
+                파트타임
+              </label>
+            </div>
+            <span className="text-xs text-gray-400">복수선택 가능</span>
           </div>
         </div>
       </div>
@@ -147,24 +187,36 @@ const UploadView: React.FC<UploadViewProps> = ({
       {file && (
         <div className="flex flex-wrap justify-center gap-4">
           <button
+            className="px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium text-lg shadow-md transition duration-300 transform hover:scale-105 flex items-center justify-center"
             onClick={handleAnalyze}
-            className="px-6 py-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-medium text-lg shadow-md transition duration-300 transform hover:scale-105"
+            disabled={status === "Processing..."}
+            style={{ minWidth: 120 }}
           >
-            🔍 분석하기
+            {status === "Processing..." ? (
+              <img src="/ui/logo/loading.gif" alt="loading" style={{ height: 28, width: 28 }} />
+            ) : (
+              "분석하기"
+            )}
           </button>
           <button
-            onClick={handleAnalyze}
+            onClick={handleManualJD}
             className="px-6 py-3 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 font-medium text-lg shadow-md transition duration-300 transform hover:scale-105"
           >
-            ✏️ 수정하기
+            📤 JD/CV 업로드하기
           </button>
           <Link href="/evaluate">
-  <button
-    className="px-6 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium text-lg shadow-md transition duration-300 transform hover:scale-105"
-  >
-    📝 평가받기
-  </button>
-</Link>
+            <button
+              className="px-6 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium text-lg shadow-md transition duration-300 transform hover:scale-105 flex items-center justify-center"
+              style={{ minWidth: 120 }}
+              disabled={status === "Processing..."}
+            >
+              {status === "Processing..." ? (
+                <img src="/ui/logo/loading.gif" alt="loading" style={{ height: 28, width: 28 }} />
+              ) : (
+                "📝 평가받기"
+              )}
+            </button>
+          </Link>
         </div>
       )}
 
