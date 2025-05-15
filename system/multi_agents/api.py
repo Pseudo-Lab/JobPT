@@ -5,6 +5,7 @@ import os
 
 from states.states import get_session_state, end_session, add_user_input_to_state, add_assistant_response_to_state
 from graph import create_graph
+from configs import *
 
 app = FastAPI()
 
@@ -12,8 +13,8 @@ from langfuse import Langfuse
 from langfuse.callback import CallbackHandler
 
 langfuse_handler = CallbackHandler(
-    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"), 
-    secret_key=os.getenv("LANGFUSE_SECRET_KEY"), 
+    public_key=LANGFUSE_PUBLIC_KEY, 
+    secret_key=LANGFUSE_SECRET_KEY, 
     host="https://cloud.langfuse.com"
 )
 

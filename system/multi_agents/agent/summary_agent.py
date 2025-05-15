@@ -11,19 +11,12 @@ from typing_extensions import Annotated
 from typing import Dict, List, cast, Annotated, Sequence
 from dotenv import load_dotenv
 from multi_agents.states.states import State
-
-# 환경 변수 로드
-load_dotenv()
-
-# API 키 확인
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY가 환경 변수에 설정되어 있지 않습니다.")
+from configs import *
 
 
 async def summary_agent(state: State) -> Dict[str, List[AIMessage]]:
 
-    model = ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=OPENAI_API_KEY)
+    model = ChatOpenAI(model=MODEL, temperature=0, api_key=OPENAI_API_KEY)
 
     async with MultiServerMCPClient({
         "tavily-mcp": {
@@ -34,7 +27,7 @@ async def summary_agent(state: State) -> Dict[str, List[AIMessage]]:
             "run",
             "@tavily-ai/tavily-mcp",
             "--key",
-            os.getenv("SMITHERY_API_KEY")
+            SMITHERY_API_KEY
             ]
         }
     }) as client:
