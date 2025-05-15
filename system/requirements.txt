@@ -27,6 +27,8 @@ supervision==0.18.0
 uvloop==0.21.0
 watchfiles==1.0.5
 websockets==15.0.1
+nltk==3.9.1
+rank-bm25==0.2.2
 
 # multi agent
 langchain-core>=0.1.0
