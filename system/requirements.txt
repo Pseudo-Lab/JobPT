@@ -1,3 +1,8 @@
+# validation agent
+python-docx==1.1.2 
+matplotlib==3.9.3
+
+# system
 azure-identity==1.22.0
 Cython==3.1.0
 dill==0.4.0
@@ -6,10 +11,9 @@ frontend==0.0.3
 httptools==0.6.4
 langchain-chroma==0.2.3
 langchain-experimental==0.3.4
-langchain-mcp-adapters==0.0.11
 langchain-openai==0.3.16
 langchain-pinecone==0.2.6
-langfuse==2.60.4
+
 langgraph==0.4.3
 markdown2==2.5.3
 pandas==2.2.3
@@ -18,9 +22,18 @@ pdfplumber==0.11.6
 pip==22.0.2
 PyMuPDF==1.25.1
 PyPDF2==3.0.1
-python-docx==1.1.2
 setuptools==59.6.0
 supervision==0.18.0
 uvloop==0.21.0
 watchfiles==1.0.5
 websockets==15.0.1
+
+# multi agent
+langchain-core>=0.1.0
+langchain-mcp-adapters>=0.0.1
+aiohttp>=3.9.0
+asyncio>=3.4.3 
+python-dotenv>=1.0.1
+openai>=1.0.0
+requests>=2.28.0
+langfuse>=2.60.4
