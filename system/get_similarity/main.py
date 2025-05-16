@@ -5,6 +5,9 @@ from get_similarity.nodes.db_load import db_load
 from dotenv import load_dotenv
 from pinecone import Pinecone
 from langchain_pinecone import PineconeVectorStore
+import pickle
+from langchain_community.retrievers import BM25Retriever
+
 import os
 from configs import COLLECTION, OPENAI_API_KEY, DB_PATH, PINECONE_API_KEY, PINECONE_INDEX
 
@@ -35,6 +38,8 @@ def matching(resume, location, remote, jobtype):
         pc = Pinecone(api_key=pinecone_key)
         index = pc.Index(pinecone_index)
         db = PineconeVectorStore(index=index, embedding=emb_model)
+        with open("system/get_similarity/bm25_retriever_final.pkl", "rb") as f:
+            lexical_retriever = pickle.load(f)
         check_db_status(index, "pinecone", index)
 
     retriever = retrieveral(db, filter = search_filter)
@@ -42,6 +47,6 @@ def matching(resume, location, remote, jobtype):
     # resume_path = './data/CV/ml_engineer_CV_3.txt'
     # prompt_path = './data/prompt.yaml'
 
-    answer, jd, jd_url, c_name = generation(retriever, resume)
+    answer, jd, jd_url, c_name = generation(retriever, lexical_retriever, resume)
 
     return answer, jd, jd_url, c_name

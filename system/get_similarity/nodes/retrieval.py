@@ -38,7 +38,7 @@ def retrieveral(db, filter, debug=False):
         embedding = OpenAIEmbeddings()
 
         # retriever 설정에 embedding 추가
-        retriever = db.as_retriever(search_kwargs={"k": 3, "filter":filter}, embedding_function=embedding)  # top-3 문서 검색  # 임베딩 모델 명시적 지정
+        retriever = db.as_retriever(search_kwargs={"k": 10, "filter":filter}, embedding_function=embedding)  # top-3 문서 검색  # 임베딩 모델 명시적 지정
         print("Retriever 설정 완료")
         print(f"- Search kwargs: {retriever.search_kwargs}")
         print(f"- Embedding model: {type(embedding)}")

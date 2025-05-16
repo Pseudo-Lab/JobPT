@@ -6,18 +6,8 @@ import DOMPurify from "dompurify";
 import { marked } from "marked";
 import UploadView from "./components/UploadView";
 import ResultView from "./components/ResultView";
-import type { RawElement } from "./components/PdfHighlighterView";
-
-// PDF 내 특정 영역(섹션)을 표시하기 위한 타입 정의
-type SectionBox = {
-    id: string;
-    title: string;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    text: string;
-};
+import ManualJDForm from "./components/ManualJDForm";
+import type { SectionBox, RawElement } from "./components/types";
 
 export default function Home() {
     // 기본 상태 관리
@@ -33,14 +23,26 @@ export default function Home() {
     const [pdfError, setPdfError] = useState<string | null>(null);
     const [sectionBoxes, setSectionBoxes] = useState<SectionBox[]>([]);
     const [rawElements, setRawElements] = useState<RawElement[]>([]);
-    const [viewMode, setViewMode] = useState<"upload" | "result">("upload");
+    const [viewMode, setViewMode] = useState<"upload" | "result" | "manualJD">("upload");
+    // JD/CV 수동입력용 상태
+    const [manualCompany, setManualCompany] = useState("");
+    const [manualJDUrl, setManualJDUrl] = useState("");
+    const [manualJDText, setManualJDText] = useState("");
     const [resumePath, setResumePath] = useState("");
+    // 사용자 복붙 이력서 상태
+    const [userResume, setUserResume] = useState<string>(() => {
+        if (typeof window !== 'undefined') {
+            return window.localStorage.getItem('user_resume') || '';
+        }
+        return '';
+    });
+    const [userResumeDraft, setUserResumeDraft] = useState<string>(userResume);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const [location, setLocation] = useState("");
-    const [remote, setRemote] = useState("any"); // "yes", "no", "any"
-    const [jobType, setJobType] = useState("any"); // "full-time", "part-time", "any"
+    const [location, setLocation] = useState<string[]>([]); // 예: ['USA', 'Germany']
+    const [remote, setRemote] = useState<boolean[]>([]); // 예: [true, false]
+    const [jobType, setJobType] = useState<string[]>([]); // 예: ['fulltime', 'parttime']
 
     const handleSectionClick = (box: SectionBox) => {
         console.log("Clicked section:", box.id, box.text);
@@ -118,10 +120,11 @@ export default function Home() {
             const session_id = getOrCreateSessionId();
             const requestData = {
                 message,
-                resume_path: resumePath || "",
-                company_name: company || "",
+                resume_path: resumePath,
+                company,
                 jd: JD || "",
                 session_id,
+                user_resume: userResume,
             };
 
             const response = await fetch("http://localhost:8000/chat", {
@@ -235,9 +238,9 @@ export default function Home() {
 
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("location", location);
-        formData.append("remote", remote);
-        formData.append("job_type", jobType);
+        formData.append("location", JSON.stringify(location));
+        formData.append("remote", JSON.stringify(remote));
+        formData.append("job_type", JSON.stringify(jobType));
 
         try {
             const uploadRes = await fetch("http://localhost:8000/upload", {
@@ -304,6 +307,13 @@ export default function Home() {
         setViewMode("upload");
     };
 
+    const handleManualJDClick = () => {
+        setManualCompany("");
+        setManualJDUrl("");
+        setManualJDText("");
+        setViewMode("manualJD");
+    };
+
     const renderUploadView = () => (
         <UploadView
             file={file}
@@ -320,8 +330,51 @@ export default function Home() {
             setLocation={setLocation}
             setRemote={setRemote}
             setJobType={setJobType}
+            handleManualJD={handleManualJDClick}
         />
     );
+
+    const handleManualJDSubmit = async (companyInput: string, jdUrlInput: string, jdTextInput: string) => {
+        setCompany(companyInput);
+        setJDUrl(jdUrlInput);
+        setJD(jdTextInput);
+        setOutput(""); // 분석 결과는 없음
+        // 이력서 파싱만 수행
+        if (file) {
+            try {
+                const upstageForm = new FormData();
+                upstageForm.append("file", file);
+                const upstageRes = await fetch("/api/upstage-parse", {
+                    method: "POST",
+                    body: upstageForm,
+                });
+                const upstageData = await upstageRes.json();
+                const boxes = (upstageData.elements || []).map((e: any) => ({
+                    id: String(e.id),
+                    title: e.category,
+                    x: 0,
+                    y: 0,
+                    width: 0,
+                    height: 0,
+                    text: e.content.markdown || e.content.text || "",
+                }));
+                setSectionBoxes(boxes);
+                setRawElements(
+                    (upstageData.elements || []).map((e: any) => ({
+                        id: e.id,
+                        page: e.page,
+                        coordinates: e.coordinates,
+                        content: { text: e.content.text, markdown: e.content.markdown },
+                    }))
+                );
+            } catch (e) {
+                console.error("[Upstage API Error] (manual JD)", e);
+                setSectionBoxes([]);
+                setRawElements([]);
+            }
+        }
+        setViewMode("result");
+    };
 
     return (
         <>
@@ -331,10 +384,21 @@ export default function Home() {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
 
+            {/* 메인 로고 + 타이틀 */}
+            <div className="flex items-center gap-3 py-8 px-6">
+                <img src="/ui/logo/main_logo.png" alt="JobPT Logo" style={{ height: 48, width: 'auto' }} />
+                <span className="text-3xl font-extrabold text-gray-800 tracking-tight">JobPT</span>
+            </div>
+
             <main className="bg-gray-50 min-h-screen">
-                {viewMode === "upload" ? (
-                    renderUploadView()
-                ) : (
+                {viewMode === "upload" && renderUploadView()}
+                {viewMode === "manualJD" && (
+                    <ManualJDForm
+                        onSubmit={handleManualJDSubmit}
+                        onBack={() => setViewMode("upload")}
+                    />
+                )}
+                {viewMode === "result" && (
                     <ResultView
                         pdfError={pdfError}
                         isPdf={isPdf}
@@ -348,6 +412,10 @@ export default function Home() {
                         handleBackToUpload={handleBackToUpload}
                         pdfUrl={pdfUrl}
                         rawElements={rawElements}
+                        userResumeDraft={userResumeDraft}
+                        setUserResumeDraft={setUserResumeDraft}
+                        userResume={userResume}
+                        setUserResume={setUserResume}
                     />
                 )}
             </main>
