@@ -15,6 +15,8 @@ type SectionBox = {
   text: string;
 };
 
+import type { RawElement } from "./types";
+
 type ResultViewProps = {
   pdfError: string | null;
   isPdf: boolean;
@@ -28,6 +30,10 @@ type ResultViewProps = {
   handleBackToUpload: () => void;
   pdfUrl: string | null;
   rawElements: RawElement[];
+  userResumeDraft: string;
+  setUserResumeDraft: (val: string) => void;
+  userResume: string;
+  setUserResume: (val: string) => void;
 };
 
 const ResultView: React.FC<ResultViewProps> = ({
@@ -43,6 +49,10 @@ const ResultView: React.FC<ResultViewProps> = ({
   handleBackToUpload,
   pdfUrl,
   rawElements,
+  userResumeDraft,
+  setUserResumeDraft,
+  userResume,
+  setUserResume,
 }) => {
   return (
     <div className="container mx-auto p-4">
@@ -136,6 +146,33 @@ const ResultView: React.FC<ResultViewProps> = ({
                 <p>분석 결과를 로드 중입니다...</p>
               </div>
             )}
+          </div>
+
+          {/* user_resume 입력창: 분석결과와 챗봇 사이 */}
+          <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+            <label htmlFor="user-resume-input" className="font-semibold mb-2 block">수정할 부분 입력하기</label>
+            <textarea
+              id="user-resume-input"
+              className="w-full min-h-[120px] border border-gray-300 rounded-lg p-2 mb-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              placeholder="수정이 필요한 이력서 내용을 붙여넣으세요."
+              value={userResumeDraft}
+              onChange={e => setUserResumeDraft(e.target.value)}
+            />
+            <div className="flex items-center justify-between">
+              <button
+                className="px-4 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition mb-2"
+                onClick={() => {
+                  setUserResume(userResumeDraft);
+                  if (typeof window !== 'undefined') {
+                    window.localStorage.setItem('user_resume', userResumeDraft);
+                  }
+                }}
+                disabled={userResumeDraft === userResume}
+              >
+                적용
+              </button>
+              <span className="text-xs text-gray-400 ml-2">* 이 내용은 변경 전까지 계속 사용됩니다.</span>
+            </div>
           </div>
           {/* 챗봇 */}
           <section className="bg-white rounded-lg shadow-md p-4 mb-6 transition-all duration-300" id="chatbot-section">
