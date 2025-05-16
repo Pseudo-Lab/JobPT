@@ -1,9 +1,11 @@
 # JobPT
 
 ## 서비스 개요
-<div style="text-align: center;">
+
+<div align="center">
 <img src="./assets/jobpt_poster.png" width="50%" height="50%"/>
 </div>
+
 
 현대 사회에서 취업 준비는 반복적이고 시간 소모적인 과정으로, 구직자가 자신의 역량을 효과적으로 어필하지 못해 기회를 놓치는 경우가 많습니다. 이를 해결하기 위해 JobPT는 LLM 기반 **채용 공고 추천, 기업 맞춤형 이력서 피드백, 회사 정보 요약 제공, 이력서 적합성 평가**등의 기능을 갖춘 '**지능형 취업 지원 서비스**'를 제공합니다.
 
