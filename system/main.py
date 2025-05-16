@@ -12,6 +12,10 @@ from get_similarity.main import matching
 from openai import OpenAI
 import uvicorn
 import nltk
+<<<<<<< HEAD
+=======
+
+>>>>>>> d6d1362f898b151f140db0553b78a57eeed0c16e
 
 
 from multi_agents.states.states import State, get_session_state, end_session, add_user_input_to_state, add_assistant_response_to_state
@@ -235,5 +239,5 @@ async def evaluate(request: EvaluateRequest):
 
 # 개발용 실행 명령
 if __name__ == "__main__":
-    nltk.download("punkt_tab")
+    nltk.download('punkt_tab')
     uvicorn.run("main:app", host="0.0.0.0", port=8000)

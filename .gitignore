@@ -15,3 +15,6 @@ resume_JD_similarity/data/**
 !/assets/*png
 **uploaded_resumes**
 **html**
+**lib**
+**chroma_db**
+**bin**
