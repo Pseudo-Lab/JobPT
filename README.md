@@ -1,136 +1,126 @@
-<h1 align="center"> JobPT </h1>
+# JobPT
 
-<div align="center">
-<a href="https://pseudo-lab.com"><img src="https://img.shields.io/badge/PseudoLab-S10-3776AB" alt="PseudoLab"/></a>
-<a href="https://discord.gg/EPurkHVtp2"><img src="https://img.shields.io/badge/Discord-BF40BF" alt="Discord Community"/></a>
-<a href="https://github.com/Pseudo-Lab/JobPT/stargazers"><img src="https://img.shields.io/github/stars/Pseudo-Lab/JobPT" alt="Stars Badge"/></a>
-<a href="https://github.com/Pseudo-Lab/JobPT/network/members"><img src="https://img.shields.io/github/forks/Pseudo-Lab/JobPT" alt="Forks Badge"/></a>
-<a href="https://github.com/Pseudo-Lab/JobPT/ppulls"><img src="https://img.shields.io/github/issues-pr/Pseudo-Lab/JobPT" alt="Pull Requests Badge"/></a>
-<a href="https://github.com/Pseudo-Lab/JobPT/issues"><img src="https://img.shields.io/github/issues/Pseudo-Lab/JobPT" alt="Issues Badge"/></a>
-<a href="https://github.com/Pseudo-Lab/JobPT/graphs/contributors"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/Pseudo-Lab/JobPT?color=2b9348"></a>
-
+## 서비스 개요
+<div style="text-align: center;">
+<img src="./assets/jobpt_poster.png" width="50%" height="50%"/>
 </div>
-<br>
 
-<!-- sheilds: https://shields.io/ -->
-<!-- hits badge: https://hits.seeyoufarm.com/ -->
+현대 사회에서 취업 준비는 반복적이고 시간 소모적인 과정으로, 구직자가 자신의 역량을 효과적으로 어필하지 못해 기회를 놓치는 경우가 많습니다. 이를 해결하기 위해 JobPT는 LLM 기반 **채용 공고 추천, 기업 맞춤형 이력서 피드백, 회사 정보 요약 제공, 이력서 적합성 평가**등의 기능을 갖춘 '**지능형 취업 지원 서비스**'를 제공합니다.
 
-> 🙋‍♂️ **“회사에서 주어진 일만 하다 보니, 나만의 기술적 성장과 도전을 놓치고 있는 건 아닐까?”**  
-> 🤔 **“사이드 프로젝트를 시작해봤지만, 동기부여가 부족해 흐지부지 끝나버린 적이 한두 번이 아니야…”**  
-> 🙋‍♀️ **“딱히 떠오르는 아이디어는 없지만, 팀으로 협업하며 문제를 해결력을 길러 보고 싶다!”**
+## 주요 기능
 
-## 🌟 프로젝트 목표 (Project Vision)
+1. **LLM 기반 개인 이력서 맞춤형 채용 공고 매칭**
+    - 제공받은 이력서를 RAG를 활용해 각 회사의 채용 공고와 의미론적 유사도를 기반으로 적합한 회사를 추천합니다.
 
-_“스스로 문제를 정의하고 체계적인 실험을 통해 주도적으로 해결책을 찾아가는 여정”_  
-**프로젝트 주제**: [이력서 기반 JD 매칭 및 이력서 수정 제안 서비스](./Description.md) (주제가 이미 정해져있는 프로젝트입니다!) <br> **현재 작업물의 키워드**: `RAG`, `요약 및 수정 LLM`, `Agent`
+2. **기업 맞춤형 이력서 피드백**
+    - 유저와의 대화를 통해 평가-개선-재평가 프로세스를 거치며 이력서를 반복적으로 개선합니다. 
+    - Multi-turn을 활용해 챗봇 인터페이스에서 유저에게 개선점을 제공하며, 이력서에 곧바로 반영합니다. (기능 반영 예정)
 
-우리는 단순히 동작하는 결과물을 만드는 것이 아닌, 다음과 같은 가치있는 과정을 추구합니다:
+3. **회사 정보 요약 제공**
+    - AI Agent를 통해 원하는 회사 또는 추천된 JD의 회사와 관련된 최신 정보를 요약해 제공합니다.
+    - 산업 및 도메인, 경쟁력, 주요 서비스, 인재상, 사내 문화, 추진 중인 프로젝트 및 이니셔티브 등에 대한 메타 데이터를 요약합니다. 
 
-1. 실험과 탐구를 통한 기술적 성장
-    - 회사에서는 시간 제약으로 시도하기 어려웠던 **새로운 기술들을 실험적으로 적용**해볼 기회를 제공합니다.
-    - 충분한 시간을 가지고 **다양한 실험과 검증**을 통해 최적의 방법론을 탐구합니다.
-    - 2주마다 작은 성과를 만들어가며, 실패한 실험도 링크드인을 통해 의미 있는 기록으로 남깁니다.
-2. 함께 협업하고 공유하는 경험
-    - 애자일한 방법론으로 프로젝트를 진행하고, git 관리를 배우며 함께 체계적으로 이끌어갑니다.
-    - 각자가 **굵은 줄기**를 맡아 깊이 있는 역할을 수행하고, 최종적으로 **큰 나무**를 완성하는 협업의 가치를 경험합니다.
+3. **이력서 적합성 평가 및 구체적 개선점 제안**
+    - 이력서 검토 시스템은 특정 JD에 맞춰 이력서를 분석하여 지원자 추적 시스템(ATS)이 이를 어떻게 평가할지 시뮬레이션합니다. 
+    - 또한, 각 이력서를 해당 직무에 최적화할 수 있도록 상세한 피드백과 개선 제안도 제공합니다. 이 분석기는 각 직무 설명을 세밀하게 분석하여, 이력서가 해당 직무에 얼마나 잘 부합하는지 가장 정확하게 평가할 수 있도록 설계되었습니다.
 
-## 🧑 역동적인 팀 소개 (Dynamic Team)
 
-| 역할 | 이름 | 기술 스택 배지 | 주요 관심 분야 |
-| --- | --- | --- | --- |
-| **Project Manager** | 김민아 | ![Python](https://img.shields.io/badge/Python-Expert-3776AB) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C) | LLM 검증 시스템 / Agent / 최적화 |
-| **Member** | 최재강 | ![Python](https://img.shields.io/badge/Python-Expert-3776AB) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C) | LLM 서빙 시스템 / 추론 최적화 / LLM 기반 평가 |
-| **Member** | 김민우 | ![Python](https://img.shields.io/badge/Python-Expert-3776AB) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C) | 파운데이션모델 / 경량화 / 강화학습 |
-| **Member** | 채병철 | ![Python](https://img.shields.io/badge/Python-Expert-3776AB) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C) | LLM 최적화 / 경량화 |
-| **Member** | 김용희 | ![Python](https://img.shields.io/badge/Python-Expert-3776AB) ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C) | LLM 검증 시스템 / RAG |
+## 시스템 구조도
 
-## 🛠️ 우리의 개발 문화 (Our Development Culture)
+### 전체 시스템 구조도
+![full_workflow](./assets/full_workflow.png)
 
-```python
-class CollaborationFramework:
-    def __init__(self):
-        self.tools = {
-            'communication': 'Discord',
-            'version_control': 'GitHub Projects',
-            'sprint_management': 'Notion'
-        }
+### 채용 공고 추천 RAG 구조도
+<img src="./assets/rag_workflow.png" width="70%" height="70%"/>
 
-    def workflow(self):
-        return """주간 사이클:
-        1️⃣ 월요일: 개발로그 업로드
-        2️⃣ 화요일: 프로젝트 진행 사항 및 인사이트 공유
-        """
+### 이력서 수정 제안 및 회사 요약 Agent 구조도
+<img src="./assets/agent_workflow.png" width="70%" height="70%"/>
+
+
+### 검토 LLM 파이프라인
+
+## 시스템 구성 기술
+-   **크롤링 API**: 여러 회사 JD 데이터 확보 및 마감된 채용 공고 삭제
+-   **PDF 파싱**: Upstage Parser를 이용한 다양한 형태의 이력서 PDF 텍스트 추출
+-   **Vector DB**: Pinecone에 Job description(JD) 텍스트 Chunk 저장 및 JD Retrieval
+-   **AI Agent**
+    -  supervisor agent를 두어 멀티 agent로 파이프라인 구성
+    -  회사 메타 데이터 정보 수집 및 요약 (Tavily Search MCP 사용)
+    -  수정 제안 agent (유저의 웹 포트폴리오 탐색 MCP)
+-   **LLM Model**
+    -  이력서 적합성 평가
+
+## 기술 스택
+- Language: Python, Typescript
+- LLM Framework
+    - LangChain
+    - Langgraph
+    - OpenAI (text-embedding-3-small, gpt-4o, gpt-4o-mini, gpt-4.1-nano)
+- Backend
+    - Web Framework: FastAPI
+    - Vector Database: Pinecone
+    - Monitoring: Langfuse
+
+
+## 서비스 데모 화면
+
+### 시연 영상
+-   [이력서 기반 JD 추천 기능 (Phase 1)](https://www.youtube.com/watch?v=m6EhfmpShCg)
+
+### 웹 화면
+
+<img src="./assets/demo1_ph2.png" width="70%" height="70%"/>
+<img src="./assets/demo2_ph2.png" width="70%" height="70%"/>
+
+
+## 시스템 구동 방법
+
+프로젝트 패키지 설치
+
+```
+pip install -r requirements.txt
 ```
 
-### 🌈 특별한 활동!
+system 폴더에 `.env` 파일 생성
+```code
+OPENAI_API_KEY=<your_openai_key>
+UPSTAGE_API_KEY=<your_upstage_key>
+SMITHERY_API_KEY=<your_smithery_key>
+PINECONE_API_KEY=<your_pinecone_key>
+LANGFUSE_PUBLIC_KEY=<your_langfuse_key>
+LANGFUSE_SECRET_KEY=<your_langfuse_key>
+```
 
-**📢 2주 마다 링크드인 포스팅 챌린지**: <br>자신이 담당한 부분에 대해 문제 정의, 실험 설계, 결과 및 인사이트를 정리하여 링크드인에 업로드합니다
+API 실행
 
-**🛠️ 새로운 도구나 기법 적용**: <br>새로운 도구나 기법을 시도할 때는 함께 관련 논문을 읽고 발표하거나, 도구를 리뷰하는 시간을 가집니다
+```
+python system/main.py
+```
 
-## 💻 주차별 활동 (Activity History)
+웹 화면 실행
 
-| 날짜       | 내용                           | 발표자 |
-| ---------- | ------------------------------ | ------ |
-| 2025/03/04 | 프로젝트 소개 및 활동 OT       | 김민아 |
-| 2025/03/11 | 진행사항 및 다음 계획 공유     | JobPT  |
-| 2025/03/18 | 진행사항 및 다음 계획 공유     | JobPT  |
-| 2025/03/25 | ✨Magical Week                 | JobPT  |
-| 2025/04/01 | 진행사항 및 기술/논문 발표     | JobPT  |
-| 2025/04/08 | 진행사항 및 다음 계획 공유     | JobPT  |
-| 2025/04/15 | 진행사항 및 다음 계획 공유     | JobPT  |
-| 2025/04/22 | 진행사항 및 다음 계획 공유     | JobPT  |
-| 2025/04/29 | 진행사항 및 다음 계획 공유     | JobPT  |
-| 2025/05/06 | 어린이 날은 쉬어갑니다~        | JobPT  |
-| 2025/05/13 | Psudo Con 준비                 | JobPT  |
-| 2025/05/17 | ✨Psudo Con                    | JobPT  |
-| 2025/05/20 | 데모데이를 위한 마지막 스퍼트! | JobPT  |
-| 2025/05/27 | ✨Magical Week (데모데이)      | JobPT  |
+```
+npm run dev
+```
 
-## 🎯 활동이 끝나면 이런 결과를 얻을 것입니다 (Outcomes After the Activity)
+API 호출 예시 (api_test.py 참조)
 
-1. 2주에 한번씩 업로드된 링크드인 인사이트 포스팅
-2. 데모데이에서 발표하는 값진 경험
-3. 문제 해결력을 기르고, 결과를 공유하며 혼자하는 것보다 더 빠른 성장
-4. 새로운 도구나 논문을 함께 리뷰하여 최신 기술 탐색
+```
+import requests
 
-## 🌟 이런 기회도 있을지도..? (Opportunities)
+# POST 요청 함수
+def send_post_request(resume_path):
+    url = "http://localhost:8000/matching"  # 실제 API 엔드포인트로 변경하세요.
+    data = {"resume_path": resume_path}
 
-1. 해커톤 or 공모전 참가 (지난 활동에서는 공모전에 함께 참가했었습니다!)
-2. 우리 깃헙에 star가?
-3. 우리의 서비스를 활용할 수 있는 회사에 API 제안 메일 써보기!
+    try:
+        response = requests.post(url, json=data)
+        response.raise_for_status()  # 상태 코드가 200번대가 아니면 예외 발생
+        print("POST 요청 성공:", response.json())
+    except requests.exceptions.RequestException as e:
+        print("POST 요청 중 오류 발생:", e)
 
-## 🌱 참여 안내 (How to Engage)
 
-### 팀원으로 참여하시려면 러너 모집 기간에 신청해주세요.
-
-[모집 링크](https://pseudo-lab.com/chanrankim/19c963ffa3ee81a2bcacebc7ef2c30d7)
-
-### 이런 분과 함께 프로젝트 했으면 합니다!
-
--   팀원 전부는 **링크드인 계정**이 있어야 합니다.
--   [프로젝트 개요](https://github.com/workdd/JobPT)를 보고 담당하고 싶은 기능이나 기대하는 부분에 대해서 알려주세요.
-
-### 누구나 청강을 통해 모임을 참여하실 수 있습니다.
-
-1. 특별한 신청 없이 정기 모임 시간(매주 화요일 20시 30분)에 맞추어 디스코드 #Room-YL 채널로 입장
-2. Magical Week 중 행사에 참가
-3. Pseudo Lab 행사에서 만나기
-
-## Acknowledgement 🙏
-
-JobPT is developed as part of Pseudo-Lab's Open Research Initiative. Special thanks to our contributors and the open source community for their valuable insights and contributions.
-
-## About Pseudo Lab 👋🏼</h2>
-
-[Pseudo-Lab](https://pseudo-lab.com/) is a non-profit organization focused on advancing machine learning and AI technologies. Our core values of Sharing, Motivation, and Collaborative Joy drive us to create impactful open-source projects. With over 5k+ researchers, we are committed to advancing machine learning and AI technologies.
-
-<h2>Contributors 😃</h2>
-<a href="https://github.com/Pseudo-Lab/JobPT/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Pseudo-Lab/JobPT" />
-</a>
-<br><br>
-
-<h2>License 🗞</h2>
-
-This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+# 함수 호출 예시
+send_post_request("data/joannadrummond-cv.pdf")
+```
