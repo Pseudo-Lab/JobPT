@@ -1,11 +1,11 @@
 import requests
 import os
 from dotenv import load_dotenv
- 
-def upstage_parser(file_path):
+# import subprocess
+
+def upstage_parser(filename):
     load_dotenv('.env')
     api_key = os.getenv("UPSTAGE_API_KEY")
-    filename = file_path
     
     url = "https://api.upstage.ai/v1/document-digitization"
     headers = {"Authorization": f"Bearer {api_key}"}
@@ -22,11 +22,20 @@ def upstage_parser(file_path):
         
     return contents, coordinates, full_contents
 
-if __name__ == "__main__":
-    file_path = "sample_cv.jpg"
-    contents, coordinates, full_contents = upstage_parser(file_path)
-    print(contents)
-    print(len(contents))
-    print(coordinates)
-    print(len(coordinates))
-    print(full_contents)
+# def run_parser():
+#     conda_python = "/opt/anaconda3/envs/py311_node/bin/python"  # conda 환경의 Python 경로
+#     script_path = "/Users/minahkim/Desktop/work space/git_project/JobPT/ui/upstage_parser.py"
+    
+#     result = subprocess.run([conda_python, script_path], 
+#                           capture_output=True, 
+#                           text=True)
+#     return result.stdout
+
+# if __name__ == "__main__":
+#     file_path = "sample_cv.jpg"
+#     contents, coordinates, full_contents = upstage_parser(file_path)
+#     print(contents)
+#     print(len(contents))
+#     print(coordinates)
+#     print(len(coordinates))
+#     print(full_contents)

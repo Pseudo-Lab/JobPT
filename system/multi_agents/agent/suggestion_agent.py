@@ -14,13 +14,10 @@ from langgraph.graph import StateGraph, add_messages
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from multi_agents.states.states import State
 from langchain_core.tools import tool
-
+from configs import *
 
 # 환경 변수 로드
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-MODEL = "gpt-4.1-mini"
-
 
 @tool
 def search(url: str) -> str:
@@ -46,7 +43,7 @@ Your task is to revise the **Selected Resume** section to improve clarity, impac
 - Do not invent or assume new experiences—only improve based on what's provided.
 - Return two parts:
   1. The improved "Selected Resume" section (in resume-ready format).
-  2. A 1–2 sentence explanation of what was improved and why (be concise and specific).
+  2. A 1-2 sentence explanation of what was improved and why (be concise and specific).
 
 - Use the same language as the original resume. For example, if the resume is written in English, your revisions must also be in English—even if the user query or instructions are in another language.
 

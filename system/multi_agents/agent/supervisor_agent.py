@@ -10,19 +10,19 @@ from langgraph.graph import StateGraph, add_messages
 from typing_extensions import Annotated
 from typing import Dict, List, cast, Annotated, Sequence
 from multi_agents.states.states import State
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
+
 import os
 import json
 import re
-
-load_dotenv()
-MODEL = "gpt-4.1-mini"
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+from configs import *
 
 client = OpenAI()
 
 
 async def router(state: State):
-    model = ChatOpenAI(model=MODEL, temperature=0, api_key=OPENAI_API_KEY)
+    model = ChatOpenAI(model='gpt-4o', temperature=0, api_key=OPENAI_API_KEY)
 
     async with MultiServerMCPClient() as client:
         agent = create_react_agent(model, client.get_tools())
@@ -74,7 +74,7 @@ Example each output:
         return {"messages": [response["messages"][-1]]}
 
 def refine_answer(state: State) -> State:
-    model = ChatOpenAI(model=MODEL, temperature=0, api_key=OPENAI_API_KEY)
+    model = ChatOpenAI(model='gpt-4.1-mini', temperature=0, api_key=OPENAI_API_KEY)
 
     system_message = """
 You are an assistant helping to finalize a user-facing response.
