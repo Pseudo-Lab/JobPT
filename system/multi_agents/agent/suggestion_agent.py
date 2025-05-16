@@ -1,24 +1,13 @@
-import os
 import asyncio
-
-from openai import OpenAI
-from typing_extensions import Annotated
-from dataclasses import dataclass, field
-from typing import Dict, List, cast, Annotated, Sequence
-from dotenv import load_dotenv
+from typing import cast
 
 from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, AnyMessage
-from langgraph.graph import StateGraph, add_messages
+from langchain_core.messages import AIMessage, SystemMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from multi_agents.states.states import State
 from langchain_core.tools import tool
 from configs import *
-
-# 환경 변수 로드
-load_dotenv()
-
 
 @tool
 def search(url: str) -> str:
@@ -63,7 +52,7 @@ Your task is to revise the **Selected Resume** section to improve clarity, impac
 [Selected Resume Section to Improve]
 {state.user_resume}
 """
-    model = ChatOpenAI(model=MODEL, temperature=0, api_key=OPENAI_API_KEY)
+    model = ChatOpenAI(model=AGENT_MODEL, temperature=0, api_key=OPENAI_API_KEY)
 
     async with MultiServerMCPClient() as client:
         tools = client.get_tools() + [search]

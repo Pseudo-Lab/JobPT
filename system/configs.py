@@ -18,4 +18,5 @@ COLLECTION = "semantic_0"
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY", "")
 LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY", "")
-MODEL = "gpt-4o-mini"
+SMITHERY_API_KEY = os.getenv("SMITHERY_API_KEY", "")
+AGENT_MODEL = "gpt-4o-mini"

@@ -1,21 +1,17 @@
-import os
 import asyncio
-import logging
-from dataclasses import dataclass, field
 from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI
 from langchain_mcp_adapters.client import MultiServerMCPClient
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, AnyMessage
-from langgraph.graph import StateGraph, add_messages
-from typing_extensions import Annotated
-from typing import Dict, List, cast, Annotated, Sequence
-from dotenv import load_dotenv
+from langchain_core.messages import AIMessage, SystemMessage
 from multi_agents.states.states import State
+from typing import Dict, List, cast
 from configs import *
 
 
 async def summary_agent(state: State) -> Dict[str, List[AIMessage]]:
-    model = ChatOpenAI(model=MODEL, temperature=0, api_key=OPENAI_API_KEY)
+
+    model = ChatOpenAI(model=AGENT_MODEL, temperature=0, api_key=OPENAI_API_KEY)
+
     async with MultiServerMCPClient(
         {"tavily-mcp": {"command": "npx", "args": ["-y", "@smithery/cli@latest", "run", "@tavily-ai/tavily-mcp", "--key", os.getenv("SMITHERY_API_KEY")]}}
     ) as client:
