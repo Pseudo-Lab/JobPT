@@ -31,6 +31,55 @@ body {
 
 /* 👇 여기에 추가 */
 @layer utilities {
+  /* 체크박스와 라디오버튼이 선택되지 않았을 때 테두리와 내부 모두 흰색 */
+  input[type="checkbox"].accent-indigo-500,
+  input[type="checkbox"].accent-green-500,
+  input[type="checkbox"].accent-red-500,
+  input[type="checkbox"].accent-blue-500,
+  input[type="checkbox"].accent-yellow-500,
+  input[type="radio"].accent-indigo-500,
+  input[type="radio"].accent-green-500,
+  input[type="radio"].accent-red-500,
+  input[type="radio"].accent-blue-500,
+  input[type="radio"].accent-yellow-500 {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: #fff !important;
+    border: 2px solid #fff !important;
+    box-shadow: 0 0 0 1px #ccc; /* 약간의 외곽선 */
+    width: 1.1em;
+    height: 1.1em;
+    border-radius: 0.25em;
+    display: inline-block;
+    position: relative;
+    vertical-align: middle;
+    cursor: pointer;
+    transition: border 0.2s, box-shadow 0.2s;
+  }
+  input[type="radio"].accent-indigo-500,
+  input[type="radio"].accent-green-500,
+  input[type="radio"].accent-red-500,
+  input[type="radio"].accent-blue-500,
+  input[type="radio"].accent-yellow-500 {
+    border-radius: 50%;
+  }
+  /* 선택됐을 때는 기존 accent-color 유지 */
+  input[type="checkbox"].accent-indigo-500:checked,
+  input[type="checkbox"].accent-green-500:checked,
+  input[type="checkbox"].accent-red-500:checked,
+  input[type="checkbox"].accent-blue-500:checked,
+  input[type="checkbox"].accent-yellow-500:checked,
+  input[type="radio"].accent-indigo-500:checked,
+  input[type="radio"].accent-green-500:checked,
+  input[type="radio"].accent-red-500:checked,
+  input[type="radio"].accent-blue-500:checked,
+  input[type="radio"].accent-yellow-500:checked {
+    accent-color: currentColor !important;
+    appearance: auto;
+    -webkit-appearance: auto;
+  }
+
+
   @keyframes fade-in {
     from {
       opacity: 0;
