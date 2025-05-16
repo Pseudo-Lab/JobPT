@@ -22,10 +22,10 @@ client = OpenAI()
 
 
 async def router(state: State):
-    model = ChatOpenAI(model='gpt-4o', temperature=0, api_key=OPENAI_API_KEY)
+    model = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)
 
     async with MultiServerMCPClient() as client:
-    agent = create_react_agent(model, client.get_tools())
+        agent = create_react_agent(model, client.get_tools())
 
     system_message = """
 user_input: {user_input}
@@ -73,8 +73,9 @@ Example each output:
     response["messages"][-1].content = json.loads(result).get("sequence")
     return {"messages": [response["messages"][-1]]}
 
+
 def refine_answer(state: State) -> State:
-    model = ChatOpenAI(model='gpt-4.1-mini', temperature=0, api_key=OPENAI_API_KEY)
+    model = ChatOpenAI(model="gpt-4.1-mini", temperature=0, api_key=OPENAI_API_KEY)
 
     system_message = """
 You are an assistant helping to finalize a user-facing response.
@@ -82,6 +83,8 @@ You are an assistant helping to finalize a user-facing response.
 Below are the original user input and the assistant's draft reply:
 - User Input: {user_input}
 - Assistant Draft Response: {assistant_response}
+
+if Assistant Draft Response is 'END', focus on user input and generate answer spontaneously.
 
 Your task is to **lightly polish the draft** without changing its meaning, tone, or structure. Keep all key details intact. 
 Focus only on improving clarity, grammar, or flow if necessary.

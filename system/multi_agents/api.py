@@ -12,11 +12,8 @@ app = FastAPI()
 from langfuse import Langfuse
 from langfuse.callback import CallbackHandler
 
-langfuse_handler = CallbackHandler(
-    public_key=LANGFUSE_PUBLIC_KEY, 
-    secret_key=LANGFUSE_SECRET_KEY, 
-    host="https://cloud.langfuse.com"
-)
+langfuse_handler = CallbackHandler(public_key=LANGFUSE_PUBLIC_KEY, secret_key=LANGFUSE_SECRET_KEY, host="https://cloud.langfuse.com")
+
 
 @app.post("/chat")
 async def chat(request: Request):

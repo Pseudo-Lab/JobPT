@@ -35,6 +35,7 @@ def start_session(session_id: str, **kwargs):
         company_summary=kwargs.get("company_summary", ""),
         user_resume=kwargs.get("user_resume", ""),
         route_decision=kwargs.get("route_decision", ""),
+        company_name=kwargs.get("company_name", ""),
     )
     session_states[session_id] = state
 

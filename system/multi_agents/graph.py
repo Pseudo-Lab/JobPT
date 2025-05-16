@@ -7,7 +7,7 @@ from langchain_core.messages import HumanMessage
 import asyncio
 
 
-async def create_graph():
+async def create_graph(state: State):
     builder = StateGraph(State)
     # Node 추가
     builder.add_node("supervisor", router)
@@ -47,6 +47,7 @@ async def create_graph():
     )
 
     def route_after_summary(state: State):
+        state.route_decision = state.messages[-2].content
         if state.route_decision == "summary_suggestion":
             return "suggestion_agent"
         else:
@@ -66,7 +67,7 @@ async def create_graph():
     # refine_answer 끝나고 항상 종료
     builder.add_edge("refine_answer", "__end__")
 
-    return builder.compile()
+    return builder.compile(), state
 
 
 base_resume = (

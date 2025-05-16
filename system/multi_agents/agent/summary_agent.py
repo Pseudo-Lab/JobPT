@@ -15,22 +15,10 @@ from configs import *
 
 
 async def summary_agent(state: State) -> Dict[str, List[AIMessage]]:
-
     model = ChatOpenAI(model=MODEL, temperature=0, api_key=OPENAI_API_KEY)
-
-    async with MultiServerMCPClient({
-        "tavily-mcp": {
-            "command": "npx",
-            "args": [
-            "-y",
-            "@smithery/cli@latest",
-            "run",
-            "@tavily-ai/tavily-mcp",
-            "--key",
-            SMITHERY_API_KEY
-            ]
-        }
-    }) as client:
+    async with MultiServerMCPClient(
+        {"tavily-mcp": {"command": "npx", "args": ["-y", "@smithery/cli@latest", "run", "@tavily-ai/tavily-mcp", "--key", os.getenv("SMITHERY_API_KEY")]}}
+    ) as client:
         agent = create_react_agent(model, client.get_tools())
 
         system_message = f"""You are an assistant specialized in gathering and summarizing company-related information. 
@@ -64,6 +52,5 @@ async def summary_agent(state: State) -> Dict[str, List[AIMessage]]:
         """
 
         messages = [SystemMessage(content=system_message), *state.messages]
-
         response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
         return {"messages": [response["messages"][-1]], "agent_name": "summary_agent", "company_summary": response["messages"][-1].content}
