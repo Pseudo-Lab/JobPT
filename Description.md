@@ -1,97 +1,79 @@
 # JobPT
 
 ## 서비스 개요
+<div style="text-align: center;">
+<img src="./assets/jobpt_poster.png" width="50%" height="50%"/>
+</div>
 
-현대 사회에서 취업 준비는 반복적이고 시간 소모적인 과정으로, 구직자가 자신의 역량을 효과적으로 어필하지 못해 기회를 놓치는 경우가 많습니다. 이를 해결하기 위해, JobPT는 **직무 공고 필터링, 회사 정보 요약 제공, 이력서 분석 및 맞춤형 피드백** 기능을 갖춘 지능형 취업 지원 서비스를 제공합니다.
+현대 사회에서 취업 준비는 반복적이고 시간 소모적인 과정으로, 구직자가 자신의 역량을 효과적으로 어필하지 못해 기회를 놓치는 경우가 많습니다. 이를 해결하기 위해 JobPT는 LLM 기반 **채용 공고 추천, 기업 맞춤형 이력서 피드백, 회사 정보 요약 제공, 이력서 적합성 평가**등의 기능을 갖춘 '**지능형 취업 지원 서비스**'를 제공합니다.
 
 ## 주요 기능
 
-1. **LLM 기반 개인 맞춤형 매칭**
-
+1. **LLM 기반 개인 이력서 맞춤형 채용 공고 매칭**
     - 제공받은 이력서를 RAG를 활용해 각 회사의 채용 공고와 의미론적 유사도를 기반으로 적합한 회사를 추천합니다.
 
-2. **회사 관련 정보 요약 제공**
+2. **기업 맞춤형 이력서 피드백**
+    - 유저와의 대화를 통해 평가-개선-재평가 프로세스를 거치며 이력서를 반복적으로 개선합니다. 
+    - Multi-turn을 활용해 챗봇 인터페이스에서 유저에게 개선점을 제공하며, 이력서에 곧바로 반영합니다. (기능 반영 예정)
 
-    - LLM을 통해 원하는 회사 또는 추천된 JD의 회사와 관련된 최신 정보를 요약해 제공합니다.
+3. **회사 정보 요약 제공**
+    - AI Agent를 통해 원하는 회사 또는 추천된 JD의 회사와 관련된 최신 정보를 요약해 제공합니다.
+    - 산업 및 도메인, 경쟁력, 주요 서비스, 인재상, 사내 문화, 추진 중인 프로젝트 및 이니셔티브 등에 대한 메타 데이터를 요약합니다. 
 
-3. **이력서 평가**
+3. **이력서 적합성 평가 및 구체적 개선점 제안**
+    - 이력서 검토 시스템은 특정 JD에 맞춰 이력서를 분석하여 지원자 추적 시스템(ATS)이 이를 어떻게 평가할지 시뮬레이션합니다. 
+    - 또한, 각 이력서를 해당 직무에 최적화할 수 있도록 상세한 피드백과 개선 제안도 제공합니다. 이 분석기는 각 직무 설명을 세밀하게 분석하여, 이력서가 해당 직무에 얼마나 잘 부합하는지 가장 정확하게 평가할 수 있도록 설계되었습니다.
 
-    - LLM을 통해 이력서와 매칭된 회사에 채용 공고에 대한 현재 점수를 평가합니다. 프롬프팅을 통해 기술 적합성, 핵심 역량, 종합 점수를 평가하도록 지시하여 현재 점수를 제공합니다.
-
-4. **이력서 개선** (Todo)
-
-    - LLM을 통해 평가 점수에 따른 개선점을 제공합니다. 높은 점수를 받은 항목은 이력서에서 더욱 강조할 수 있도록 개선합니다. 반대로, 점수가 낮은 부분에 대해서는 부족한 역량이나 경험을 보완할 수 있는 내용을 제안합니다.
-
-5. **LLM을 통한 대화형 평가 및 개선 반복** (Todo)
-    - LLM과 대화를 통해 평가-개선-재평가 프로세스를 거치며 이력서를 반복적으로 개선합니다. Multi-turn을 활용해 제공받은 개선점을 보완해가며 평가 점수를 높힙니다.
 
 ## 시스템 구조도
 
-### phase 1 | 이력서 기반 JD 추천 기능
+### 전체 시스템 구조도
+![full_workflow](./assets/full_workflow.png)
 
-![phase1_pipeline](./assets/phase1_pipeline.png)
+### 채용 공고 추천 RAG 구조도
+<img src="./assets/rag_workflow.png" width="70%" height="70%"/>
 
-### phase 2 | 이력서 수정 제안 기능
+### 이력서 수정 제안 및 회사 요약 Agent 구조도
+<img src="./assets/agent_workflow.png" width="70%" height="70%"/>
 
-![phase2_pipeline](./assets/phase2_pipeline.png)
 
-### 주요 기술
+### 검토 LLM 파이프라인
 
--   **크롤링**: 여러 회사 JD 데이터 확보
--   **PDF 파싱**: MS OmniParser를 사용해 컴퓨터 비전 기반 PDF 텍스트 추출
--   **Vector DB**: ChromaDB에 Job description 텍스트 Chunk 저장
--   **LLM**
-    -   이력서 평가 및 개선 기능에 활용 (ChatGPT API 사용)
-    -   회사 정보 및 뉴스 요약에 활용 (Huggingface Qwen2.5 모델 사용)
--   **Gradio**: 웹서비스 구동용 인터페이스에 활용
--   **LangChain**: LLM 추론 및 멀티턴 시스템 구현을 위해 사용
--   **LangGraph**: Agent와 업무 자동화를 위해 사용
+## 시스템 구성 기술
+-   **크롤링 API**: 여러 회사 JD 데이터 확보 및 마감된 채용 공고 삭제
+-   **PDF 파싱**: Upstage Parser를 이용한 다양한 형태의 이력서 PDF 텍스트 추출
+-   **Vector DB**: Pinecone에 Job description(JD) 텍스트 Chunk 저장 및 JD Retrieval
+-   **AI Agent**
+    -  supervisor agent를 두어 멀티 agent로 파이프라인 구성
+    -  회사 메타 데이터 정보 수집 및 요약 (Tavily Search MCP 사용)
+    -  수정 제안 agent (유저의 웹 포트폴리오 탐색 MCP)
+-   **LLM Model**
+    -  이력서 적합성 평가
 
-## DB 구조도
+## 기술 스택
+- Language: Python, Typescript
+- LLM Framework
+    - LangChain
+    - Langgraph
+    - OpenAI (text-embedding-3-small, gpt-4o, gpt-4o-mini, gpt-4.1-nano)
+- Backend
+    - Web Framework: FastAPI
+    - Vector Database: Pinecone
+    - Monitoring: Langfuse
 
-![vectordb](./assets/inserting_data.png)
 
-## 서비스 데모
+## 서비스 데모 화면
 
-### 시연 영상 - 이력서 기반 JD 추천 기능
-
--   [데모 유튜브 링크](https://www.youtube.com/watch?v=m6EhfmpShCg)
+### 시연 영상
+-   [이력서 기반 JD 추천 기능 (Phase 1)](https://www.youtube.com/watch?v=m6EhfmpShCg)
 
 ### 웹 화면
 
-<img src="./assets/demo1.png" width="50%" height="50%"/>
-<img src="./assets/demo2.png" width="50%" height="50%"/>
-<img src="./assets/demo3.png" width="50%" height="50%"/>
+<img src="./assets/demo1_ph2.png" width="70%" height="70%"/>
+<img src="./assets/demo2_ph2.png" width="70%" height="70%"/>
 
-## Docker 기반 시스템 구동 방법
-
-1. 환경 변수 설정
-
-```bash
-export OPENAI_API_KEY=your_api_key
-export DOCKER_USERNAME=jaeghangchoi
-```
-
-2. Docker 컨테이너 실행
-
--   docker-compose.yml 파일이 있는 경로로 이동
-
-```bash
-mkdir -p data/jd_origin
-mkdir -p data/chroma_db
-docker compose up -d
-```
-
-### 접속
-
--   http://localhost:7860
 
 ## 시스템 구동 방법
-
-OmniParser 폴더 압축 해제
-
--   system 폴더안에 사전 제공된 OmniParser_v1.zip 파일을 압축해제
--   반드시 OmniParser_v1 폴더명이여야 함
 
 프로젝트 패키지 설치
 
@@ -99,16 +81,14 @@ OmniParser 폴더 압축 해제
 pip install -r requirements.txt
 ```
 
-OPENAI_API_KEY 등록
-
-```
-export OPENAI_API_KEY=<your_openai_key>
-```
-
-Chroma DB 세팅
-
-```
-python system/insert_chunks.py
+system 폴더에 `.env` 파일 생성
+```code
+OPENAI_API_KEY=<your_openai_key>
+UPSTAGE_API_KEY=<your_upstage_key>
+SMITHERY_API_KEY=<your_smithery_key>
+PINECONE_API_KEY=<your_pinecone_key>
+LANGFUSE_PUBLIC_KEY=<your_langfuse_key>
+LANGFUSE_SECRET_KEY=<your_langfuse_key>
 ```
 
 API 실행
@@ -117,10 +97,10 @@ API 실행
 python system/main.py
 ```
 
-Gradio 앱 실행
+웹 화면 실행
 
 ```
-python gradioapp.py
+npm run dev
 ```
 
 API 호출 예시 (api_test.py 참조)
