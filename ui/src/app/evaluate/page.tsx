@@ -82,16 +82,17 @@ export default function EvaluatePage() {
         <h2 className="text-lg font-semibold mb-2">기본 리포트 (Basic Report)</h2>
         <div className="border rounded bg-white p-4 shadow mb-4 prose max-w-none">
           {loading ? (
-            <>
-              <div className="w-full mb-2">
-                <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="bg-green-500 h-3 transition-all duration-700" style={{ width: `${progress}%` }} />
+              <>
+                <div className="flex flex-col items-center w-full mb-2">
+                  <img src="/logo/loading.gif" alt="loading" style={{ height: 48, width: 'auto' }} className="mb-3" />
+                  <div className="h-3 bg-gray-200 rounded-full overflow-hidden w-full">
+                    <div className="bg-green-500 h-3 transition-all duration-700" style={{ width: `${progress}%` }} />
+                  </div>
+                  <div className="mt-2 text-center text-sm text-gray-600 animate-pulse">{stepMsg}</div>
                 </div>
-                <div className="mt-2 text-center text-sm text-gray-600 animate-pulse">{stepMsg}</div>
-              </div>
-              <div className="text-center text-gray-400 mt-3">리포트 생성에는 수십 초~수 분이 소요될 수 있습니다.<br/>잠시만 기다려주세요...</div>
-            </>
-          ) : error ? (
+                <div className="text-center text-gray-400 mt-3">리포트 생성에는 수십 초~수 분이 소요될 수 있습니다.<br/>잠시만 기다려주세요...</div>
+              </>
+            ) : error ? (
             <div className="text-red-600">{error}</div>
           ) : (
             <>

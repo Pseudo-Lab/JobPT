@@ -385,8 +385,8 @@ export default function Home() {
             </Head>
 
             {/* 메인 로고 + 타이틀 */}
-            <div className="flex items-center gap-3 py-8 px-6">
-                <img src="/ui/logo/main_logo.png" alt="JobPT Logo" style={{ height: 48, width: 'auto' }} />
+            <div className="flex items-center gap-3 py-8 px-6 bg-white">
+                <img src="/logo/main_logo.png" alt="JobPT Logo" style={{ height: 48, width: 'auto', background: '#fff', borderRadius: 8 }} />
                 <span className="text-3xl font-extrabold text-gray-800 tracking-tight">JobPT</span>
             </div>
 
