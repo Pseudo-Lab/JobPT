@@ -11,8 +11,10 @@ from parser import run_parser, convert_pdf_to_jpg
 from get_similarity.main import matching
 from openai import OpenAI
 import uvicorn
+import nltk
 
-from multi_agents.states.states import get_session_state, end_session, add_user_input_to_state, add_assistant_response_to_state
+
+from multi_agents.states.states import State, get_session_state, end_session, add_user_input_to_state, add_assistant_response_to_state
 from multi_agents.graph import create_graph
 from configs import *
 
@@ -20,9 +22,9 @@ from configs import *
 resume_cache = {}
 analysis_cache = {}
 
-location_cache = ""         #['USA' 'Germany' 'UK']
-remote_cache = ""            #[ True False]
-job_type_cache = ""    #['fulltime' 'parttime']
+location_cache = ""  # ['USA' 'Germany' 'UK']
+remote_cache = ""  # [ True False]
+job_type_cache = ""  # ['fulltime' 'parttime']
 
 app = FastAPI()
 
@@ -106,9 +108,7 @@ class ChatRequest(BaseModel):
 from langfuse import Langfuse
 from langfuse.callback import CallbackHandler
 
-langfuse_handler = CallbackHandler(
-    public_key=LANGFUSE_PUBLIC_KEY, secret_key=LANGFUSE_SECRET_KEY, host="https://cloud.langfuse.com"
-)
+langfuse_handler = CallbackHandler(public_key=LANGFUSE_PUBLIC_KEY, secret_key=LANGFUSE_SECRET_KEY, host="https://cloud.langfuse.com")
 
 
 @app.post("/chat")
@@ -116,19 +116,20 @@ async def chat(request: Request):
     data = await request.json()
     session_id = data["session_id"]
     user_input = data["message"]
-    company_name = data.get("company_name", "")
+    company_name = data.get("company", "")
     resume_path = data.get("resume_path", "")
-
     state = get_session_state(
         session_id,
         job_description=data.get("jd", ""),
         resume=resume_cache.get(resume_path, ""),
         company_name=company_name,
         user_resume=data.get("user_resume", ""),
+        route_decision=data.get("route_decision", ""),
     )
 
     add_user_input_to_state(state, user_input)
-    graph = await create_graph()
+    graph, state = await create_graph(state)
+
     result = await graph.ainvoke(state, config={"callbacks": [langfuse_handler]})
     answer = result["messages"][-1].content
     add_assistant_response_to_state(state, answer)
@@ -234,4 +235,5 @@ async def evaluate(request: EvaluateRequest):
 
 # 개발용 실행 명령
 if __name__ == "__main__":
+    nltk.download("punkt_tab")
     uvicorn.run("main:app", host="0.0.0.0", port=8000)

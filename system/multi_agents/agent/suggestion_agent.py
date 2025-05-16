@@ -19,6 +19,7 @@ from configs import *
 # 환경 변수 로드
 load_dotenv()
 
+
 @tool
 def search(url: str) -> str:
     """
