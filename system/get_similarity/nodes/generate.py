@@ -5,11 +5,36 @@ from langchain_core.prompts import PromptTemplate
 import yaml
 import pandas as pd
 from configs import *
+import numpy as np
+from collections import defaultdict
 
 llm = ChatOpenAI(model=RAG_MODEL)
+search_dict = defaultdict(list)
 
 
-def generation(retriever, resume):
+
+def make_rank(results,k, full=False):
+    ## query와 db를 넣으면 id의 list를 리턴
+    search_range = min(k, len(results))
+    scores = np.empty(search_range, dtype=object)
+    for i in range(search_range):
+        scores[i] = results[i].metadata['id']
+        search_dict[results[i].metadata['id']].append(results[i])
+    return scores
+
+def rrf(multi_scores, k=1):        #n*10개의 입력, id로 들어옴
+    score = 0.0
+    score_dict = defaultdict(int)
+    for scores in multi_scores:
+        for rank, id in enumerate(scores):
+            score = 1.0 / ( k + rank+1)       #index는 0부터 시작하므로 +1
+            score_dict[id]+=score
+    score_dict = sorted(score_dict.items(), key=lambda x: x[1], reverse=True)
+    return score_dict
+
+
+
+def generation(retriever, lexical_retriever, resume):
     print("\n=== Generation 함수 시작 ===")
     print("입력된 resume:", resume[:100], "...")  # 긴 텍스트는 일부만 출력
 
@@ -39,14 +64,24 @@ def generation(retriever, resume):
     # Retriever 실행
     print("\n=== Retriever 실행 ===")
     job_descriptions = retriever.invoke(resume)
-    print("검색된 문서 수:", len(job_descriptions) if job_descriptions else 0)
-    print("job_descriptions 타입:", type(job_descriptions))
-    print("job_descriptions 내용:", job_descriptions)
+    print("job_descriptions:", job_descriptions)
+
+    lexical_job_descriptions = lexical_retriever.invoke(resume)
+    sem_rank = make_rank(job_descriptions, k=10)
+    lex_rank = make_rank(lexical_job_descriptions, k=10)
+
+    job_descriptions = search_dict[rrf([sem_rank, lex_rank], k=1.2)[0][0]]
+
+
+    # print("검색된 문서 수:", len(job_descriptions) if job_descriptions else 0)
+    # print("job_descriptions 타입:", type(job_descriptions))
+    # print("job_descriptions 내용:", job_descriptions)
 
     # 결과가 없는 경우 처리
     if not job_descriptions:
         print("검색된 문서가 없습니다!")
         return "No matches found", "", "", ""
+
 
     # Metadata 접근
     try:
