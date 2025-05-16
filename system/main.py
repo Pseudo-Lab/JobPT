@@ -12,11 +12,6 @@ from get_similarity.main import matching
 from openai import OpenAI
 import uvicorn
 import nltk
-<<<<<<< HEAD
-=======
-
->>>>>>> d6d1362f898b151f140db0553b78a57eeed0c16e
-
 
 from multi_agents.states.states import State, get_session_state, end_session, add_user_input_to_state, add_assistant_response_to_state
 from multi_agents.graph import create_graph
