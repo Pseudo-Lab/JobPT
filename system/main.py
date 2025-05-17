@@ -117,10 +117,19 @@ async def chat(request: Request):
     user_input = data["message"]
     company_name = data.get("company", "")
     resume_path = data.get("resume_path", "")
+    output_folder = "data"
+    image_paths = convert_pdf_to_jpg(resume_path, output_folder)
+    resume_content = []
+    for image_path in image_paths:
+        resume = run_parser(image_path)
+        resume_content.append(resume[0])
+
+    resume_content_text = "".join(resume_content)
+    print(resume_content_text)
     state = get_session_state(
         session_id,
         job_description=data.get("jd", ""),
-        resume=resume_cache.get(resume_path, ""),
+        resume=resume_content_text,
         company_name=company_name,
         user_resume=data.get("user_resume", ""),
         route_decision=data.get("route_decision", ""),
@@ -234,5 +243,5 @@ async def evaluate(request: EvaluateRequest):
 
 # 개발용 실행 명령
 if __name__ == "__main__":
-    nltk.download('punkt_tab')
+    nltk.download("punkt_tab")
     uvicorn.run("main:app", host="0.0.0.0", port=8000)
