@@ -9,6 +9,7 @@ from multi_agents.states.states import State
 from langchain_core.tools import tool
 from configs import *
 
+
 @tool
 def search(url: str) -> str:
     """
@@ -39,6 +40,7 @@ Your task is to revise the **Selected Resume** section to improve clarity, impac
 
 - If you find a blog address (URL) in the resume or user message, always call the search tool with that blog address as input.
 
+- Please highlight the changes in bold.
 
 [Job Description]
 {state.job_description}
