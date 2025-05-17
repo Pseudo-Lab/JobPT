@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // 임시 경로에 파일 저장
+    // 임시 경로와 public/uploads 경로에 파일 저장
     const fs = require("fs");
     const path = require("path");
     const os = require("os");
@@ -21,6 +21,15 @@ export async function POST(req: NextRequest) {
     const tmpFilename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${file.name}`;
     const tmpFilePath = path.join(tmpDir, tmpFilename);
     fs.writeFileSync(tmpFilePath, buffer);
+
+    // public/uploads 경로에도 복사 (Next.js에서 public은 process.cwd()/public)
+    const uploadsDir = path.join(process.cwd(), "public", "uploads");
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    const publicFilePath = path.join(uploadsDir, tmpFilename);
+    fs.copyFileSync(tmpFilePath, publicFilePath);
+    const pdfUrl = `/uploads/${tmpFilename}`;
 
     // 2. 업로드된 파일을 upstage_parser.py로 파싱 (python에서 결과 저장)
     const pyPath = path.join(process.cwd(), "upstage_parser.py");
@@ -37,5 +46,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Python script error", stderr: py.stderr, stdout: py.stdout }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, stdout: py.stdout });
+    // pdfUrl 추가하여 반환
+    return NextResponse.json({ success: true, stdout: py.stdout, pdfUrl });
 }
