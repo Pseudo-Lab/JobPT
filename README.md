@@ -38,8 +38,9 @@
 ### 이력서 수정 제안 및 회사 요약 Agent 구조도
 <img src="./assets/agent_workflow.png" width="70%" height="70%"/>
 
-
 ### 검토 LLM 파이프라인
+<img src="./assets/ATS_workflow.png" width="70%" height="70%"/>
+
 
 ## 시스템 구성 기술
 -   **크롤링 API**: 여러 회사 JD 데이터 확보 및 마감된 채용 공고 삭제
