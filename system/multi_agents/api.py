@@ -20,7 +20,7 @@ async def chat(request: Request):
     data = await request.json()
     session_id = data["session_id"]
     user_input = data["messages"]
-
+    
     state = get_session_state(
         session_id,
         agent_name=data.get("agent_name", ""),
