@@ -204,7 +204,6 @@ export default function Home() {
             const isPdfFile = selectedFile.type === "application/pdf";
             setIsPdf(isPdfFile);
             if (isPdfFile) {
-                setPdfUrl(URL.createObjectURL(selectedFile));
                 setThumbnailUrl(null);
             } else {
                 setThumbnailUrl(URL.createObjectURL(selectedFile));
@@ -223,7 +222,6 @@ export default function Home() {
             const isPdfFile = droppedFile.type === "application/pdf";
             setIsPdf(isPdfFile);
             if (isPdfFile) {
-                setPdfUrl(URL.createObjectURL(droppedFile));
                 setThumbnailUrl(null);
             } else {
                 setThumbnailUrl(URL.createObjectURL(droppedFile));
@@ -272,6 +270,10 @@ export default function Home() {
                 });
                 const upstageData = await upstageRes.json();
                 console.log("[Upstage API Response]", upstageData);
+
+                if (upstageData.pdfUrl) {
+                    setPdfUrl(upstageData.pdfUrl);
+                }
 
                 const boxes = (upstageData.elements || []).map((e: any) => ({
                     id: String(e.id),
@@ -349,6 +351,9 @@ export default function Home() {
                     body: upstageForm,
                 });
                 const upstageData = await upstageRes.json();
+                if (upstageData.pdfUrl) {
+                    setPdfUrl(upstageData.pdfUrl);
+                }
                 const boxes = (upstageData.elements || []).map((e: any) => ({
                     id: String(e.id),
                     title: e.category,
