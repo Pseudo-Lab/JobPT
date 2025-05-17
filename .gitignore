@@ -18,3 +18,4 @@ resume_JD_similarity/data/**
 **lib**
 **chroma_db**
 **bin**
+ui/public/uploads/**
