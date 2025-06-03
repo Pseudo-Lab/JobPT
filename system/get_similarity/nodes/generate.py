@@ -11,8 +11,6 @@ from collections import defaultdict
 llm = ChatOpenAI(model=RAG_MODEL)
 search_dict = defaultdict(list)
 
-
-
 def make_rank(results,k, full=False):
     ## query와 db를 넣으면 id의 list를 리턴
     search_range = min(k, len(results))
@@ -32,7 +30,16 @@ def rrf(multi_scores, k=1):        #n*10개의 입력, id로 들어옴
     score_dict = sorted(score_dict.items(), key=lambda x: x[1], reverse=True)
     return score_dict
 
-
+def format_docs(docs):
+    print("\n=== format_docs 함수 실행 ===")
+    print("입력된 docs 수:", len(docs) if docs else 0)
+    try:
+        doc_list = [doc.metadata["description"] for doc in docs]
+        print("메타데이터 추출 성공")
+        return doc_list[0]
+    except Exception as e:
+        print("format_docs 에러:", str(e))
+        return ""
 
 def generation(retriever, lexical_retriever, resume):
     print("\n=== Generation 함수 시작 ===")
@@ -108,15 +115,3 @@ def generation(retriever, lexical_retriever, resume):
         return "Error in chain execution", top_job_description, job_url, ""
 
     return answer, top_job_description, job_url, company_name
-
-
-def format_docs(docs):
-    print("\n=== format_docs 함수 실행 ===")
-    print("입력된 docs 수:", len(docs) if docs else 0)
-    try:
-        doc_list = [doc.metadata["description"] for doc in docs]
-        print("메타데이터 추출 성공")
-        return doc_list[0]
-    except Exception as e:
-        print("format_docs 에러:", str(e))
-        return ""

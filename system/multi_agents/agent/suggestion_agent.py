@@ -39,7 +39,6 @@ Your task is to revise the **Selected Resume** section to improve clarity, impac
 - Use the same language as the original resume. For example, if the resume is written in English, your revisions must also be in English—even if the user query or instructions are in another language.
 
 - If you find a blog address (URL) in the resume or user message, always call the search tool with that blog address as input.
-
 - Please highlight the changes in bold.
 
 [Job Description]

@@ -24,19 +24,11 @@ def check_db_status(db, db_type="chroma", index=None):
 
 
 
-def retrieveral(db, filter, debug=False):
+def retrieveral(db, embedding, filter, debug=False):
     print("\n=== Retriever 설정 및 검색 시작 ===")
     print(f"Debug 모드: {debug}")
 
     try:
-        # DB 상태 확인
-        # print(f"DB 상태:")
-        # print(f"- Collection name: {db._collection.name}")
-        # print(f"- 총 문서 수: {db._collection.count()}")
-
-        # embedding 모델 생성
-        embedding = OpenAIEmbeddings()
-
         # retriever 설정에 embedding 추가
         retriever = db.as_retriever(search_kwargs={"k": 10, "filter":filter}, embedding_function=embedding)  # top-3 문서 검색  # 임베딩 모델 명시적 지정
         print("Retriever 설정 완료")

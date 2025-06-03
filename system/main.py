@@ -1,8 +1,7 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Body, Request
+from fastapi import FastAPI, UploadFile, File, HTTPException, Body, Request, Form
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
 import shutil
 import uuid
 import os
@@ -16,6 +15,12 @@ import nltk
 from multi_agents.states.states import State, get_session_state, end_session, add_user_input_to_state, add_assistant_response_to_state
 from multi_agents.graph import create_graph
 from configs import *
+
+from langfuse import Langfuse
+from langfuse.callback import CallbackHandler
+
+from ats_analyzer_improved import ATSAnalyzer
+
 
 # 캐시 저장소
 resume_cache = {}
@@ -39,10 +44,6 @@ app.add_middleware(
 # 업로드 디렉토리 설정
 UPLOAD_DIR = "uploaded_resumes"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-
-# /upload - 파일 업로드 및 경로 반환
-from fastapi import Form
 
 
 @app.post("/upload")
@@ -97,16 +98,6 @@ async def run(data: MatchRequest):
 
 
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답
-class ChatRequest(BaseModel):
-    message: str
-    resume_path: Optional[str] = None
-    company_name: Optional[str] = None
-    jd: Optional[str] = None
-
-
-from langfuse import Langfuse
-from langfuse.callback import CallbackHandler
-
 langfuse_handler = CallbackHandler(public_key=LANGFUSE_PUBLIC_KEY, secret_key=LANGFUSE_SECRET_KEY, host="https://cloud.langfuse.com")
 
 
@@ -117,14 +108,18 @@ async def chat(request: Request):
     user_input = data["message"]
     company_name = data.get("company", "")
     resume_path = data.get("resume_path", "")
-    output_folder = "data"
-    image_paths = convert_pdf_to_jpg(resume_path, output_folder)
-    resume_content = []
-    for image_path in image_paths:
-        resume = run_parser(image_path)
-        resume_content.append(resume[0])
 
-    resume_content_text = "".join(resume_content)
+    if resume_cache[resume_path] is None:
+        output_folder = "data"
+        image_paths = convert_pdf_to_jpg(resume_path, output_folder)
+        resume_content = []
+        for image_path in image_paths:
+            resume = run_parser(image_path)
+            resume_content.append(resume[0])
+        resume_content_text = "".join(resume_content)
+    else:
+        resume_content_text = resume_cache[resume_path]
+    
     print(resume_content_text)
     state = get_session_state(
         session_id,
@@ -217,10 +212,6 @@ async def chat(request_data: dict = Body(...)):
 
 
 # /evaluate - ATS 분석 및 HTML 리포트 반환
-from ats_analyzer_improved import ATSAnalyzer
-from fastapi.responses import JSONResponse
-
-
 class EvaluateRequest(BaseModel):
     resume_path: str
     jd_text: str
