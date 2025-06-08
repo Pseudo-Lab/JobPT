@@ -42,6 +42,19 @@ def format_docs(docs):
         return ""
 
 def generation(retriever, lexical_retriever, resume):
+    """
+    사용자의 이력서를 기반으로 벡터 DB에서 채용공고를 검색하고
+    LLM을 이용해 CV, JD 리뷰를 수행하는 함수
+    Args:
+        retriever: semantic retriever
+        lexical_retriever: lexical retriever
+        resume: 사용자의 이력서
+    Returns:
+        answer: LLM을 통한 CV, JD 리뷰
+        top_job_description: 첫 번째 문서(top-similarity)의 채용공고 전문
+        top_job_url: 첫 번째 문서의 채용공고 URL
+        top_company_name: 첫 번째 문서의 회사 이름
+    """
     print("\n=== Generation 함수 시작 ===")
     print("입력된 resume:", resume[:100], "...")  # 긴 텍스트는 일부만 출력
 
@@ -71,18 +84,12 @@ def generation(retriever, lexical_retriever, resume):
     # Retriever 실행
     print("\n=== Retriever 실행 ===")
     job_descriptions = retriever.invoke(resume)
-    print("job_descriptions:", job_descriptions)
+    # print("job_descriptions:", job_descriptions)      # retrieval된 모든 결과 출력
 
     lexical_job_descriptions = lexical_retriever.invoke(resume)
     sem_rank = make_rank(job_descriptions, k=10)
     lex_rank = make_rank(lexical_job_descriptions, k=10)
-
     job_descriptions = search_dict[rrf([sem_rank, lex_rank], k=1.2)[0][0]]
-
-
-    # print("검색된 문서 수:", len(job_descriptions) if job_descriptions else 0)
-    # print("job_descriptions 타입:", type(job_descriptions))
-    # print("job_descriptions 내용:", job_descriptions)
 
     # 결과가 없는 경우 처리
     if not job_descriptions:
@@ -90,28 +97,28 @@ def generation(retriever, lexical_retriever, resume):
         return "No matches found", "", "", ""
 
 
-    # Metadata 접근
+    # Metadata 접근(채용공고 전문 포함)
     try:
         top_job_description = job_descriptions[0].metadata["description"]
-        job_url = job_descriptions[0].metadata["job_url"]
-        company_name = job_descriptions[0].metadata["company"]
-        print("==================================================")
-        print(job_descriptions)
+        top_job_url = job_descriptions[0].metadata["job_url"]
+        top_company_name = job_descriptions[0].metadata["company"]
         print("==================================================")
         print("\n첫 번째 문서 메타데이터 확인:")
-        print("description 존재:", "description" in job_descriptions[0].metadata)
-        print("job_url 존재:", "job_url" in job_descriptions[0].metadata)
+        print("JD 전문:", top_job_description)
+        print("==================================================")
+        print("job_url:", top_job_url)
+        print("company:", top_company_name)
     except Exception as e:
         print("메타데이터 접근 중 에러:", str(e))
         return "Error accessing metadata", "", "", ""
 
-    # Chain 실행
+    # Chain 실행(LLM을 통한 CV, JD 리뷰)
     print("\n=== Chain 실행 ===")
     try:
         answer = rag_chain.invoke(resume)
         print("Chain 실행 결과:", answer[:100], "...")
     except Exception as e:
         print("Chain 실행 중 에러:", str(e))
-        return "Error in chain execution", top_job_description, job_url, ""
+        return "Error in chain execution", top_job_description, top_job_url, top_company_name
 
-    return answer, top_job_description, job_url, company_name
+    return answer, top_job_description, top_job_url, top_company_name

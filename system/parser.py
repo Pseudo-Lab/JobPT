@@ -13,7 +13,10 @@ import io
 import base64
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
+
 load_dotenv()
+api_key = UPSTAGE_API_KEY
+
 
 def process(image_input, box_threshold=0.05, iou_threshold=0.1, use_paddleocr=True, imgsz=640) -> Optional[Image.Image]:
     print("1. process 함수 시작")
@@ -83,10 +86,9 @@ def convert_pdf_to_jpg(pdf_path, output_folder):
         print(f"에러가 발생했습니다: {str(e)}")
 
 def run_parser(image_path):
-    api_key = UPSTAGE_API_KEY
-    print(api_key)
-    print(image_path)
-    
+    """
+    Upstage API를 사용하여 이미지에서 텍스트를 추출합니다.
+    """
     url = "https://api.upstage.ai/v1/document-digitization"
     headers = {"Authorization": f"Bearer {api_key}"}
     files = {"document": open(image_path, "rb")}
@@ -127,5 +129,6 @@ def run_parser(image_path):
     full_contents = response_data.get('content', {}).get('text', '')
     contents = "\n".join(contents)
 
+    print(f"{image_path}에서 텍스트 추출 완료")
     return contents, coordinates, full_contents
 

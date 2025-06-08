@@ -1,4 +1,3 @@
-from get_similarity.nodes.db_load import db_load
 from langchain.embeddings.openai import OpenAIEmbeddings
 
 
@@ -17,14 +16,17 @@ def check_db_status(db, db_type="chroma", index=None):
     elif db_type == "pinecone":
         try:
             print("DB 상태 확인 중...")
-            print(f"- 총 문서 수: {db.describe_index_stats()}")
+            print(f"- 인덱스 정보: {db.describe_index_stats()}")
         except Exception as e:
             print(f"DB 상태 확인 중 에러 발생: {str(e)}")
             raise
 
 
 
-def retrieveral(db, embedding, filter, debug=False):
+def get_retriever(db, embedding, filter, debug=False):
+    """
+    langchain기반 retriever를 설정하고 반환하는 함수
+    """
     print("\n=== Retriever 설정 및 검색 시작 ===")
     print(f"Debug 모드: {debug}")
 
