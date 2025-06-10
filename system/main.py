@@ -46,8 +46,27 @@ UPLOAD_DIR = "uploaded_resumes"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
+# /matching - 이력서 분석 및 JD 매칭
+class MatchRequest(BaseModel):
+    resume_path: str
+
+
+
 @app.post("/upload")
 async def upload_resume(file: UploadFile = File(...), location: str = Form(""), remote: str = Form("any"), job_type: str = Form("any")):
+    """
+    사용자의 이력서를 업로드하고, 이력서의 정보를 캐시{file_path}에 저장합니다.
+
+    Args:
+        file: 사용자가 업로드한 이력서 파일(PDF)
+        
+        아래 3개의 인자는 검색시 메타데이터 필터링을 위해 사용됨(e.g. Location=USA)
+        location: 근무 희망 위치 ['USA', 'Germany', 'UK']
+        remote: 원격 근무 여부 ['True', 'False']
+        job_type: 근무 유형 ['fulltime', 'parttime']
+    Returns:
+        JSONResponse: 업로드된 이력서의 파일 경로
+    """
     try:
         file_ext = os.path.splitext(file.filename)[-1]
         file_id = f"{uuid.uuid4()}{file_ext}"
@@ -67,16 +86,26 @@ async def upload_resume(file: UploadFile = File(...), location: str = Form(""), 
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# /matching - 이력서 분석 및 JD 매칭
-class MatchRequest(BaseModel):
-    resume_path: str
 
 
 @app.post("/matching")
 async def run(data: MatchRequest):
+    """
+    사용자의 이력서를 기반으로 벡터 DB에서 채용공고를 검색하고
+    LLM을 이용해 CV, JD 리뷰를 수행하는 함수
+    Args:
+        data: MatchRequest
+    Returns:
+        JSONResponse: 
+            - JD: 첫 번째 문서(top-similarity)의 채용공고 전문
+            - JD_url: 채용공고 URL
+            - output: LLM을 통한 CV, JD 리뷰
+            - name: 회사 이름
+    """
     resume_path = data.resume_path
     output_folder = "data"
 
+    # PDF를 JPG로 변환 후 저장
     image_paths = convert_pdf_to_jpg(resume_path, output_folder)
     resume_content = []
     for image_path in image_paths:
@@ -234,5 +263,6 @@ async def evaluate(request: EvaluateRequest):
 
 # 개발용 실행 명령
 if __name__ == "__main__":
+    nltk.download("punkt")
     nltk.download("punkt_tab")
     uvicorn.run("main:app", host="0.0.0.0", port=8000)
