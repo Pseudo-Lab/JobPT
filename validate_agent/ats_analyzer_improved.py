@@ -3,1380 +3,819 @@ import os
 import re
 import json
 import time
+import asyncio
 import numpy as np
 import openai
+from groq import Groq
 import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
 from datetime import datetime
 from dotenv import load_dotenv
-#from upstage_parser import upstage_parser
+import markdown
+
+# 내부 모듈 임포트
 from ..system.parser import run_parser
+from . import prompts
+
 
 class ATSAnalyzer:
     """
     Advanced ATS (Applicant Tracking System) Analyzer
-
-    This class analyzes resumes against job descriptions to simulate
-    how an ATS system would evaluate the resume, providing detailed feedback
-    and improvement suggestions.
+    이 클래스는 이력서와 채용 공고를 분석하여 ATS 시스템이 이력서를 어떻게 평가하는지 시뮬레이션하고,
+    상세한 피드백과 개선 제안을 제공합니다.
     """
 
     def __init__(self, cv_path, jd_text, model=1):
         """
-        Initialize the ATS Analyzer
+        ATS 분석기 초기화
 
         Args:
-            cv_path (str): Path to the resume file (PDF, DOCX, TXT) or raw text
-            jd_text (str): Job description text
-            model (int): Model selection (1=OpenAI, 2=Groq)
+            cv_path (str): 이력서 파일 경로 (PDF, DOCX, TXT) 또는 원시 텍스트
+            jd_text (str): 채용 공고 텍스트
+            model (int): 모델 선택 (1=OpenAI, 2=Groq, 3=Gemini)
         """
         self.cv_path = cv_path
         self.jd_text = jd_text
+        self.model = model
+        
+        # 분석 과정 및 결과를 저장할 변수들
         self.cv_text = ""
         self.preprocessed_cv = ""
         self.structured_cv = {}
-        self.jd_analysis = {}  # Added: Store JD analysis results
-        self.jd_requirements = []  # Added: Store extracted JD requirements
-        self.jd_keywords = []  # Added: Store extracted JD keywords
+        self.jd_analysis = {}
+        self.jd_requirements = []
+        self.jd_keywords = []
+        
         self.analysis_results = {}
         self.scores = {}
         self.final_report = ""
         self.improvement_suggestions = ""
         self.competitive_analysis = ""
         self.optimized_resume = ""
+        
+        # 성능 및 사용량 추적 변수
         self.llm_call_count = 0
         self.total_tokens = 0
         self.total_time = 0
-        self.model = model
 
-        # Load environment variables
+        # .env 파일에서 API 키 로드 및 LLM 클라이언트 초기화
         load_dotenv()
+        self._initialize_llm_clients()
 
-    def extract_and_preprocess(self):
-        """Extract text from resume file and preprocess it"""
-        ext = os.path.splitext(self.cv_path)[1].lower()
-        text = ""
+    def _initialize_llm_clients(self):
+        """환경 변수에서 API 키를 읽어 LLM 클라이언트를 초기화합니다."""
+        self.openai_client = None
+        self.groq_client = None
+        self.gemini_client = None
+
+        # OpenAI 클라이언트 초기화
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        if openai_api_key and openai_api_key != "your_openai_api_key_here":
+            self.openai_client = openai.AsyncOpenAI(api_key=openai_api_key)
+        else:
+            print("경고: OpenAI API 키가 .env 파일에 없거나 유효하지 않습니다.")
+
+        # Groq 클라이언트 초기화
+        groq_api_key = os.getenv("GROQ_API_KEY")
+        if groq_api_key and groq_api_key != "your_groq_api_key_here":
+            try:
+                # Groq SDK는 현재 동기 방식만 공식 지원하므로,
+                # 비동기 호출을 위해 동기 클라이언트를 생성합니다.
+                self.groq_client = Groq(api_key=groq_api_key)
+            except ImportError:
+                print("경고: 'groq' 패키지가 설치되지 않았습니다. `pip install groq`로 설치해주세요.")
+            except Exception as e:
+                print(f"Groq 클라이언트 초기화 실패: {e}")
+        else:
+            print("경고: Groq API 키가 .env 파일에 없거나 유효하지 않습니다.")
+
+        # Gemini 클라이언트 초기화 (OpenAI 호환 엔드포인트 사용)
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
+        if gemini_api_key and gemini_api_key != "your_gemini_api_key_here":
+            try:
+                # Gemini API를 OpenAI 라이브러리 형식으로 사용하기 위한 설정
+                self.gemini_client = openai.AsyncOpenAI(api_key=gemini_api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+            except Exception as e:
+                print(f"Gemini 클라이언트 초기화 실패: {e}")
+        else:
+            print("경고: Gemini API 키가 .env 파일에 없거나 유효하지 않습니다.")
+
+
+    async def extract_and_preprocess(self):
+        """이력서 파일에서 텍스트를 추출하고 전처리합니다."""
         try:
-            #_,_, full_contents = upstage_parser(self.cv_path)
-            _,_, full_contents = run_parser(self.cv_path)
+            # upstage-parser를 사용하여 이력서 내용 추출
+            _, _, full_contents = run_parser(self.cv_path)
             text = full_contents
         except Exception as e:
-            print(f"Error processing resume file: {e}")
+            print(f"이력서 파일 처리 중 오류 발생: {e}")
             text = ""
 
         self.cv_text = text.strip()
+        self.structured_cv = self._extract_resume_sections(self.cv_text)
+        self.preprocessed_cv = self._advanced_preprocessing(self.cv_text)
+        
+        # 채용 공고 분석은 다른 분석의 선행 작업이므로 await로 완료를 기다립니다.
+        await self.analyze_job_description()
 
-        # Extract structured sections from the resume
-        self.structured_cv = self.extract_resume_sections(self.cv_text)
+        print(f"이력서에서 {len(self.cv_text)}자 추출 완료")
+        print(f"이력서에서 {len(self.structured_cv)}개의 섹션 식별 완료")
+        print(f"채용 공고 분석 완료, {len(self.jd_keywords)}개의 키워드 추출 완료")
 
-        # Advanced preprocessing
-        self.preprocessed_cv = self.advanced_preprocessing(self.cv_text)
-
-        # Analyze the job description
-        self.analyze_job_description()
-
-        print(f"Extracted {len(self.cv_text)} characters from resume")
-        print(f"Identified {len(self.structured_cv)} sections in the resume")
-        print(f"Analyzed job description with {len(self.jd_keywords)} keywords extracted")
-
-    def analyze_job_description(self):
+    async def analyze_job_description(self):
         """
-        Analyze the job description to extract requirements, keywords, and other important information
-        This is a critical step to ensure the ATS analysis is specific to this particular job
+        채용 공고를 분석하여 요구사항, 키워드 및 기타 중요한 정보를 추출합니다.
+        이 단계는 ATS 분석을 특정 직무에 맞게 조정하는 데 매우 중요합니다.
         """
-        # Extract key requirements and keywords from the JD
-        jd_analysis_prompt = f"""
-        Perform a detailed analysis of this job description to extract all information that would be used by an ATS system.
-
-        JOB DESCRIPTION:
-        {self.jd_text}
-
-        Please provide a comprehensive analysis with the following components:
-
-        1. REQUIRED QUALIFICATIONS: All explicitly stated required qualifications (education, experience, certifications, etc.)
-        2. PREFERRED QUALIFICATIONS: All preferred or desired qualifications that are not strictly required
-        3. KEY RESPONSIBILITIES: The main job duties and responsibilities
-        4. TECHNICAL SKILLS: All technical skills, tools, languages, frameworks, etc. mentioned
-        5. SOFT SKILLS: All soft skills, personal qualities, and character traits mentioned
-        6. INDUSTRY KNOWLEDGE: Required industry-specific knowledge or experience
-        7. COMPANY VALUES: Any company values or culture fit indicators mentioned
-
-        Format your response as a valid JSON object with these categories as keys, and arrays of strings as values.
-        Also include a "keywords" array with all important keywords from the job description, each with an importance score from 1-10.
-
-        The JSON must be properly formatted with no errors. Make sure all quotes are properly escaped and all arrays and objects are properly closed.
-
-        Example format:
-        {{"required_qualifications": ["Bachelor's degree in Computer Science", "5+ years of experience"],
-          "preferred_qualifications": ["Master's degree", "Experience with cloud platforms"],
-          "key_responsibilities": ["Develop software applications", "Debug and troubleshoot issues"],
-          "technical_skills": ["Python", "JavaScript", "AWS"],
-          "soft_skills": ["Communication", "Teamwork"],
-          "industry_knowledge": ["Financial services", "Regulatory compliance"],
-          "company_values": ["Innovation", "Customer focus"],
-          "keywords": [{{"keyword": "Python", "importance": 9, "category": "Technical Skill"}}, {{"keyword": "Bachelor's degree", "importance": 8, "category": "Education"}}]
-        }}
-
-        Return ONLY the JSON object with no additional text before or after.
-        """
-
-        response = self.call_llm(jd_analysis_prompt, model=self.model)
-
-        # Parse the JSON response
-        try:
-            # Try to clean up the response to make it valid JSON
-            # Remove any text before the first '{' and after the last '}'
-            start_idx = response.find('{')
-            end_idx = response.rfind('}')
-
-            if start_idx >= 0 and end_idx >= 0:
-                response = response[start_idx:end_idx+1]
-
-            # Try to parse the JSON
+        jd_analysis_prompt = prompts.get_jd_analysis_prompt(self.jd_text)
+        
+        max_retries = 2
+        for attempt in range(max_retries):
+            response = await self.call_llm(jd_analysis_prompt)
+            
             try:
-                self.jd_analysis = json.loads(response)
-            except json.JSONDecodeError as e:
-                # If parsing fails, try to fix common JSON errors
-                print(f"Initial JSON parsing failed: {e}")
-                print("Attempting to fix JSON format...")
+                self.jd_analysis = self._parse_json_from_llm(response)
+                
+                # 분석된 JD에서 키워드 및 요구사항 목록 추출
+                self.jd_keywords = self.jd_analysis.get('keywords', [])
+                self.jd_requirements = (
+                    self.jd_analysis.get('required_qualifications', []) +
+                    self.jd_analysis.get('preferred_qualifications', []) +
+                    self.jd_analysis.get('technical_skills', []) +
+                    self.jd_analysis.get('soft_skills', []) +
+                    self.jd_analysis.get('industry_knowledge', [])
+                )
+                print(f"JD 분석 JSON 파싱 성공, {len(self.jd_keywords)}개 키워드 추출")
+                return # 성공 시 함수 종료
+            except (json.JSONDecodeError, SyntaxError) as e:
+                print(f"JD 분석 JSON 파싱 오류 (시도 {attempt + 1}/{max_retries}): {e}")
+                if attempt == max_retries - 1:
+                    print("최대 재시도 횟수 초과. 대체용 기본 JD 분석 구조를 생성합니다.")
+                    self._create_default_jd_analysis()
 
-                # Fix common JSON errors
-                # 1. Replace single quotes with double quotes
-                response = response.replace("'", '"')
-
-                # 2. Fix trailing commas in arrays and objects
-                response = re.sub(r',\s*}', '}', response)
-                response = re.sub(r',\s*]', ']', response)
-
-                # Try parsing again
-                self.jd_analysis = json.loads(response)
-
-            # Extract keywords for later use
-            self.jd_keywords = self.jd_analysis.get('keywords', [])
-
-            # Compile a list of all requirements
-            self.jd_requirements = (
-                self.jd_analysis.get('required_qualifications', []) +
-                self.jd_analysis.get('preferred_qualifications', []) +
-                self.jd_analysis.get('technical_skills', []) +
-                self.jd_analysis.get('soft_skills', []) +
-                self.jd_analysis.get('industry_knowledge', [])
-            )
-
-            print(f"Successfully parsed JD analysis with {len(self.jd_keywords)} keywords")
-
-        except Exception as e:
-            print(f"Error parsing JD analysis JSON: {e}")
-            print(f"Raw response: {response[:500]}...")
-
-            # If all parsing attempts fail, create a default structure with dummy data
-            print("Creating default JD analysis structure with dummy data")
-            self.jd_analysis = {
-                "required_qualifications": ["Master's degree", "1+ years of experience"],
-                "preferred_qualifications": ["PhD", "Industry experience"],
-                "key_responsibilities": ["Research", "Development", "Collaboration"],
-                "technical_skills": ["Python", "Machine Learning", "Deep Learning"],
-                "soft_skills": ["Communication", "Teamwork"],
-                "industry_knowledge": ["AI Research", "Software Development"],
-                "company_values": ["Innovation", "Collaboration"],
-                "keywords": [
-                    {"keyword": "Python", "importance": 9, "category": "Technical Skill"},
-                    {"keyword": "Machine Learning", "importance": 8, "category": "Technical Skill"},
-                    {"keyword": "Research", "importance": 7, "category": "Experience"},
-                    {"keyword": "Master's degree", "importance": 8, "category": "Education"}
-                ]
-            }
-            self.jd_keywords = self.jd_analysis["keywords"]
-            self.jd_requirements = (
-                self.jd_analysis["required_qualifications"] +
-                self.jd_analysis["preferred_qualifications"] +
-                self.jd_analysis["technical_skills"] +
-                self.jd_analysis["soft_skills"] +
-                self.jd_analysis["industry_knowledge"]
-            )
-
-    def extract_resume_sections(self, text):
-        """
-        Extract and structure resume sections
-
-        Args:
-            text (str): Raw resume text
-
-        Returns:
-            dict: Resume sections as a structured dictionary
-        """
-        # Common resume section header patterns
-        section_patterns = {
-            'personal_info': r'(Personal\s*Information|Contact|Profile)',
-            'summary': r'(Summary|Professional\s*Summary|Profile|Objective)',
-            'education': r'(Education|Academic|Qualifications|Degrees)',
-            'experience': r'(Experience|Work\s*Experience|Employment|Career\s*History)',
-            'skills': r'(Skills|Technical\s*Skills|Competencies|Expertise)',
-            'projects': r'(Projects|Key\s*Projects|Professional\s*Projects)',
-            'certifications': r'(Certifications|Certificates|Accreditations)',
-            'languages': r'(Languages|Language\s*Proficiency)',
-            'publications': r'(Publications|Research|Papers)',
-            'awards': r'(Awards|Honors|Achievements|Recognitions)'
+    def _create_default_jd_analysis(self):
+        """JD 분석 실패 시 기본 더미 데이터를 생성합니다."""
+        self.jd_analysis = {
+            "required_qualifications": ["Master's degree", "1+ years of experience"],
+            "preferred_qualifications": ["PhD", "Industry experience"],
+            "key_responsibilities": ["Research", "Development", "Collaboration"],
+            "technical_skills": ["Python", "Machine Learning", "Deep Learning"],
+            "soft_skills": ["Communication", "Teamwork"],
+            "industry_knowledge": ["AI Research", "Software Development"],
+            "company_values": ["Innovation", "Collaboration"],
+            "keywords": [
+                {"keyword": "Python", "importance": 9, "category": "Technical Skill"},
+                {"keyword": "Machine Learning", "importance": 8, "category": "Technical Skill"}
+            ]
         }
+        self.jd_keywords = self.jd_analysis["keywords"]
+        self.jd_requirements = (
+            self.jd_analysis["required_qualifications"] +
+            self.jd_analysis["preferred_qualifications"]
+        )
 
+    def _parse_json_from_llm(self, response_text: str):
+        """
+        LLM 응답에서 JSON 객체를 더 안정적으로 추출하고 파싱합니다.
+        - 마크다운 코드 블록(```json ... ```) 제거
+        - 불필요한 접두/접미사 제거
+        - 흔한 JSON 오류 자동 수정
+        """
+        # LLM 응답에서 코드 블록(```json ... ```)을 찾아 내용만 추출
+        match = re.search(r'```json\s*([\s\S]*?)\s*```', response_text)
+        if match:
+            response_text = match.group(1)
+        
+        # 첫 '{'와 마지막 '}' 사이의 텍스트를 추출하여 불필요한 접두/접미사 제거
+        start_idx = response_text.find('{')
+        end_idx = response_text.rfind('}')
+        if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+            response_text = response_text[start_idx:end_idx+1]
+
+        try:
+            return json.loads(response_text)
+        except json.JSONDecodeError as e:
+            print(f"JSON 파싱 1차 시도 실패: {e}. 자동 수정을 시도합니다.")
+            # 후행 쉼표(trailing comma)와 같은 흔한 오류 수정
+            text = re.sub(r',\s*([}\]])', r'\1', response_text)
+            
+            try:
+                return json.loads(text)
+            except json.JSONDecodeError as final_e:
+                print(f"JSON 자동 수정 후 파싱 최종 실패: {final_e}")
+                # 오류 정보를 포함하여 예외 발생
+                raise SyntaxError("LLM으로부터 유효한 JSON을 파싱하는 데 실패했습니다.") from final_e
+
+
+    def _extract_resume_sections(self, text: str) -> dict:
+        """정규식을 사용하여 이력서 텍스트를 구조화된 섹션으로 추출합니다."""
+        # 이력서의 일반적인 섹션 제목 패턴
+        section_patterns = {
+            'personal_info': r'^(Personal\s*Information|Contact|Profile)$',
+            'summary': r'^(Summary|Professional\s*Summary|Profile|Objective)$',
+            'education': r'^(Education|Academic|Qualifications|Degrees)$',
+            'experience': r'^(Experience|Work\s*Experience|Employment|Career\s*History)$',
+            'skills': r'^(Skills|Technical\s*Skills|Competencies|Expertise)$',
+            'projects': r'^(Projects|Key\s*Projects|Professional\s*Projects)$',
+            'certifications': r'^(Certifications|Certificates|Accreditations)$',
+            'languages': r'^(Languages|Language\s*Proficiency)$',
+            'publications': r'^(Publications|Research|Papers)$',
+            'awards': r'^(Awards|Honors|Achievements|Recognitions)$'
+        }
+        
         sections = {}
-        current_section = 'header'  # Text before first section is considered header
+        current_section = 'header'  # 첫 섹션 제목이 나오기 전까지의 내용은 헤더로 간주
         sections[current_section] = []
 
         lines = text.split('\n')
         for line in lines:
+            line_stripped = line.strip()
+            if not line_stripped:
+                continue
+
             matched = False
             for section_name, pattern in section_patterns.items():
-                if re.search(pattern, line, re.IGNORECASE):
+                # 섹션 제목은 보통 한 줄을 다 차지하므로, 라인 전체가 패턴과 일치하는지 확인
+                if re.fullmatch(pattern, line_stripped, re.IGNORECASE):
                     current_section = section_name
-                    sections[current_section] = []
+                    if current_section not in sections:
+                        sections[current_section] = []
                     matched = True
                     break
-
+            
             if not matched:
+                if current_section not in sections:
+                    sections[current_section] = []
                 sections[current_section].append(line)
-
-        # Combine lines in each section into text
-        for section in sections:
-            sections[section] = '\n'.join(sections[section]).strip()
-
+        
+        # 각 섹션의 라인들을 하나의 텍스트 블록으로 합침
+        for section, section_lines in sections.items():
+            sections[section] = '\n'.join(section_lines).strip()
+            
         return sections
 
-    def advanced_preprocessing(self, text):
-        """
-        Advanced text preprocessing for resume analysis
-
-        Args:
-            text (str): Raw resume text
-
-        Returns:
-            str: Preprocessed text
-        """
-        # Preserve important formatting like emails, URLs, phone numbers
-        # Replace excessive whitespace
-        text = re.sub(r'\s+', ' ', text)
-
-        # Clean up unnecessary line breaks while preserving paragraph structure
-        text = re.sub(r'\n{3,}', '\n\n', text)
-
+    def _advanced_preprocessing(self, text: str) -> str:
+        """이력서 분석을 위한 고급 텍스트 전처리. 불필요한 공백과 줄바꿈을 정리합니다."""
+        text = re.sub(r'[ \t]+', ' ', text)  # 여러 공백/탭을 하나의 공백으로
+        text = re.sub(r'\n{3,}', '\n\n', text) # 과도한 줄바꿈을 두개로 제한
         return text.strip()
 
-    def analyze_keywords(self):
-        """
-        Analyze how well the resume matches key terms in the job description
-        Uses the pre-analyzed JD to ensure accuracy
-        """
-        # Prepare JD analysis for the prompt
-        jd_analysis_str = "\n".join([
-            "REQUIRED QUALIFICATIONS:\n- " + "\n- ".join(self.jd_analysis.get('required_qualifications', [])),
-            "PREFERRED QUALIFICATIONS:\n- " + "\n- ".join(self.jd_analysis.get('preferred_qualifications', [])),
-            "TECHNICAL SKILLS:\n- " + "\n- ".join(self.jd_analysis.get('technical_skills', [])),
-            "SOFT SKILLS:\n- " + "\n- ".join(self.jd_analysis.get('soft_skills', [])),
-            "INDUSTRY KNOWLEDGE:\n- " + "\n- ".join(self.jd_analysis.get('industry_knowledge', []))
-        ])
-
-        # Extract top keywords by importance
-        top_keywords = sorted(self.jd_keywords, key=lambda x: x.get('importance', 0), reverse=True)[:20]
-        keywords_str = "\n".join([f"- {kw.get('keyword')} (Importance: {kw.get('importance')}/10, Category: {kw.get('category')})"
-                               for kw in top_keywords])
-
-        prompt = f"""
-        Analyze how well this resume matches the key requirements and keywords from the job description.
-
-        JOB DESCRIPTION ANALYSIS:
-        {jd_analysis_str}
-
-        TOP KEYWORDS FROM JOB DESCRIPTION:
-        {keywords_str}
-
-        RESUME:
-        {self.preprocessed_cv}
-
-        Please provide a detailed analysis with the following:
-
-        1. TECHNICAL SKILLS MATCH: Evaluate how well the resume matches the required technical skills
-        2. QUALIFICATIONS MATCH: Evaluate how well the resume matches required and preferred qualifications
-        3. SOFT SKILLS MATCH: Evaluate how well the resume demonstrates the required soft skills
-        4. EXPERIENCE MATCH: Evaluate how well the resume satisfies experience requirements
-        5. KEYWORD ANALYSIS: Create a table showing matched and missing keywords, with their importance
-
-        For each category, provide specific examples from both the job description and resume.
-        Calculate a match percentage for each category, and provide an overall keyword match score.
-
-        End your analysis with "Score: XX points" where XX is a score from 0-100 representing how well the resume matches the job description's keywords and requirements.
-        """
-
-        response = self.call_llm(prompt, model=self.model)
-        print("[DEBUG] Keywords analysis LLM response:\n", response[:300], "...")
-
-        score = self.extract_score(response)
-        print("[DEBUG] Keywords score:", score)
-
+    async def analyze_keywords(self):
+        """이력서가 채용 공고의 핵심 용어와 얼마나 일치하는지 분석합니다."""
+        prompt = prompts.get_keyword_analysis_prompt(
+            jd_analysis=self.jd_analysis,
+            jd_keywords=self.jd_keywords,
+            resume_text=self.preprocessed_cv
+        )
+        response = await self.call_llm(prompt)
+        print("[DEBUG] 키워드 분석 LLM 응답:\n", response[:200], "...")
+        score = self._extract_score(response)
+        print("[DEBUG] 키워드 점수:", score)
         self.analysis_results['keywords'] = response
         self.scores['keywords'] = score
 
-    def analyze_experience_and_qualifications(self):
-        """
-        Analyze how well the resume's experience and qualifications match the job requirements
-        """
-        prompt = f"""
-        Evaluate how well the candidate's experience and qualifications match the job requirements:
-
-        JOB DESCRIPTION:
-        {self.jd_text}
-
-        RESUME:
-        {self.preprocessed_cv}
-
-        Please provide a detailed analysis of:
-        1. Required years of experience vs. candidate's experience
-        2. Required education level vs. candidate's education
-        3. Required industry experience vs. candidate's industry background
-        4. Required responsibilities vs. candidate's demonstrated capabilities
-        5. Required achievements vs. candidate's accomplishments
-
-
-        For each area, indicate whether the candidate exceeds, meets, or falls short of requirements.
-        Provide specific examples from both the job description and resume.
-
-
-        End your analysis with "Score: XX points" where XX is a score from 0-100 representing how well the candidate's experience and qualifications match the job requirements.
-        """
-
-        response = self.call_llm(prompt, model=self.model)
-        print("[DEBUG] Experience analysis LLM response:\n", response[:300], "...")
-
-        score = self.extract_score(response)
-        print("[DEBUG] Experience score:", score)
-
+    async def analyze_experience_and_qualifications(self):
+        """이력서의 경력 및 자격이 직무 요구사항과 얼마나 일치하는지 분석합니다."""
+        prompt = prompts.get_experience_analysis_prompt(self.jd_text, self.preprocessed_cv)
+        response = await self.call_llm(prompt)
+        print("[DEBUG] 경력 분석 LLM 응답:\n", response[:200], "...")
+        score = self._extract_score(response)
+        print("[DEBUG] 경력 점수:", score)
         self.analysis_results['experience'] = response
         self.scores['experience'] = score
 
-    def analyze_format_and_readability(self):
-        """
-        Analyze the resume's format, structure, and readability
-        """
-        prompt = f"""
-        Evaluate the format, structure, and readability of the following resume:
-
-        RESUME:
-        {self.preprocessed_cv}
-
-        Please analyze:
-        1. Overall organization and structure
-        2. Readability and clarity
-        3. Use of bullet points, sections, and white space
-        4. Consistency in formatting (dates, job titles, etc.)
-        5. Grammar, spelling, and punctuation
-        6. ATS-friendliness of the format
-
-
-        Provide specific examples of strengths and weaknesses in the format.
-        Suggest specific improvements to make the resume more ATS-friendly and readable.
-
-
-        End your analysis with "Score: XX points" where XX is a score from 0-100 representing the quality of the resume's format and readability.
-        """
-
-        response = self.call_llm(prompt, model=self.model)
-        print("[DEBUG] Format analysis LLM response:\n", response[:300], "...")
-
-        score = self.extract_score(response)
-        print("[DEBUG] Format score:", score)
-
+    async def analyze_format_and_readability(self):
+        """이력서의 형식, 구조, 가독성을 분석합니다."""
+        prompt = prompts.get_format_analysis_prompt(self.preprocessed_cv)
+        response = await self.call_llm(prompt)
+        print("[DEBUG] 형식 분석 LLM 응답:\n", response[:200], "...")
+        score = self._extract_score(response)
+        print("[DEBUG] 형식 점수:", score)
         self.analysis_results['format'] = response
         self.scores['format'] = score
 
-    def analyze_content_quality(self):
-        """
-        Analyze the quality of content in the resume
-        """
-        prompt = f"""
-        Evaluate the quality of content in the following resume:
-
-        RESUME:
-        {self.preprocessed_cv}
-
-        Please analyze:
-        1. Use of strong action verbs and achievement-oriented language
-        2. Quantification of achievements (metrics, percentages, numbers)
-        3. Specificity vs. vagueness in descriptions
-        4. Relevance of included information
-        5. Balance between technical details and high-level accomplishments
-        6. Presence of clichés or generic statements vs. unique value propositions
-
-
-        Provide specific examples from the resume for each point.
-        Suggest specific improvements to strengthen the content quality.
-
-
-        End your analysis with "Score: XX points" where XX is a score from 0-100 representing the quality of the resume's content.
-        """
-
-        response = self.call_llm(prompt, model=self.model)
-        print("[DEBUG] Content analysis LLM response:\n", response[:300], "...")
-
-        score = self.extract_score(response)
-        print("[DEBUG] Content score:", score)
-
+    async def analyze_content_quality(self):
+        """이력서 내용의 품질을 분석합니다."""
+        prompt = prompts.get_content_quality_prompt(self.preprocessed_cv)
+        response = await self.call_llm(prompt)
+        print("[DEBUG] 내용 품질 분석 LLM 응답:\n", response[:200], "...")
+        score = self._extract_score(response)
+        print("[DEBUG] 내용 품질 점수:", score)
         self.analysis_results['content'] = response
         self.scores['content'] = score
 
-    def check_errors_and_consistency(self):
-        """
-        Check for errors, inconsistencies, and red flags in the resume
-        """
-        prompt = f"""
-        Analyze the following resume for errors, inconsistencies, and potential red flags:
-
-        RESUME:
-        {self.preprocessed_cv}
-
-        Please identify and explain:
-        1. Spelling and grammar errors
-        2. Inconsistencies in dates, job titles, or other information
-        3. Unexplained employment gaps
-        4. Formatting inconsistencies
-        5. Potential red flags that might concern employers
-
-
-        For each issue found, provide the specific text from the resume and suggest a correction.
-        If no issues are found in a category, explicitly state that.
-
-
-        End your analysis with "Score: XX points" where XX is a score from 0-100 representing how error-free and consistent the resume is (100 = perfect, no issues).
-        """
-
-        response = self.call_llm(prompt, model=self.model)
-        print("[DEBUG] Errors analysis LLM response:\n", response[:300], "...")
-
-        score = self.extract_score(response)
-        print("[DEBUG] Errors score:", score)
-
+    async def check_errors_and_consistency(self):
+        """이력서의 오류, 불일치, 위험 신호를 확인합니다."""
+        prompt = prompts.get_error_check_prompt(self.preprocessed_cv)
+        response = await self.call_llm(prompt)
+        print("[DEBUG] 오류 분석 LLM 응답:\n", response[:200], "...")
+        score = self._extract_score(response)
+        print("[DEBUG] 오류 점수:", score)
         self.analysis_results['errors'] = response
         self.scores['errors'] = score
 
-    def simulate_ats_filtering(self):
+    async def analyze_semantic_keyword_match(self):
         """
-        Simulate how an actual ATS system would evaluate this resume
-        Uses the pre-analyzed JD keywords for more accurate simulation
+        LLM을 사용하여 키워드의 의미적 일치도를 분석하고 점수를 매깁니다.
+        기존의 단순 텍스트 매칭 방식인 simulate_ats_filtering을 대체합니다.
         """
-        # Use the keywords already extracted from JD analysis
         if not self.jd_keywords:
-            print("No keywords available from JD analysis, running JD analysis first")
-            self.analyze_job_description()
-
-        # Use the keywords from JD analysis
-        keywords = self.jd_keywords
-
-        if not keywords:
-            print("Warning: No keywords found in JD analysis")
-            self.analysis_results['ats_simulation'] = "Error in ATS simulation: No keywords found in job description"
-            self.scores['ats_simulation'] = 50  # Default middle score
+            print("JD 분석에서 키워드를 찾을 수 없어 의미론적 키워드 분석을 건너뛰습니다.")
+            self.analysis_results['ats_simulation'] = "JD 분석에서 키워드를 찾을 수 없어 분석에 실패했습니다."
+            self.scores['ats_simulation'] = 0
             return
 
-        # Calculate keyword matching score with more sophisticated matching
-        total_importance = sum(kw.get('importance', 5) for kw in keywords)
-        matched_importance = 0
-        matched_keywords = []
-        missing_keywords = []
-        partial_matches = []
-
-        for kw in keywords:
-            keyword = kw.get('keyword', '')
-            importance = kw.get('importance', 5)
-            category = kw.get('category', 'Uncategorized')
-
-            # Check for exact matches (case insensitive)
-            if re.search(r'\b' + re.escape(keyword) + r'\b', self.preprocessed_cv, re.IGNORECASE):
-                matched_importance += importance
-                matched_keywords.append({"keyword": keyword, "importance": importance, "category": category, "match_type": "exact"})
-
-            # Check for partial matches (for multi-word keywords)
-            elif len(keyword.split()) > 1:
-                # For multi-word keywords, check if at least 70% of the words are present
-                words = keyword.lower().split()
-                matches = 0
-                for word in words:
-                    if re.search(r'\b' + re.escape(word) + r'\b', self.preprocessed_cv.lower()):
-                        matches += 1
-
-                match_percentage = matches / len(words)
-                if match_percentage >= 0.7:  # At least 70% of words match
-                    partial_value = importance * match_percentage
-                    matched_importance += partial_value
-                    partial_matches.append({"keyword": keyword, "importance": importance,
-                                          "category": category, "match_type": "partial",
-                                          "match_percentage": f"{match_percentage:.0%}"})
-                else:
-                    missing_keywords.append({"keyword": keyword, "importance": importance, "category": category})
-            else:
-                missing_keywords.append({"keyword": keyword, "importance": importance, "category": category})
-
-        # Calculate ATS score (0-100)
-        if total_importance > 0:
-            ats_score = (matched_importance / total_importance) * 100
-        else:
-            ats_score = 0
-
-        # Group keywords by category for better reporting
-        matched_by_category = {}
-        partial_by_category = {}
-        missing_by_category = {}
-
-        for kw in matched_keywords:
-            category = kw['category']
-            if category not in matched_by_category:
-                matched_by_category[category] = []
-            matched_by_category[category].append(kw)
-
-        for kw in partial_matches:
-            category = kw['category']
-            if category not in partial_by_category:
-                partial_by_category[category] = []
-            partial_by_category[category].append(kw)
-
-        for kw in missing_keywords:
-            category = kw['category']
-            if category not in missing_by_category:
-                missing_by_category[category] = []
-            missing_by_category[category].append(kw)
-
-        # Generate detailed report
-        report = f"""## ATS Simulation Results
-
-### Overall ATS Score: {ats_score:.1f}/100
-
-"""
-
-        # Add matched keywords section
-        report += "### Exact Keyword Matches\n\n"
-        for category, keywords in matched_by_category.items():
-            report += f"**{category}**:\n"
-            for kw in sorted(keywords, key=lambda x: x['importance'], reverse=True):
-                report += f"- {kw['keyword']} (Importance: {kw['importance']}/10)\n"
-            report += "\n"
-
-        # Add partial matches section
-        if partial_matches:
-            report += "### Partial Keyword Matches\n\n"
-            for category, keywords in partial_by_category.items():
-                report += f"**{category}**:\n"
-                for kw in sorted(keywords, key=lambda x: x['importance'], reverse=True):
-                    report += f"- {kw['keyword']} (Importance: {kw['importance']}/10, Match: {kw['match_percentage']})\n"
-                report += "\n"
-
-        # Add missing keywords section
-        report += "### Missing Keywords\n\n"
-        for category, keywords in missing_by_category.items():
-            report += f"**{category}**:\n"
-            for kw in sorted(keywords, key=lambda x: x['importance'], reverse=True):
-                report += f"- {kw['keyword']} (Importance: {kw['importance']}/10)\n"
-            report += "\n"
-
-        # Add ATS passage likelihood with more detailed assessment
-        if ats_score >= 85:
-            passage = "Very high likelihood of passing ATS filters - Resume is extremely well-matched to this job"
-        elif ats_score >= 70:
-            passage = "High likelihood of passing ATS filters - Resume is well-matched to this job"
-        elif ats_score >= 55:
-            passage = "Moderate likelihood of passing ATS filters - Resume has adequate matching but could be improved"
-        elif ats_score >= 40:
-            passage = "Low likelihood of passing ATS filters - Resume needs significant improvements for this job"
-        else:
-            passage = "Very low likelihood of passing ATS filters - Resume is not well-matched to this job"
-
-        report += f"### ATS Passage Assessment\n\n{passage}\n\n"
-
-        # Add specific recommendations based on missing keywords
-        report += "### Key Recommendations\n\n"
-
-        # Get top 5 missing keywords by importance
-        top_missing = sorted(missing_keywords, key=lambda x: x.get('importance', 0), reverse=True)[:5]
-        if top_missing:
-            report += "Consider adding these high-importance missing keywords to your resume:\n"
-            for kw in top_missing:
-                report += f"- {kw['keyword']} (Importance: {kw['importance']}/10, Category: {kw['category']})\n"
-
-        report += f"\nScore: {int(ats_score)} points"
-
-        self.analysis_results['ats_simulation'] = report
-        self.scores['ats_simulation'] = min(100, ats_score)
-
-    def analyze_industry_specific(self):
-        """
-        Perform industry and job role specific analysis
-        """
-        # First, identify the industry and job role
-        industry_prompt = f"""
-        Based on the following job description, identify the specific industry and job role.
-
-        JOB DESCRIPTION:
-        {self.jd_text}
-
-        Format your response as a JSON object with this structure:
-        {{"industry": "Technology", "job_role": "Software Engineer"}}
-
-
-        Be specific about both the industry and job role.
-        """
-
-        response = self.call_llm(industry_prompt, model=self.model)
-
-        # Parse the JSON response
+        prompt = prompts.get_semantic_keyword_analysis_prompt(self.jd_keywords, self.preprocessed_cv)
+        
         try:
-            # Find JSON in the response
-            json_match = re.search(r'\{\s*"industry"\s*:.+?\}', response, re.DOTALL)
-            if json_match:
-                response = json_match.group(0)
+            response_str = await self.call_llm(prompt)
+            analysis_data = self._parse_json_from_llm(response_str)
 
-            job_info = json.loads(response)
+            keyword_matches = analysis_data.get("keyword_matches", [])
+            summary = analysis_data.get("semantic_analysis_summary", "요약 정보 없음.")
+            
+            if not keyword_matches:
+                raise ValueError("LLM 응답에서 키워드 매칭 정보를 찾을 수 없습니다.")
+
+            total_importance = sum(kw.get('importance', 5) for kw in keyword_matches)
+            if total_importance == 0:
+                self.scores['ats_simulation'] = 0
+                self.analysis_results['ats_simulation'] = "분석된 키워드의 중요도 점수가 없어 점수를 계산할 수 없습니다."
+                return
+
+            matched_score = 0
+            status_weights = {'matched': 1.0, 'semantically_present': 0.75, 'missing': 0.0}
+
+            for match in keyword_matches:
+                status = match.get('status', 'missing')
+                importance = match.get('importance', 5)
+                weight = status_weights.get(status, 0.0)
+                matched_score += importance * weight
+            
+            final_score = (matched_score / total_importance) * 100
+
+            # 보고서 생성
+            report_parts = [
+                f"## ATS Semantic Analysis Results\n",
+                f"### Overall Semantic Score: {final_score:.1f}/100\n",
+                f"**요약:** {summary}\n",
+                "| Keyword | Status | Justification | Importance | Category |",
+                "|---|---|---|---|---|"
+            ]
+            
+            status_map = {
+                'matched': '✅ Matched',
+                'semantically_present': '💡 Semantically Present',
+                'missing': '❌ Missing'
+            }
+            
+            for item in sorted(keyword_matches, key=lambda x: x.get('importance', 0), reverse=True):
+                status_display = status_map.get(item['status'], item['status'])
+                report_parts.append(
+                    f"| {item['keyword']} | **{status_display}** | {item['justification']} | {item['importance']}/10 | {item['category']} |"
+                )
+
+            self.analysis_results['ats_simulation'] = "\n".join(report_parts)
+            self.scores['ats_simulation'] = final_score
+
+        except (json.JSONDecodeError, SyntaxError, ValueError) as e:
+            print(f"의미론적 키워드 분석 실패: {e}. 이전 방식으로 대체합니다.")
+            self.analysis_results['ats_simulation'] = "의미론적 키워드 분석 중 오류가 발생했습니다."
+            self.scores['ats_simulation'] = 20 # 실패 시 기본 점수
+
+
+    async def analyze_industry_specific(self):
+        """산업 및 직무별 특화 분석을 수행합니다."""
+        # 1. LLM을 사용하여 산업 및 직무 역할 식별
+        industry_prompt = prompts.get_industry_identification_prompt(self.jd_text)
+        response = await self.call_llm(industry_prompt)
+        
+        try:
+            job_info = self._parse_json_from_llm(response)
             industry = job_info.get('industry', 'General')
             job_role = job_info.get('job_role', 'General')
-        except Exception as e:
-            print(f"Error parsing industry JSON: {e}")
-            industry = "Technology"  # Default fallback
-            job_role = "Professional"  # Default fallback
+        except (json.JSONDecodeError, SyntaxError) as e:
+            print(f"산업 정보 JSON 파싱 오류: {e}. 기본값으로 대체합니다.")
+            industry, job_role = "Technology", "Professional"
 
-        # Now perform industry-specific analysis
-        industry_analysis_prompt = f"""
-        Analyze this resume for a {job_role} position in the {industry} industry.
-
-        JOB DESCRIPTION:
-        {self.jd_text}
-
-        RESUME:
-        {self.preprocessed_cv}
-
-        Please provide an industry-specific analysis considering:
-        1. Industry-specific terminology and keywords in the resume
-        2. Relevant industry experience and understanding
-        3. Industry-specific certifications and education
-        4. Industry trends awareness
-        5. Industry-specific achievements and metrics
-
-
-        For each point, evaluate how well the resume demonstrates industry alignment.
-        Provide specific recommendations for improving industry relevance.
-
-
-        End your analysis with "Score: XX points" where XX is a score from 0-100 representing how well the resume aligns with this specific industry and role.
-        """
-
-        response = self.call_llm(industry_analysis_prompt, model=self.model)
-        score = self.extract_score(response)
+        # 2. 식별된 정보를 바탕으로 산업별 분석 수행
+        industry_analysis_prompt = prompts.get_industry_specific_analysis_prompt(
+            job_role=job_role,
+            industry=industry,
+            jd_text=self.jd_text,
+            resume_text=self.preprocessed_cv
+        )
+        response = await self.call_llm(industry_analysis_prompt)
+        score = self._extract_score(response)
 
         self.analysis_results['industry_specific'] = response
         self.scores['industry_specific'] = score
 
-    def suggest_resume_improvements(self):
-        """
-        Generate specific suggestions to improve the resume for this job
-        """
-        prompt = f"""
-        Based on the comprehensive analysis of this resume against the job description, provide specific, actionable improvements.
-
-        JOB DESCRIPTION:
-        {self.jd_text}
-
-        RESUME:
-        {self.preprocessed_cv}
-
-        ANALYSIS RESULTS:
-        Keywords Analysis: {self.scores.get('keywords', 'N/A')}/100
-        Experience Match: {self.scores.get('experience', 'N/A')}/100
-        Format & Readability: {self.scores.get('format', 'N/A')}/100
-        Content Quality: {self.scores.get('content', 'N/A')}/100
-        Errors & Consistency: {self.scores.get('errors', 'N/A')}/100
-        ATS Simulation: {self.scores.get('ats_simulation', 'N/A')}/100
-        Industry Alignment: {self.scores.get('industry_specific', 'N/A')}/100
-
-
-        Please provide specific, actionable improvements in these categories:
-
-
-        1. CRITICAL ADDITIONS: Keywords and qualifications that must be added
-        2. CONTENT ENHANCEMENTS: How to strengthen existing content
-        3. FORMAT IMPROVEMENTS: Structural changes to improve ATS compatibility
-        4. REMOVAL SUGGESTIONS: Content that should be removed or de-emphasized
-        5. SECTION-BY-SECTION RECOMMENDATIONS: Specific improvements for each resume section
-
-
-        For each suggestion, provide a clear before/after example where possible.
-        Focus on the most impactful changes that will significantly improve ATS performance and human readability.
-        """
-
-        response = self.call_llm(prompt, model=self.model)
+    async def suggest_resume_improvements(self):
+        """분석 결과를 바탕으로 이력서 개선을 위한 구체적인 제안을 생성합니다."""
+        prompt = prompts.get_improvement_suggestion_prompt(
+            jd_text=self.jd_text,
+            resume_text=self.preprocessed_cv,
+            scores=self.scores
+        )
+        response = await self.call_llm(prompt)
         self.improvement_suggestions = response
         return response
 
-    def analyze_competitive_position(self):
-        """
-        Analyze the competitive position of this resume in the current job market
-        """
-        prompt = f"""
-        Analyze how competitive this resume would be in the current job market for this position.
-
-        JOB DESCRIPTION:
-        {self.jd_text}
-
-        RESUME:
-        {self.preprocessed_cv}
-
-        Please provide a competitive analysis including:
-
-
-        1. MARKET COMPARISON: How this resume compares to typical candidates for this role
-        2. STANDOUT STRENGTHS: The most impressive qualifications compared to the average candidate
-        3. COMPETITIVE WEAKNESSES: Areas where the candidate may fall behind competitors
-        4. DIFFERENTIATION FACTORS: Unique elements that set this resume apart (positively or negatively)
-        5. HIRING PROBABILITY: Assessment of the likelihood of getting an interview (Low/Medium/High)
-
-
-        Base your analysis on current job market trends and typical qualifications for this role and industry.
-        Be honest but constructive in your assessment.
-
-
-        End with a competitive score from 0-100 representing how well this resume would compete against other candidates.
-        """
-
-        response = self.call_llm(prompt, model=self.model)
-        score = self.extract_score(response)
-
+    async def analyze_competitive_position(self):
+        """현재 채용 시장에서 이력서의 경쟁력을 분석합니다."""
+        prompt = prompts.get_competitive_analysis_prompt(
+            jd_text=self.jd_text,
+            resume_text=self.preprocessed_cv
+        )
+        response = await self.call_llm(prompt)
+        # 경쟁력 점수는 다른 점수 형식과 다를 수 있으므로 별도 처리
+        score_match = re.search(r'Competitive Score:\s*(\d+)/100', response, re.IGNORECASE)
+        if score_match:
+            score = int(score_match.group(1))
+        else:
+            score = self._extract_score(response)
+        
         self.analysis_results['competitive'] = response
         self.scores['competitive'] = score
         return response
 
-    def generate_optimized_resume(self):
-        """
-        Generate an optimized version of the resume tailored to the job description
-        """
-        prompt = f"""
-        Create an optimized version of this resume specifically tailored for the job description.
-
-        JOB DESCRIPTION:
-        {self.jd_text}
-
-        CURRENT RESUME:
-        {self.preprocessed_cv}
-
-        Please rewrite the resume to:
-        1. Incorporate all relevant keywords from the job description
-        2. Highlight the most relevant experience and qualifications
-        3. Use ATS-friendly formatting and structure
-        4. Quantify achievements where possible
-        5. Remove or downplay irrelevant information
-
-
-        The optimized resume should maintain truthfulness while presenting the candidate in the best possible light for this specific position.
-        Use standard resume formatting with clear section headers.
-        """
-
-        response = self.call_llm(prompt, model=self.model)
+    async def generate_optimized_resume(self):
+        """채용 공고에 맞춰 최적화된 이력서 버전을 생성합니다."""
+        prompt = prompts.get_resume_optimization_prompt(
+            jd_text=self.jd_text,
+            resume_text=self.preprocessed_cv
+        )
+        response = await self.call_llm(prompt)
         self.optimized_resume = response
         return response
 
-    def generate_final_score_and_recommendations(self):
-        """
-        Generate final score with weighted categories and overall recommendations
-        Adjusted to give more weight to JD-specific factors
-        """
-        # Define weights for different categories with higher emphasis on JD-specific factors
+    async def generate_final_score_and_recommendations(self):
+        """가중치를 적용한 최종 점수와 전반적인 권장 사항을 생성합니다."""
+        # 각 분석 항목에 대한 가중치 정의
         weights = {
-            'ats_simulation': 0.30,    # Direct ATS simulation is most important
-            'keywords': 0.25,         # Keywords are critical for ATS
-            'experience': 0.20,       # Experience match is very important
-            'industry_specific': 0.15, # Industry relevance
-            'content': 0.05,          # Content quality
-            'format': 0.03,           # Format and readability
-            'errors': 0.02,           # Errors and consistency
+            'ats_simulation': 0.30,    # ATS 시뮬레이션이 가장 중요
+            'keywords': 0.25,         # 키워드 일치도
+            'experience': 0.20,       # 경력 부합도
+            'industry_specific': 0.15, # 산업 전문성
+            'content': 0.05,          # 내용 품질
+            'format': 0.03,           # 형식 및 가독성
+            'errors': 0.02,           # 오류 및 일관성
         }
-
-        # Calculate weighted score
-        weighted_sum = 0
-        used_weights_sum = 0
-        category_scores = {}
-
-        for category, weight in weights.items():
-            if category in self.scores:
-                score = self.scores[category]
-                weighted_sum += score * weight
-                used_weights_sum += weight
-                category_scores[category] = score
-
-        # Calculate final score
-        if used_weights_sum > 0:
-            final_score = weighted_sum / used_weights_sum
-        else:
-            final_score = 0
-
+        
+        # 가중 평균 점수 계산
+        weighted_sum = sum(self.scores.get(cat, 0) * w for cat, w in weights.items() if cat in self.scores)
+        used_weights_sum = sum(w for cat, w in weights.items() if cat in self.scores)
+        final_score = weighted_sum / used_weights_sum if used_weights_sum > 0 else 0
         self.scores['final'] = final_score
 
-        # Prepare JD analysis summary for the prompt
-        jd_summary = ""
-        if self.jd_analysis:
-            jd_summary = "JOB DESCRIPTION ANALYSIS:\n"
-            if self.jd_analysis.get('required_qualifications'):
-                jd_summary += "Required Qualifications: " + ", ".join(self.jd_analysis.get('required_qualifications')[:5]) + "\n"
-            if self.jd_analysis.get('technical_skills'):
-                jd_summary += "Technical Skills: " + ", ".join(self.jd_analysis.get('technical_skills')[:5]) + "\n"
-            if self.jd_analysis.get('key_responsibilities'):
-                jd_summary += "Key Responsibilities: " + ", ".join(self.jd_analysis.get('key_responsibilities')[:3]) + "\n"
-
-        # Generate final recommendations
-        prompt = f"""
-        Based on the comprehensive analysis of this resume against the job description, provide a final assessment and recommendations.
-
-        {jd_summary}
-
-        RESUME ANALYSIS SCORES:
-        ATS Simulation Score: {category_scores.get('ats_simulation', 'N/A')}/100 (30% of final score)
-        Keywords Match: {category_scores.get('keywords', 'N/A')}/100 (25% of final score)
-        Experience Match: {category_scores.get('experience', 'N/A')}/100 (20% of final score)
-        Industry Alignment: {category_scores.get('industry_specific', 'N/A')}/100 (15% of final score)
-        Content Quality: {category_scores.get('content', 'N/A')}/100 (5% of final score)
-        Format & Readability: {category_scores.get('format', 'N/A')}/100 (3% of final score)
-        Errors & Consistency: {category_scores.get('errors', 'N/A')}/100 (2% of final score)
-
-        FINAL WEIGHTED SCORE: {final_score:.1f}/100
-
-        Please provide a detailed final assessment with:
-
-        1. EXECUTIVE SUMMARY: A concise summary of how well this resume matches this specific job description
-
-        2. STRENGTHS: The top 3 strengths of this resume for this specific job
-
-        3. CRITICAL IMPROVEMENTS: The top 3 most critical improvements needed to better match this job description
-
-        4. ATS ASSESSMENT: An assessment of the resume's likelihood of passing ATS filters for this specific job
-
-        5. INTERVIEW POTENTIAL: An assessment of whether this resume would likely lead to an interview
-
-        6. FINAL RECOMMENDATION: A clear verdict on whether the candidate should:
-           a) Apply with this resume as is
-           b) Make minor improvements before applying
-           c) Make major improvements before applying
-
-        Be specific about which improvements would have the biggest impact on ATS performance for this particular job.
-        """
-
-        response = self.call_llm(prompt, model=self.model)
-        self.final_report = f"Final ATS Score for This Job: {final_score:.1f}/100\n\n{response}"
+        # 최종 보고서 생성을 위한 프롬프트 호출
+        prompt = prompts.get_final_report_prompt(
+            jd_analysis=self.jd_analysis,
+            scores=self.scores,
+            final_score=final_score
+        )
+        response = await self.call_llm(prompt)
+        self.final_report = f"## OVERALL ATS ANALYSIS SCORE: {final_score:.1f}/100\n\n{response}"
 
     def generate_visual_report(self, output_path="ats_report.html"):
-        """
-        Generate a visual HTML report with charts and formatted analysis
-
-        Args:
-            output_path (str): Path to save the HTML report
-
-        Returns:
-            str: Path to the generated report
-        """
+        """차트와 서식이 지정된 분석을 포함하는 시각적인 HTML 보고서를 생성합니다."""
         try:
-            # Create radar chart for scores
-            categories = [
-                'Keywords', 'Experience', 'ATS Simulation',
-                'Industry Fit', 'Content Quality', 'Format', 'Errors'
-            ]
-
-            values = [
-                self.scores.get('keywords', 0),
-                self.scores.get('experience', 0),
-                self.scores.get('ats_simulation', 0),
-                self.scores.get('industry_specific', 0),
-                self.scores.get('content', 0),
-                self.scores.get('format', 0),
-                self.scores.get('errors', 0)
-            ]
-
-            # Create radar chart
-            fig = plt.figure(figsize=(10, 6))
-            ax = fig.add_subplot(111, polar=True)
-
-            # Calculate angles for each category
-            angles = np.linspace(0, 2*np.pi, len(categories), endpoint=False).tolist()
-
-            # Close the plot
-            values.append(values[0])
-            angles.append(angles[0])
-            categories.append(categories[0])
-
-            # Plot data
-            ax.plot(angles, values, 'o-', linewidth=2)
-            ax.fill(angles, values, alpha=0.25)
-            ax.set_thetagrids(np.degrees(angles[:-1]), categories[:-1])
-            ax.set_ylim(0, 100)
-            plt.title('Resume ATS Analysis Results', size=15)
-
-            # Convert plot to base64 for embedding in HTML
-            buffer = BytesIO()
-            plt.savefig(buffer, format='png')
-            buffer.seek(0)
-            img_str = base64.b64encode(buffer.read()).decode()
-            plt.close()
-
-            # Import markdown to HTML converter
-            try:
-                import markdown
-                markdown_available = True
-            except ImportError:
-                print("Warning: markdown package not installed. Markdown formatting will not be rendered.")
-                print("Install with: pip install markdown")
-                markdown_available = False
-
-            # Function to convert markdown to HTML
-            def md_to_html(text):
-                if markdown_available:
-                    # Convert markdown to HTML
-                    try:
-                        return markdown.markdown(text)
-                    except:
-                        return f"<pre>{text}</pre>"
-                else:
+            # 점수 시각화를 위한 레이더 차트 생성
+            chart_base64 = self._create_radar_chart()
+            
+            # 마크다운을 HTML로 변환하는 헬퍼 함수
+            def md_to_html(text: str) -> str:
+                if not text:
+                    return "<p>내용 없음</p>"
+                try:
+                    # fenced_code: 코드 블록 지원, tables: 표 지원
+                    # nl2br 확장 기능은 표 렌더링과 충돌할 수 있으므로 제거합니다.
+                    return markdown.markdown(text, extensions=['fenced_code', 'tables'])
+                except Exception as e:
+                    print(f"마크다운 변환 오류: {e}")
+                    # 오류 발생 시 원본 텍스트를 <pre> 태그로 감싸서 안전하게 표시
                     return f"<pre>{text}</pre>"
 
-            # Create HTML report
-            html_content = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>ATS Analysis Report</title>
-                <style>
-                    body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }}
-                    .container {{ max-width: 1000px; margin: 0 auto; }}
-                    .header {{ text-align: center; margin-bottom: 30px; }}
-                    .score-card {{ background-color: #f5f5f5; padding: 20px; border-radius: 10px; margin-bottom: 20px; }}
-                    .score-title {{ font-size: 18px; font-weight: bold; margin-bottom: 10px; }}
-                    .score-value {{ font-size: 24px; font-weight: bold; color: #2c3e50; }}
-                    .chart {{ text-align: center; margin: 30px 0; }}
-                    .analysis-section {{ margin-bottom: 30px; }}
-                    .improvement {{ background-color: #e8f4f8; padding: 15px; border-radius: 5px; margin-top: 20px; }}
-                    .category {{ font-weight: bold; color: #3498db; }}
-                    .highlight {{ background-color: #ffffcc; padding: 2px 5px; }}
-                    .progress-container {{ width: 100%; background-color: #e0e0e0; border-radius: 5px; margin: 5px 0; }}
-                    .progress-bar {{ height: 20px; border-radius: 5px; }}
-                    .good {{ background-color: #4CAF50; }}
-                    .medium {{ background-color: #FFC107; }}
-                    .poor {{ background-color: #F44336; }}
-                    pre {{ white-space: pre-wrap; }}
-                    .markdown-content {{ line-height: 1.6; }}
-                    .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4 {{ margin-top: 1.5em; margin-bottom: 0.5em; color: #2c3e50; }}
-                    .markdown-content ul, .markdown-content ol {{ padding-left: 2em; }}
-                    .markdown-content table {{ border-collapse: collapse; width: 100%; margin: 1em 0; }}
-                    .markdown-content th, .markdown-content td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-                    .markdown-content th {{ background-color: #f2f2f2; }}
-                    .markdown-content code {{ background-color: #f5f5f5; padding: 2px 4px; border-radius: 3px; font-family: monospace; }}
-                    .markdown-content blockquote {{ border-left: 4px solid #ddd; padding-left: 1em; margin-left: 0; color: #666; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>Resume ATS Analysis Report</h1>
-                        <p>Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-                    </div>
-
-                    <div class="score-card">
-                        <div class="score-title">Final ATS Score</div>
-                        <div class="score-value">{self.scores.get('final', 0):.1f}/100</div>
-                        <div class="progress-container">
-                            <div class="progress-bar {'good' if self.scores.get('final', 0) >= 80 else 'medium' if self.scores.get('final', 0) >= 60 else 'poor'}"
-                                 style="width: {self.scores.get('final', 0)}%"></div>
-                        </div>
-                        <p>This score represents the overall effectiveness of your resume for this specific job.</p>
-                    </div>
-
-                    <div class="chart">
-                        <h2>Score Breakdown</h2>
-                        <img src="data:image/png;base64,{img_str}" alt="ATS Analysis Chart">
-                    </div>
-
-                    <div class="analysis-section">
-                        <h2>Executive Summary</h2>
-                        <div class="markdown-content">{md_to_html(self.final_report)}</div>
-                    </div>
-
-                    <div class="analysis-section">
-                        <h2>ATS Simulation Results</h2>
-                        <div class="markdown-content">{md_to_html(self.analysis_results.get('ats_simulation', 'Not available'))}</div>
-                    </div>
-
-                    <div class="improvement">
-                        <h2>Recommended Improvements</h2>
-                        <div class="markdown-content">{md_to_html(self.improvement_suggestions)}</div>
-                    </div>
-
-                    <div class="analysis-section">
-                        <h2>Detailed Analysis</h2>
-
-                        <h3 class="category">Keywords Match ({self.scores.get('keywords', 0)}/100)</h3>
-                        <div class="progress-container">
-                            <div class="progress-bar {'good' if self.scores.get('keywords', 0) >= 80 else 'medium' if self.scores.get('keywords', 0) >= 60 else 'poor'}"
-                                 style="width: {self.scores.get('keywords', 0)}%"></div>
-                        </div>
-                        <div class="markdown-content">{md_to_html(self.analysis_results.get('keywords', 'Not available'))}</div>
-
-                        <h3 class="category">Experience & Qualifications ({self.scores.get('experience', 0)}/100)</h3>
-                        <div class="progress-container">
-                            <div class="progress-bar {'good' if self.scores.get('experience', 0) >= 80 else 'medium' if self.scores.get('experience', 0) >= 60 else 'poor'}"
-                                 style="width: {self.scores.get('experience', 0)}%"></div>
-                        </div>
-                        <div class="markdown-content">{md_to_html(self.analysis_results.get('experience', 'Not available'))}</div>
-
-                        <h3 class="category">Format & Readability ({self.scores.get('format', 0)}/100)</h3>
-                        <div class="progress-container">
-                            <div class="progress-bar {'good' if self.scores.get('format', 0) >= 80 else 'medium' if self.scores.get('format', 0) >= 60 else 'poor'}"
-                                 style="width: {self.scores.get('format', 0)}%"></div>
-                        </div>
-                        <div class="markdown-content">{md_to_html(self.analysis_results.get('format', 'Not available'))}</div>
-
-                        <h3 class="category">Content Quality ({self.scores.get('content', 0)}/100)</h3>
-                        <div class="progress-container">
-                            <div class="progress-bar {'good' if self.scores.get('content', 0) >= 80 else 'medium' if self.scores.get('content', 0) >= 60 else 'poor'}"
-                                 style="width: {self.scores.get('content', 0)}%"></div>
-                        </div>
-                        <div class="markdown-content">{md_to_html(self.analysis_results.get('content', 'Not available'))}</div>
-
-                        <h3 class="category">Errors & Consistency ({self.scores.get('errors', 0)}/100)</h3>
-                        <div class="progress-container">
-                            <div class="progress-bar {'good' if self.scores.get('errors', 0) >= 80 else 'medium' if self.scores.get('errors', 0) >= 60 else 'poor'}"
-                                 style="width: {self.scores.get('errors', 0)}%"></div>
-                        </div>
-                        <div class="markdown-content">{md_to_html(self.analysis_results.get('errors', 'Not available'))}</div>
-
-                        <h3 class="category">Industry Alignment ({self.scores.get('industry_specific', 0)}/100)</h3>
-                        <div class="progress-container">
-                            <div class="progress-bar {'good' if self.scores.get('industry_specific', 0) >= 80 else 'medium' if self.scores.get('industry_specific', 0) >= 60 else 'poor'}"
-                                 style="width: {self.scores.get('industry_specific', 0)}%"></div>
-                        </div>
-                        <div class="markdown-content">{md_to_html(self.analysis_results.get('industry_specific', 'Not available'))}</div>
-                    </div>
-
-                    <div class="analysis-section">
-                        <h2>Competitive Analysis</h2>
-                        <div class="markdown-content">{md_to_html(self.analysis_results.get('competitive', 'Not available'))}</div>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-
-            # Write HTML to file
+            # prompts 모듈의 템플릿을 사용하여 HTML 컨텐츠 생성
+            html_content = prompts.get_html_report_template(
+                final_score=self.scores.get('final', 0),
+                chart_image=chart_base64,
+                final_report_md=md_to_html(self.final_report),
+                ats_simulation_md=md_to_html(self.analysis_results.get('ats_simulation', '분석 정보 없음')),
+                improvements_md=md_to_html(self.improvement_suggestions),
+                scores=self.scores,
+                analysis_results=self.analysis_results,
+                md_to_html_func=md_to_html
+            )
+            
+            # 생성된 HTML을 파일에 저장
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(html_content)
-
+            
             return output_path
 
         except Exception as e:
-            print(f"Error generating visual report: {e}")
+            print(f"시각적 보고서 생성 중 오류 발생: {e}")
             return None
 
+    def _create_radar_chart(self) -> str:
+        """점수 레이더 차트를 생성하고 base64로 인코딩된 이미지 문자열을 반환합니다."""
+        categories = ['Keywords', 'Experience', 'ATS Sim', 'Industry Fit', 'Content', 'Format', 'Errors']
+        score_keys = ['keywords', 'experience', 'ats_simulation', 'industry_specific', 'content', 'format', 'errors']
+        values = [self.scores.get(key, 0) for key in score_keys]
+        
+        if len(values) != len(categories):
+             print("경고: 차트 생성에 필요한 점수가 부족합니다.")
+             return ""
+
+        fig = plt.figure(figsize=(8, 8))
+        ax = fig.add_subplot(111, polar=True)
+        
+        # 각도 계산 및 플롯 닫기
+        angles = np.linspace(0, 2 * np.pi, len(categories), endpoint=False).tolist()
+        values += values[:1]
+        angles += angles[:1]
+
+        # 플롯 스타일 설정
+        ax.plot(angles, values, 'o-', linewidth=2, color='blue')
+        ax.fill(angles, values, 'skyblue', alpha=0.25)
+        ax.set_thetagrids(np.degrees(angles[:-1]), categories)
+        ax.set_ylim(0, 100)
+        ax.set_rlabel_position(22.5)
+        ax.grid(True)
+        plt.title('Resume ATS Analysis Results', size=16, color='blue', y=1.1)
+
+        # 이미지를 메모리 버퍼에 저장하여 base64로 인코딩
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png', bbox_inches='tight')
+        buffer.seek(0)
+        img_str = base64.b64encode(buffer.read()).decode()
+        plt.close(fig)
+        return img_str
+
     def generate_text_report(self):
-        """
-        Generate a text-based report of the analysis
-
-        Returns:
-            str: Formatted text report
-        """
+        """분석에 대한 텍스트 기반 보고서를 생성합니다."""
         report = "=== ATS ANALYSIS REPORT ===\n\n"
-
-        # Add final score
         report += f"FINAL SCORE: {self.scores.get('final', 0):.1f}/100\n\n"
-
-        # Add individual scores
         report += "SCORE BREAKDOWN:\n"
-        report += f"- Keywords Match: {self.scores.get('keywords', 0)}/100\n"
-        report += f"- Experience Match: {self.scores.get('experience', 0)}/100\n"
-        report += f"- ATS Simulation: {self.scores.get('ats_simulation', 0)}/100\n"
-        report += f"- Format & Readability: {self.scores.get('format', 0)}/100\n"
-        report += f"- Content Quality: {self.scores.get('content', 0)}/100\n"
-        report += f"- Errors & Consistency: {self.scores.get('errors', 0)}/100\n"
-        report += f"- Industry Alignment: {self.scores.get('industry_specific', 0)}/100\n\n"
-
-        # Add final report
-        report += "EXECUTIVE SUMMARY:\n"
-        report += f"{self.final_report}\n\n"
-
-        # Add improvement suggestions
+        for cat in ['keywords', 'experience', 'ats_simulation', 'format', 'content', 'errors', 'industry_specific']:
+            report += f"- {cat.replace('_', ' ').title()}: {self.scores.get(cat, 'N/A')}/100\n"
+        report += "\nEXECUTIVE SUMMARY:\n"
+        # 최종 보고서는 마크다운 형식일 수 있으므로 간단한 텍스트로 변환
+        summary_text = re.sub(r'##.*?\n', '', self.final_report)
+        report += f"{summary_text}\n\n"
         report += "RECOMMENDED IMPROVEMENTS:\n"
         report += f"{self.improvement_suggestions}\n\n"
-
-        # Add usage statistics
         report += "USAGE STATISTICS:\n"
         report += f"- LLM API Calls: {self.llm_call_count}\n"
         report += f"- Total Tokens Used: {self.total_tokens}\n"
         report += f"- Analysis Time: {self.total_time:.2f} seconds\n"
-
         return report
 
-    def call_llm(self, prompt, model=1):
+    async def call_llm(self, prompt: str, model: int = None) -> str:
         """
-        Call the LLM API with the given prompt
-
-        Args:
-            prompt (str): The prompt to send to the LLM
-            model (int): Model selection (1=OpenAI, 2=Groq)
-
-        Returns:
-            str: The LLM response
+        선택된 모델에 따라 LLM API를 비동기적으로 호출하고,
+        호출 시간, 횟수, 토큰 사용량을 추적합니다.
         """
+        if model is None:
+            model = self.model
+        
+        call_start_time = time.time()
+        
         try:
-            # Check if .env file exists and load it
-            env_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
-            if not os.path.exists(env_file_path):
-                print(f"Warning: .env file not found at {env_file_path}")
-                print("Creating a default .env file with placeholders for API keys")
-                with open(env_file_path, 'w') as f:
-                    f.write("# API Keys for ATS Analyzer\n")
-                    f.write("# Replace with your actual API keys\n\n")
-                    f.write("# OpenAI API Key\n")
-                    f.write("OPENAI_API_KEY=your_openai_api_key_here\n\n")
-                    f.write("# Groq API Key (optional, only needed if using model=2)\n")
-                    f.write("GROQ_API_KEY=your_groq_api_key_here\n")
-                print(f"Please edit {env_file_path} and add your API keys")
-
-                # Fallback to dummy response if no API keys are available
-                return self._generate_dummy_response(prompt)
-
-            # Reload environment variables
-            from dotenv import load_dotenv
-            load_dotenv(env_file_path)
-
+            response_content = ""
             if model == 1:
-                # Get OpenAI API key from environment variables
-                openai_api_key = os.getenv("OPENAI_API_KEY")
-                if not openai_api_key or openai_api_key == "your_openai_api_key_here":
-                    print("Error: OpenAI API key not found or not set in .env file")
-                    print(f"Please edit {env_file_path} and add your OpenAI API key")
-                    # Fallback to model 2 if OpenAI API key is not available
-                    if model == 1:
-                        print("Attempting to use Groq API instead...")
-                        return self.call_llm(prompt, model=2)
-                    else:
-                        return self._generate_dummy_response(prompt)
-
-                client = openai.OpenAI(api_key=openai_api_key)
-                response = client.chat.completions.create(
-                    model="gpt-4.1-nano",  # Can be configured as a parameter
-                    messages=[
-                        {"role": "system", "content": "You are an expert resume analyst and ATS specialist."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.1,
-                    max_tokens=1500
-                )
-
-                self.llm_call_count += 1
-                self.total_tokens += response.usage.total_tokens
-                return response.choices[0].message.content.strip()
-
+                response_content = await self._call_openai(prompt)
             elif model == 2:
-                try:
-                    from groq import Groq
-                except ImportError:
-                    print("Error: Groq package not installed. Please install it with 'pip install groq'")
-                    print("Falling back to OpenAI API...")
-                    return self.call_llm(prompt, model=1)
-
-                # Get Groq API key from environment variables
-                groq_api_key = os.getenv("GROQ_API_KEY")
-                if not groq_api_key or groq_api_key == "your_groq_api_key_here":
-                    print("Error: Groq API key not found or not set in .env file")
-                    print(f"Please edit {env_file_path} and add your Groq API key")
-                    print("Falling back to OpenAI API...")
-                    return self.call_llm(prompt, model=1)
-
-                client = Groq(api_key=groq_api_key)
-                completion = client.chat.completions.create(
-                    model="meta-llama/llama-4-maverick-17b-128e-instruct",
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "You are an expert resume analyst and ATS specialist."
-                        },
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ],
-                    temperature=0.1,
-                    max_completion_tokens=1500,
-                    top_p=1,
-                    stream=False,
-                    stop=None,
-                )
-
-                self.llm_call_count += 1
-                self.total_tokens += completion.usage.total_tokens
-                return completion.choices[0].message.content.strip()
-            
+                response_content = await self._call_groq(prompt)
             elif model == 3:
-                # Get OpenAI API key from environment variables
-                openai_api_key = os.getenv("GEMINI_API_KEY")
-                if not openai_api_key or openai_api_key == "your_openai_api_key_here":
-                    print("Error: OpenAI API key not found or not set in .env file")
-                    print(f"Please edit {env_file_path} and add your OpenAI API key")
-                    # Fallback to model 2 if OpenAI API key is not available
-                    if model == 1:
-                        print("Attempting to use openai API instead...")
-                        return self.call_llm(prompt, model=1)
-                    else:
-                        return self._generate_dummy_response(prompt)
-
-                client = openai.OpenAI(api_key="GEMINI_API_KEY", base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
-                response = client.chat.completions.create(
-                    model="gemini-2.0-flash-lite",  # Can be configured as a parameter
-                    messages=[
-                        {"role": "system", "content": "You are an expert resume analyst and ATS specialist."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.1,
-                    max_tokens=1500
-                )
-
-                self.llm_call_count += 1
-                self.total_tokens += response.usage.total_tokens
-                return response.choices[0].message.content.strip()
-
+                 response_content = await self._call_gemini(prompt)
             else:
-                return "Error: Invalid model selection"
+                print(f"오류: 잘못된 모델 선택({model})")
+                return self._generate_dummy_response(prompt)
+            
+            return response_content
 
         except Exception as e:
-            print(f"Error calling LLM API: {e}")
-            # If there's an error with the API call, generate a dummy response
-            return self._generate_dummy_response(prompt)
+            print(f"LLM API 호출 중 심각한 오류 발생 (모델 {model}): {e}")
+            return await self._fallback_llm_call(prompt)
+        finally:
+            # 개별 LLM 호출 시간은 전체 분석 시간에 합산
+            pass
 
-    def _generate_dummy_response(self, prompt):
-        """
-        Generate a dummy response when API calls fail
-        This is used for testing or when API keys are not available
+    async def _call_openai(self, prompt: str) -> str:
+        """OpenAI API를 비동기적으로 호출합니다."""
+        if not self.openai_client:
+            raise ValueError("OpenAI 클라이언트가 설정되지 않았습니다.")
+        
+        model="gpt-4.1-nano-2025-04-14"
+        print(f"OpenAI model: {model}")
+        response = await self.openai_client.chat.completions.create(
+            model=model, # 최신 및 더 강력한 모델로 변경
+            messages=[
+                {"role": "system", "content": "You are an expert resume analyst and ATS specialist. Respond in well-formatted Markdown."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1,
+            max_tokens=3000 # 더 긴 응답을 위해 토큰 수 증가
+        )
+        self.llm_call_count += 1
+        if response.usage:
+            self.total_tokens += response.usage.total_tokens
+        return response.choices[0].message.content.strip()
 
-        Args:
-            prompt (str): The original prompt
+    async def _call_groq(self, prompt: str) -> str:
+        """Groq API를 호출합니다. (비동기 처리를 위해 asyncio.to_thread 사용)"""
+        if not self.groq_client:
+            raise ValueError("Groq 클라이언트가 설정되지 않았습니다.")
 
-        Returns:
-            str: A dummy response
-        """
-        print("Generating dummy response for testing purposes...")
+        model="meta-llama/llama-4-maverick-17b-128e-instruct"
+        print(f"Groq model: {model}")
+        # Groq의 동기 SDK를 비동기 이벤트 루프에서 블로킹 없이 실행
+        def sync_groq_call():
+            return self.groq_client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": "You are an expert resume analyst and ATS specialist. Respond in well-formatted Markdown."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1,
+                max_tokens=3000,
+                top_p=1,
+                stream=False
+            )
+        
+        completion = await asyncio.to_thread(sync_groq_call)
 
-        # Check what kind of analysis is being requested
-        if "keywords" in prompt.lower():
-            return "This is a dummy keywords analysis.\n\nThe resume contains some keywords that match the job description, but could be improved by adding more specific technical skills and qualifications.\n\nScore: 65 points"
-        elif "experience" in prompt.lower():
-            return "This is a dummy experience analysis.\n\nThe candidate's experience partially matches the job requirements. Some areas could be strengthened to better align with the position.\n\nScore: 70 points"
-        elif "format" in prompt.lower():
-            return "This is a dummy format analysis.\n\nThe resume has a clean format but could be improved with better section organization and more consistent formatting.\n\nScore: 75 points"
-        elif "content" in prompt.lower():
-            return "This is a dummy content quality analysis.\n\nThe content is generally good but could use more quantifiable achievements and specific examples.\n\nScore: 68 points"
-        elif "errors" in prompt.lower():
-            return "This is a dummy errors analysis.\n\nThe resume has few grammatical errors but some inconsistencies in formatting and punctuation.\n\nScore: 80 points"
-        elif "industry" in prompt.lower():
-            return "This is a dummy industry analysis.\n\nThe resume shows good industry alignment but could benefit from more industry-specific terminology.\n\nScore: 72 points"
-        elif "competitive" in prompt.lower():
-            return "This is a dummy competitive analysis.\n\nThe resume is competitive but could be strengthened in areas of technical expertise and project outcomes.\n\nScore: 70 points"
-        elif "improvements" in prompt.lower():
-            return "This is a dummy improvement suggestions.\n\n1. Add more technical keywords from the job description\n2. Quantify achievements with specific metrics\n3. Improve formatting for better ATS readability"
-        elif "final assessment" in prompt.lower():
-            return "This is a dummy final assessment.\n\nThe resume is generally well-aligned with the job description but has room for improvement in keyword matching and experience presentation.\n\nFinal recommendation: Make minor improvements before applying."
-        else:
-            return "This is a dummy response for testing purposes. In a real scenario, this would contain a detailed analysis based on your prompt.\n\nScore: 70 points"
+        self.llm_call_count += 1
+        if completion.usage:
+            self.total_tokens += completion.usage.total_tokens
+        return completion.choices[0].message.content.strip()
+        
+    async def _call_gemini(self, prompt: str) -> str:
+        """Gemini API를 비동기적으로 호출합니다. (OpenAI 호환)"""
+        if not self.gemini_client:
+            raise ValueError("Gemini 클라이언트가 설정되지 않았습니다.")
+        model="gemini-2.5-flash-preview-05-20"
+        print(f"Gemini model: {model}")
+        response = await self.gemini_client.chat.completions.create(
+            model=model, # 모델명은 실제 Gemini 모델에 맞게 확인 필요
+            messages=[
+                {"role": "system", "content": "You are an expert resume analyst and ATS specialist. Respond in well-formatted Markdown."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1,
+            max_tokens=3000
+        )
+        self.llm_call_count += 1
+        if hasattr(response, 'usage') and response.usage:
+            self.total_tokens += response.usage.total_tokens
+        
+        # Gemini API가 안전 필터 등에 의해 비어있는 응답을 보낼 경우를 대비한 방어 코드
+        choice = response.choices[0]
+        if choice.message.content is None:
+            finish_reason = getattr(choice, 'finish_reason', 'N/A')
+            print(f"경고: Gemini API가 비어 있는 콘텐츠를 반환했습니다. 종료 사유: {finish_reason}")
+            # 안전 설정 등으로 인해 콘텐츠가 반환되지 않은 경우, 사용자에게 정보를 제공하고 비어 있는 문자열을 반환합니다.
+            return f"Gemini API가 콘텐츠를 반환하지 않았습니다. 종료 사유: {finish_reason}"
+        
+        return choice.message.content.strip()
 
-    def extract_score(self, response_text):
-        """
-        Extract score from LLM response
+    async def _fallback_llm_call(self, prompt: str) -> str:
+        """주 LLM 호출 실패 시 대체 가능한 다른 LLM을 순서대로 호출합니다."""
+        print("주요 LLM 호출 실패. 대체 모델을 시도합니다...")
+        
+        # 시도해볼 모델 목록 (현재 모델 제외)
+        fallback_models = {
+            1: self._call_openai,
+            2: self._call_groq,
+            3: self._call_gemini,
+        }
+        
+        for model_num, call_func in fallback_models.items():
+            if model_num == self.model:
+                continue
+            
+            try:
+                print(f"{model_num}번 모델로 대체 호출을 시도합니다...")
+                return await call_func(prompt)
+            except Exception as e:
+                print(f"{model_num}번 모델 호출 실패: {e}")
+                continue
 
-        Args:
-            response_text (str): LLM response text
+        print("사용 가능한 모든 LLM 클라이언트 호출에 실패했습니다. 더미 응답을 생성합니다.")
+        return self._generate_dummy_response(prompt)
 
-        Returns:
-            int: Extracted score (0-100)
-        """
-        import re
+    def _generate_dummy_response(self, prompt: str) -> str:
+        """API 호출 실패 또는 API 키 부재 시 테스트용 더미 응답을 생성합니다."""
+        print("경고: 더미 응답을 생성합니다. 실제 분석 결과가 아닙니다.")
+        
+        # JSON 응답을 기대하는 프롬프트인지 확인
+        if "json" in prompt.lower():
+            return '```json\n{"message": "This is a dummy JSON response.", "score": 50}\n```'
+        
+        return "This is a dummy response for testing purposes. In a real scenario, this would contain a detailed analysis based on your prompt.\n\nScore: 50 points"
 
-        # Look for score in format "Score: XX points" or similar patterns
+    def _extract_score(self, response_text: str) -> int:
+        """LLM 응답 텍스트에서 점수를 지능적으로 추출합니다."""
+        # 다양한 점수 형식 패턴 정의 (가장 구체적인 것부터)
         patterns = [
-            r'Score:\s*(\d+)\s*points',
-            r'Score:\s*(\d+)',
-            r'score of\s*(\d+)',
-            r'rated at\s*(\d+)',
-            r'(\d+)/100',
-            r'(\d+)\s*out of\s*100'
+            r'Score:\s*(\d{1,3})\s*points',
+            r'Score:\s*(\d{1,3})',
+            r'score of\s*(\d{1,3})',
+            r'rated at\s*(\d{1,3})',
+            r'(\d{1,3})\s*/\s*100',
+            r'(\d{1,3})\s*out of\s*100'
         ]
 
         for pattern in patterns:
             match = re.search(pattern, response_text, re.IGNORECASE)
             if match:
                 score = int(match.group(1))
-                # Ensure score is in range 0-100
-                return max(0, min(100, score))
+                return max(0, min(100, score)) # 점수를 0-100 사이로 보정
 
-        # Default score if no match found
+        # 텍스트에서 점수 추출 실패 시, JSON 파싱 시도
+        try:
+            data = self._parse_json_from_llm(response_text)
+            if 'overall_score' in data and isinstance(data['overall_score'], int):
+                return max(0, min(100, data['overall_score']))
+            if 'score' in data and isinstance(data['score'], int):
+                return max(0, min(100, data['score']))
+        except (SyntaxError, json.JSONDecodeError, TypeError, KeyError):
+            pass # JSON 파싱에 실패하면 무시하고 계속 진행
+
+        print(f"경고: 응답에서 점수를 추출하지 못했습니다. 기본값 50을 사용합니다. 응답: '{response_text[:100]}...'")
         return 50
 
-    def run_full_analysis(self, advanced=True, generate_html=True):
+    async def run_full_analysis(self, advanced=True, generate_html=True):
         """
-        Run the complete resume analysis
+        전체 이력서 분석을 비동기적으로 실행하여 성능을 최적화합니다.
 
         Args:
-            advanced (bool): Whether to run advanced analyses
-            generate_html (bool): Whether to generate HTML report
+            advanced (bool): 고급 분석(ATS 시뮬레이션, 경쟁력 분석 등) 실행 여부
+            generate_html (bool): HTML 보고서 생성 여부
 
         Returns:
-            str: Path to the report or text report
+            str: 생성된 보고서의 경로 또는 텍스트 보고서 내용
         """
-        start_time = time.time()
+        analysis_start_time = time.time()
+        print("ATS 분석을 시작합니다...")
 
-        print("Starting ATS analysis for this specific job description...")
+        # 1. 전처리 및 JD 분석 (순차 실행 필요)
+        await self.extract_and_preprocess()
+        print(f"채용 공고별 특화된 {len(self.jd_keywords)}개의 키워드를 바탕으로 분석을 진행합니다...")
 
-        # Extract and preprocess resume text (this also analyzes the JD)
-        self.extract_and_preprocess()
-
-        print(f"Analyzing resume against {len(self.jd_keywords)} job-specific keywords...")
-
-        # Run basic analyses
-        self.analyze_keywords()
-        self.analyze_experience_and_qualifications()
-        self.analyze_format_and_readability()
-        self.analyze_content_quality()
-        self.check_errors_and_consistency()
-
-        # Run advanced analyses if requested
+        # 2. 병렬 실행할 분석 작업 목록 생성
+        # LLM을 호출하는 비동기 작업들
+        llm_tasks = [
+            self.analyze_keywords(),
+            self.analyze_experience_and_qualifications(),
+            self.analyze_format_and_readability(),
+            self.analyze_content_quality(),
+            self.check_errors_and_consistency(),
+        ]
         if advanced:
-            print("Running advanced ATS simulation...")
-            self.simulate_ats_filtering()
-            self.analyze_industry_specific()
-            self.analyze_competitive_position()
+            print("고급 분석을 병렬로 실행합니다...")
+            llm_tasks.extend([
+                self.analyze_industry_specific(),
+                self.analyze_competitive_position(),
+                self.analyze_semantic_keyword_match(),
+            ])
+        
+        # 3. asyncio.gather를 사용하여 LLM 호출을 병렬로 실행
+        await asyncio.gather(*llm_tasks)
+        
+        # 4. LLM 호출이 없는 순수 계산 작업 실행 (병렬 처리 후)
+        # if advanced:
+        #     await self.simulate_ats_filtering() # 이 함수는 이제 analyze_semantic_keyword_match로 대체됨
 
-        # Generate improvement suggestions
-        print("Generating job-specific improvement suggestions...")
-        self.suggest_resume_improvements()
+        # 5. 후속 작업 (순차 실행)
+        print("개선 제안 사항을 생성합니다...")
+        await self.suggest_resume_improvements()
+        
+        print("최적화된 이력서를 생성합니다...")
+        await self.generate_optimized_resume()
 
-        # Generate final score and report
-        print("Calculating final ATS score for this job...")
-        self.generate_final_score_and_recommendations()
+        print("최종 점수 및 보고서를 생성합니다...")
+        await self.generate_final_score_and_recommendations()
 
-        # Record total time
-        self.total_time = time.time() - start_time
-        print(f"Analysis completed in {self.total_time:.1f} seconds")
-
-        # Print usage statistics to console
+        self.total_time = time.time() - analysis_start_time
+        print(f"분석 완료. 총 소요 시간: {self.total_time:.1f}초")
         self.print_usage_statistics()
 
-        # Generate and return report
+        # 6. 최종 보고서 생성
         if generate_html:
-            print("Generating visual HTML report...")
+            print("시각적인 HTML 보고서를 생성합니다...")
             report_path = self.generate_visual_report()
-            print(f"HTML report generated: {report_path}")
+            print(f"HTML 보고서 생성 완료: {report_path}")
             return report_path
         else:
             return self.generate_text_report()
 
     def print_usage_statistics(self):
-        """
-        Print usage statistics to console
-        """
+        """콘솔에 사용 통계를 출력합니다."""
         print("\n===== USAGE STATISTICS =====")
         print(f"LLM API Calls: {self.llm_call_count}")
         print(f"Total Tokens Used: {self.total_tokens}")
@@ -1386,7 +825,7 @@ class ATSAnalyzer:
         print(f"Final ATS Score: {self.scores.get('final', 0):.1f}/100")
         print(f"Keywords Match: {self.scores.get('keywords', 0)}/100")
         print(f"Experience Match: {self.scores.get('experience', 0)}/100")
-        print(f"ATS Simulation: {self.scores.get('ats_simulation', 0)}/100")
+        print(f"ATS Simulation (Semantic): {self.scores.get('ats_simulation', 0):.1f}/100")
         print(f"Format & Readability: {self.scores.get('format', 0)}/100")
         print(f"Content Quality: {self.scores.get('content', 0)}/100")
         print(f"Errors & Consistency: {self.scores.get('errors', 0)}/100")
@@ -1394,84 +833,106 @@ class ATSAnalyzer:
         print("============================\n")
 
 
-if __name__ == "__main__":
-    cv_path = "sample_cv.jpg" 
-    model = 3  # 1=OpenAI, 2=Groq 3=Gemini
+async def main():
+    """
+    ATS 분석기 실행을 위한 메인 함수.
+    사용자는 이 함수 내의 설정값만 수정하면 됩니다.
+    """
+    # 1. 분석할 이력서 파일의 경로를 지정하세요.
+    # 파일의 절대경로를 입력하세요.
+    cv_path = "GJS/JobPT/validate_agent/OpenAI_Solutions_Architect,_Digital_Natives_segment_CV.pdf" 
+    
+    # 2. 사용할 AI 모델을 선택하세요. (1: OpenAI, 2: Groq, 3: Gemini)
+    # .env 파일에 해당 모델의 API 키가 설정되어 있어야 합니다.
+    # 2번의 Groq의 경우 무료 tier는 병렬 처리 시 문제가 발생하므로 paid tier로 업그레이드 후 사용 가능능
+    model = 1
+    
+    # 3. 고급 분석(경쟁력, 산업 적합도 등)을 실행할지 여부를 선택하세요.
     advanced = True 
+    
+    # 4. 최종 리포트를 HTML 파일로 생성할지 여부를 선택하세요.
+    # False로 설정하면, 콘솔에 텍스트 요약본만 출력됩니다.
     generate_html = True  
 
+    # 5. 아래에 분석할 채용 공고(Job Description) 전문을 복사하여 붙여넣으세요.
     jd_text = """
-Responsibilities:
+About the team
 
-Shape Zoom AI's future via groundbreaking research. Incubate AI models, algorithms, and techniques for next generation business applications by collaborating with experienced researchers and engineers;
-Join AI projects, work with diverse teams, and achieve exciting results;
-The AI incubation team is dedicated to Incubate AI breakthroughs, including foundational AI techniques and AI native applications that will largely improve people's work productivity;
-Incubate foundation techniques for AGI, including new model structure, optimization techniques and distributed learning algorithms;
-Incubate game-changing AI applications which will create huge potential business impact;
-Collaborate with cross-functional teams to solve unique product problem;
-Communicate technical concepts clearly in team discussions and presentations for technical and nontechnical audiences;
-Foster growth in the AI research community by contributing to research papers for conferences and journals; and
-Receive mentorship and providing insights drive innovation with experienced researchers and team members.
+The Solutions Architecture team is responsible for ensuring the safe and effective deployment of Generative AI applications for developers and enterprises. We act as a trusted advisor and thought partner for our customers, working to build an effective backlog of GenAI use cases for their industry and drive them to production through strong technical guidance. As a Solutions Architect in the Digital Natives segment, you'll help large and highly technical companies transform their business through solutions such as customer service, automated content generation, contextual search, personalization, and novel applications that make use of our newest, most exciting models.
 
+About the role
 
+We are looking for a driven solutions leader with a product mindset to partner with our customers and ensure they achieve tangible business value with GenAI. You will pair with senior customer leaders to establish a GenAI strategy and identify the highest value applications. You'll then partner with their engineering and product teams to move from prototype through production. You'll take a holistic view of their needs and design an enterprise architecture using OpenAI API and other services to maximize customer value. You will collaborate closely with Sales, Solutions Engineering, Applied Research, and Product teams.
 
+This role is based in Seoul, South Korea. We use a hybrid work model of 3 days in the office per week and offer relocation assistance to new employees.
 
-What we're looking for:
+In this role, you will:
 
-Requires a Master's degree in Computer Science, Intelligent Information Systems, a related field, or a foreign degree equivalent;
-Must have 1 year of experience in job offered or related occupation;
-Must have 1 year of experience in experience in AI research or engineering practice in large scale distributed systems;
-Must have 1 year of experience in developing distributed deep learning training system;
-Must have 1 year of experience in optimizing efficiency of distributed training system;
-Must have 1 year of experience in optimizing robustness of distributed training system;
-Must have 1 year of experience in one of the programming languages: Python/C/C++/CUDA, and deep learning frameworks, such as PyTorch, Transformers and Deepspeed;
-Must have 1 year of experience in Python Coding;
-Must have 1 year of experience in developing new deep learning model to solve product problems;
-Must have 1 year of experience in optimizing model parameters for better accuracy; and
-Must have 1 year of experience in building AI solutions with deep learning models.
-Salary Range or On Target Earnings:
+Deeply embed with our most sophisticated and technical platform customers as the technical lead, serving as their technical thought partner to ideate and build novel applications on our API.
 
-Minimum:
+Work with senior customer stakeholders to identify the best applications of GenAI in their industry and to build/qualify a comprehensive backlog to support their AI roadmap.
 
-$180,000.00
-Maximum:
+Intervene directly to accelerate customer time to value through building hands-on prototypes and/or by delivering impactful strategic guidance.
 
-$255,400.00
-In addition to the base salary and/or OTE listed Zoom has a Total Direct Compensation philosophy that takes into consideration; base salary, bonus and equity value.
+Forge and manage relationships with our customers' leadership and stakeholders to ensure the successful deployment and scale of their applications.
 
-Note: Starting pay will be based on a number of factors and commensurate with qualifications & experience.
+Contribute to our open-source developer and enterprise resources.
 
-We also have a location based compensation structure;  there may be a different range for candidates in this and other locations.
+Scale the Solutions Architect function through sharing knowledge, codifying best practices, and publishing notebooks to our internal and external repositories.
 
-Ways of Working
-Our structured hybrid approach is centered around our offices and remote work environments. The work style of each role, Hybrid, Remote, or In-Person is indicated in the job description/posting.
+Validate, synthesize, and deliver high-signal feedback to the Product, Engineering, and Research teams.
 
-Benefits
-As part of our award-winning workplace culture and commitment to delivering happiness, our benefits program offers a variety of perks, benefits, and options to help employees maintain their physical, mental, emotional, and financial health; support work-life balance; and contribute to their community in meaningful ways. Click Learn for more information.
+You'll thrive in this role if you:
 
-About Us
-Zoomies help people stay connected so they can get more done together. We set out to build the best collaboration platform for the enterprise, and today help people communicate better with products like Zoom Contact Center, Zoom Phone, Zoom Events, Zoom Apps, Zoom Rooms, and Zoom Webinars.
-We're problem-solvers, working at a fast pace to design solutions with our customers and users in mind. Here, you'll work across teams to deliver impactful projects that are changing the way people communicate and enjoy opportunities to advance your career in a diverse, inclusive environment.
+Have 5+ years of technical consulting (or equivalent) experience, bridging technical teams and senior business stakeholders.
 
+Are an effective and polished communicator who can translate business and technical topics to all audiences.
 
-Our Commitment​
-We believe that the unique contributions of all Zoomies is the driver of our success. To make sure that our products and culture continue to incorporate everyone's perspectives and experience we never discriminate on the basis of race, religion, national origin, gender identity or expression, sexual orientation, age, or marital, veteran, or disability status. Zoom is proud to be an equal opportunity workplace and is an affirmative action employer. All your information will be kept confidential according to EEO guidelines.
+Are proficient in both Korean and English. This is essential to effectively perform key responsibilities such as partnering with customers, driving the sales cycle, managing accounts, collaborating with cross-functional teams, and communicating with headquarters
 
-We welcome people of different backgrounds, experiences, abilities and perspectives including qualified applicants with arrest and conviction records and any qualified applicants requiring reasonable accommodations in accordance with the law.
+Have led complex implementations of Generative AI/traditional ML solutions and have knowledge of network/cloud architecture.
 
-If you need assistance navigating the interview process due to a medical disability, please submit an Accommodations Request Form and someone from our team will reach out soon. This form is solely for applicants who require an accommodation due to a qualifying medical disability. Non-accommodation-related requests, such as application follow-ups or technical issues, will not be addressed.
+Have industry experience in programming languages like Python or Javascript.
 
-Think of this opportunity as a marathon, not a sprint! We're building a strong team at Zoom, and we're looking for talented individuals to join us for the long haul. No need to rush your application – take your time to ensure it's a good fit for your career goals. We continuously review applications, so submit yours whenever you're ready to take the next step.
+Own problems end-to-end and are willing to pick up whatever knowledge you're missing to get the job done.
 
-    """
+Have a humble attitude, an eagerness to help your colleagues, and a desire to do whatever it takes to make the team succeed.
+
+Are an effective, high throughput operator who can drive multiple concurrent projects and prioritize ruthlessly. 
+
+About OpenAI
+
+OpenAI is an AI research and deployment company dedicated to ensuring that general-purpose artificial intelligence benefits all of humanity. We push the boundaries of the capabilities of AI systems and seek to safely deploy them to the world through our products. AI is an extremely powerful tool that must be created with safety and human needs at its core, and to achieve our mission, we must encompass and value the many different perspectives, voices, and experiences that form the full spectrum of humanity. 
+
+We are an equal opportunity employer, and we do not discriminate on the basis of race, religion, color, national origin, sex, sexual orientation, age, veteran status, disability, genetic information, or other applicable legally protected characteristic.
+
+For additional information, please see OpenAI's Affirmative Action and Equal Employment Opportunity Policy Statement.
+
+Qualified applicants with arrest or conviction records will be considered for employment in accordance with applicable law, including the San Francisco Fair Chance Ordinance, the Los Angeles County Fair Chance Ordinance for Employers, and the California Fair Chance Act. For unincorporated Los Angeles County workers: we reasonably believe that criminal history may have a direct, adverse and negative relationship with the following job duties, potentially resulting in the withdrawal of a conditional offer of employment: protect computer hardware entrusted to you from theft, loss or damage; return all computer hardware in your possession (including the data contained therein) upon termination of employment or end of assignment; and maintain the confidentiality of proprietary, confidential, and non-public information. In addition, job duties require access to secure and protected information technology systems and related data security obligations.
+
+We are committed to providing reasonable accommodations to applicants with disabilities, and requests can be made via this link.
+
+OpenAI Global Applicant Privacy Policy
+
+At OpenAI, we believe artificial intelligence has the potential to help people solve immense global challenges, and we want the upside of AI to be widely shared. Join us in shaping the future of technology.
+"""
 
     analyzer = ATSAnalyzer(cv_path, jd_text, model=model)
-    result = analyzer.run_full_analysis(advanced=advanced, generate_html=generate_html)
+    result = await analyzer.run_full_analysis(advanced=advanced, generate_html=generate_html)
 
     if not generate_html:
+        print("\n=== TEXT REPORT ===")
         print(result)
     else:
         print(f"\n분석 완료! 보고서가 저장된 경로: {result}")
         print("웹 브라우저에서 HTML 파일을 열어 전체 보고서를 확인하세요.")
+
+if __name__ == "__main__":
+    import time
+    start_time = time.time()
+    asyncio.run(main())
+    end_time = time.time()
+    print(f"\n총 구동 시간: {end_time - start_time:.2f}초")
+
 
 # %%
