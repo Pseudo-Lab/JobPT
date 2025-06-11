@@ -2,41 +2,12 @@
 import Link from 'next/link';
 import DOMPurify from 'dompurify';
 import { marked } from "marked";
-import React from 'react';
-import PdfHighlighterView from './PdfHighlighterView';
+import React, { memo } from 'react';
+import Image from 'next/image';
+import { PdfHighlighterView } from '../common';
+import type { SectionBox, RawElement, ResultViewProps } from '../types/evaluate';
 
-type SectionBox = {
-  id: string;
-  title: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  text: string;
-};
-
-import type { RawElement } from "./types";
-
-type ResultViewProps = {
-  pdfError: string | null;
-  isPdf: boolean;
-  sectionBoxes: SectionBox[];
-  handleSectionClick: (box: SectionBox) => void;
-  thumbnailUrl: string | null;
-  company: string;
-  JD: string;
-  JD_url: string;
-  output: string;
-  handleBackToUpload: () => void;
-  pdfUrl: string | null;
-  rawElements: RawElement[];
-  userResumeDraft: string;
-  setUserResumeDraft: (val: string) => void;
-  userResume: string;
-  setUserResume: (val: string) => void;
-};
-
-const ResultView: React.FC<ResultViewProps> = ({
+const ResultView: React.FC<ResultViewProps> = memo(({
   pdfError,
   isPdf,
   sectionBoxes,
@@ -84,13 +55,15 @@ const ResultView: React.FC<ResultViewProps> = ({
           {pdfError ? (
             <div className="border rounded p-4 bg-red-50 text-red-500">{pdfError}</div>
           ) : isPdf && pdfUrl ? (
-            // PDF 미리보기는 한 번만 렌더링
             <PdfHighlighterView key={pdfUrl} pdfUrl={pdfUrl} />
           ) : thumbnailUrl ? (
-            <img
+            <Image
               src={thumbnailUrl}
               alt="이력서 미리보기"
+              width={800}
+              height={1000}
               className="w-full rounded"
+              priority
             />
           ) : (
             <div className="border rounded p-4 bg-gray-50 text-gray-500 h-32 flex items-center justify-center">
@@ -224,6 +197,8 @@ const ResultView: React.FC<ResultViewProps> = ({
       </div>
     </div>
   );
-};
+});
+
+ResultView.displayName = 'ResultView';
 
 export default ResultView;

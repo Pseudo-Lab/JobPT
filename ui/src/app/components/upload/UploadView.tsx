@@ -1,27 +1,10 @@
-import React, { useState } from "react"; 
-
-
-interface UploadViewProps {
-  file: File | null;
-  status: string;
-  isDragging: boolean;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleAnalyze: () => void;
-  handleDrop: (e: React.DragEvent<HTMLDivElement>) => void;
-  setIsDragging: (dragging: boolean) => void;
-  location: string[];
-  remote: boolean[];
-  jobType: string[];
-  setLocation: (val: string[]) => void;
-  setRemote: (val: boolean[]) => void;
-  setJobType: (val: string[]) => void;
-  handleManualJD: () => void;
-}
+import React, { useState, memo } from "react";
+import { UploadViewProps } from "../types/upload";
 
 import Link from 'next/link';
+import Image from 'next/image';
 
-const UploadView: React.FC<UploadViewProps> = ({
+const UploadView: React.FC<UploadViewProps> = memo(({
   file,
   status,
   isDragging,
@@ -199,7 +182,13 @@ const UploadView: React.FC<UploadViewProps> = ({
             disabled={status === "Processing..."}
           >
             {status === "Processing..." ? (
-              <img src="/logo/loading.gif" alt="loading" style={{ height: 28, width: 28, background: '#fff', borderRadius: 8 }} />
+              <Image 
+                src="/logo/loading.gif" 
+                alt="loading" 
+                width={28} 
+                height={28} 
+                style={{ background: '#fff', borderRadius: 8 }} 
+              />
             ) : (
               <><span role="img" aria-label="분석">🔍</span> 분석하기</>
             )}
@@ -210,7 +199,13 @@ const UploadView: React.FC<UploadViewProps> = ({
             disabled={status === "Processing..."}
           >
             {status === "Processing..." ? (
-              <img src="/logo/loading.gif" alt="loading" style={{ height: 28, width: 28, background: '#fff', borderRadius: 8 }} />
+              <Image 
+                src="/logo/loading.gif" 
+                alt="loading" 
+                width={28} 
+                height={28} 
+                style={{ background: '#fff', borderRadius: 8 }} 
+              />
             ) : (
               <><span role="img" aria-label="업로드">📤</span> JD/CV 업로드하기</>
             )}
@@ -221,7 +216,13 @@ const UploadView: React.FC<UploadViewProps> = ({
               disabled={status === "Processing..."}
             >
               {status === "Processing..." ? (
-                <img src="/logo/loading.gif" alt="loading" style={{ height: 28, width: 28, background: '#fff', borderRadius: 8 }} />
+                <Image 
+                  src="/logo/loading.gif" 
+                  alt="loading" 
+                  width={28} 
+                  height={28} 
+                  style={{ background: '#fff', borderRadius: 8 }} 
+                />
               ) : (
                 <><span role="img" aria-label="평가">📝</span> 평가받기</>
               )}
@@ -235,6 +236,8 @@ const UploadView: React.FC<UploadViewProps> = ({
       </p>
     </div>
   );
-};
+});
+
+UploadView.displayName = 'UploadView';
 
 export default UploadView;
