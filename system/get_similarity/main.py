@@ -35,7 +35,7 @@ def matching(resume, location, remote, jobtype):
     print("Loading vector DB...")
     db = get_db(DB_PATH, emb_model, COLLECTION, DB_TYPE)
     ## lexical DB 로딩
-    with open("system/get_similarity/bm25_retriever_final.pkl", "rb") as f:
+    with open("system/get_similarity/data/bm25_retriever_final.pkl", "rb") as f:
         lexical_retriever = pickle.load(f)
 
     retriever = get_retriever(db, emb_model, filter=search_filter)
