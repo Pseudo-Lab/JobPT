@@ -1,32 +1,37 @@
-from collections import defaultdict
+from typing import cast
 from openai import OpenAI
-from dotenv import load_dotenv
-from dataclasses import dataclass, field
 from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI
 from langchain_mcp_adapters.client import MultiServerMCPClient
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, AnyMessage
-from langgraph.graph import StateGraph, add_messages
-from typing_extensions import Annotated
-from typing import Dict, List, cast, Annotated, Sequence
+from langchain_core.messages import AIMessage, SystemMessage
 from multi_agents.states.states import State
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 
-import os
 import json
 import re
-from configs import *
+from configs import *  # 필요한 모든 설정 import
 
 client = OpenAI()
 
 
 async def router(state: State):
-    model = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)
+    """
+    사용자 입력을 분석하여 적절한 에이전트 실행 순서를 결정하는 라우터 함수
+
+    Args:
+        state (State): 현재 상태 정보 (사용자 입력, 이력서 등 포함)
+
+    Returns:
+        dict: 라우팅 결정이 포함된 메시지 딕셔너리
+    """
+    model = ChatOpenAI(model="gpt-4o", temperature=0)
 
     async with MultiServerMCPClient() as client:
         agent = create_react_agent(model, client.get_tools())
 
+    # 라우팅을 위한 시스템 메시지 구성
+    # 사용자 입력과 이력서 정보를 바탕으로 적절한 에이전트 실행 순서 결정
     system_message = """
 user_input: {user_input}
 user_resume: {user_resume}
@@ -59,6 +64,7 @@ Example each output:
     sequence: "suggestion"
 }}
 """
+    # 시스템 메시지에 현재 상태 정보 삽입
     system_message = system_message.format(user_input=state.messages, user_resume=state.user_resume)
 
     messages = [SystemMessage(content=system_message), *state.messages]
@@ -74,9 +80,21 @@ Example each output:
     return {"messages": [response["messages"][-1]]}
 
 
-def refine_answer(state: State) -> State:
-    model = ChatOpenAI(model="gpt-4.1-mini", temperature=0, api_key=OPENAI_API_KEY)
+def refine_answer(state: State) -> dict:
+    """
+    최종 사용자 응답을 다듬고 개선하는 함수
 
+    Args:
+        state (State): 현재 상태 정보
+
+    Returns:
+        dict: 개선된 응답 메시지를 포함한 딕셔너리
+    """
+    # ChatOpenAI 모델 초기화 (환경변수 자동 사용)
+    model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
+    # 응답 개선을 위한 시스템 메시지
+    # 원본 의미와 구조를 유지하면서 명확성과 문법을 개선
     system_message = """
 You are an assistant helping to finalize a user-facing response.
 
@@ -95,6 +113,11 @@ If the assistant's reply is already clear and appropriate, return it unchanged.
 """
     prompt = PromptTemplate.from_template(system_message)
     chain = prompt | model | StrOutputParser()
+
+    # 응답 개선 실행
     answer = chain.invoke({"user_input": state.messages[0].content, "assistant_response": state.messages[-1].content})
+
+    print("=============refined_answer=============")
     print(answer)
+
     return {"messages": [AIMessage(content=answer)]}
