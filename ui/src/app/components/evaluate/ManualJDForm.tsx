@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-
-interface ManualJDFormProps {
-  onSubmit: (company: string, jdUrl: string, jdText: string) => void;
-  onBack: () => void;
-}
+import { ManualJDFormProps } from "../types/evaluate";
 
 const ManualJDForm: React.FC<ManualJDFormProps> = ({ onSubmit, onBack }) => {
   const [company, setCompany] = useState("");

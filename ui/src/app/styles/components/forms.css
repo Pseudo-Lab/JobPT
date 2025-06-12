@@ -1,42 +1,5 @@
-@import "./styles/theme/variables.css";
-@import "./styles/common/base.css";
-@import "./styles/common/animations.css";
-@import "./styles/components/forms.css";
-
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* 👇 여기에 추가 */
 @layer utilities {
-  /* 체크박스와 라디오버튼이 선택되지 않았을 때 테두리와 내부 모두 흰색 */
+  /* 체크박스와 라디오버튼 스타일 */
   input[type="checkbox"].accent-indigo-500,
   input[type="checkbox"].accent-green-500,
   input[type="checkbox"].accent-red-500,
@@ -51,7 +14,7 @@ body {
     -webkit-appearance: none;
     background-color: #fff !important;
     border: 2px solid #fff !important;
-    box-shadow: 0 0 0 1px #ccc; /* 약간의 외곽선 */
+    box-shadow: 0 0 0 1px #ccc;
     width: 1.1em;
     height: 1.1em;
     border-radius: 0.25em;
@@ -61,6 +24,7 @@ body {
     cursor: pointer;
     transition: border 0.2s, box-shadow 0.2s;
   }
+
   input[type="radio"].accent-indigo-500,
   input[type="radio"].accent-green-500,
   input[type="radio"].accent-red-500,
@@ -68,7 +32,8 @@ body {
   input[type="radio"].accent-yellow-500 {
     border-radius: 50%;
   }
-  /* 선택됐을 때는 기존 accent-color 유지 */
+
+  /* 선택된 상태 스타일 */
   input[type="checkbox"].accent-indigo-500:checked,
   input[type="checkbox"].accent-green-500:checked,
   input[type="checkbox"].accent-red-500:checked,
@@ -83,18 +48,4 @@ body {
     appearance: auto;
     -webkit-appearance: auto;
   }
-
-
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 1s ease-out;
-  }
-}
+} 

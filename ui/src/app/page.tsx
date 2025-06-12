@@ -4,9 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import Head from "next/head";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-import UploadView from "./components/UploadView";
-import ResultView from "./components/ResultView";
-import ManualJDForm from "./components/ManualJDForm";
+import { UploadView } from "./components/upload";
+import { ResultView } from "./components/evaluate";
+import ManualJDForm from "./components/evaluate/ManualJDForm";
 import type { SectionBox, RawElement } from "./components/types";
 
 export default function Home() {
