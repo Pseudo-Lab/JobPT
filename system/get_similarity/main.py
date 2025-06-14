@@ -1,4 +1,5 @@
 from get_similarity.nodes.retrieval import get_retriever
+from get_similarity.nodes.search import search_jd
 from get_similarity.nodes.generate import generation
 from langchain_openai import OpenAIEmbeddings
 from get_similarity.nodes.db_load import get_db
@@ -35,10 +36,11 @@ def matching(resume, location, remote, jobtype):
     print("Loading vector DB...")
     db = get_db(DB_PATH, emb_model, COLLECTION, DB_TYPE)
     ## lexical DB 로딩
-    with open("system/get_similarity/bm25_retriever_final.pkl", "rb") as f:
+    with open("system/get_similarity/data/bm25_retriever_final.pkl", "rb") as f:
         lexical_retriever = pickle.load(f)
 
     retriever = get_retriever(db, emb_model, filter=search_filter)
-    answer, jd, jd_url, c_name = generation(retriever, lexical_retriever, resume)
+    jd, jd_url, c_name = search_jd(retriever, lexical_retriever, resume)
+    answer = generation(resume, jd)
 
     return answer, jd, jd_url, c_name
