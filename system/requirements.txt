@@ -14,7 +14,7 @@ langchain-experimental==0.3.4
 langchain-openai==0.3.16
 langchain-pinecone==0.2.6
 
-langgraph==0.4.3
+langgraph==0.5.4
 markdown2==2.5.3
 pandas==2.2.3
 pdf2image==1.17.0
