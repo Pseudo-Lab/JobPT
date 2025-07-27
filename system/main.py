@@ -16,8 +16,8 @@ from multi_agents.states.states import State, get_session_state, end_session, ad
 from multi_agents.graph import create_graph
 from configs import *
 
-from langfuse import Langfuse
-from langfuse.callback import CallbackHandler
+# from langfuse import Langfuse
+# from langfuse.callback import CallbackHandler
 
 from ats_analyzer_improved import ATSAnalyzer
 
@@ -127,7 +127,7 @@ async def run(data: MatchRequest):
 
 
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답
-langfuse_handler = CallbackHandler(public_key=LANGFUSE_PUBLIC_KEY, secret_key=LANGFUSE_SECRET_KEY, host="https://cloud.langfuse.com")
+# langfuse_handler = CallbackHandler(public_key=LANGFUSE_PUBLIC_KEY, secret_key=LANGFUSE_SECRET_KEY, host="https://cloud.langfuse.com")
 
 
 @app.post("/chat")
@@ -162,7 +162,7 @@ async def chat(request: Request):
     add_user_input_to_state(state, user_input)
     graph, state = await create_graph(state)
 
-    result = await graph.ainvoke(state, config={"callbacks": [langfuse_handler]})
+    result = await graph.ainvoke(state)
     answer = result["messages"][-1].content
     add_assistant_response_to_state(state, answer)
     return {"response": answer}

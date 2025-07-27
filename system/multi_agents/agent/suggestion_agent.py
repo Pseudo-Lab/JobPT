@@ -68,16 +68,14 @@ Your task is to revise the **Selected Resume** section to improve clarity, impac
 """
     model = ChatOpenAI(model=AGENT_MODEL, temperature=0)
 
-    # MCP 클라이언트를 통해 도구들을 가져오고 에이전트 실행
-    async with MultiServerMCPClient() as client:
-        # 사용 가능한 도구들 수집 (MCP 도구 + 커스텀 검색 도구)
-        tools = client.get_tools() + [search]
+    client = MultiServerMCPClient()
+    tools = await client.get_tools() + [search]
 
-        # React 에이전트 생성
-        agent = create_react_agent(model, tools)
+    # React 에이전트 생성
+    agent = create_react_agent(model, tools)
 
-        # 메시지 구성 (시스템 메시지 + 기존 대화 내역)
-        messages = [SystemMessage(content=system_message), *state.messages]
+    # 메시지 구성 (시스템 메시지 + 기존 대화 내역)
+    messages = [SystemMessage(content=system_message), *state.messages]
 
-        response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
+    response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
     return {"messages": [response["messages"][-1]], "agent_name": "suggestion_agent"}

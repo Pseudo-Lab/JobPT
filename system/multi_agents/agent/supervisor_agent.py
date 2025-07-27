@@ -27,8 +27,10 @@ async def router(state: State):
     """
     model = ChatOpenAI(model="gpt-4o", temperature=0)
 
-    async with MultiServerMCPClient() as client:
-        agent = create_react_agent(model, client.get_tools())
+    # client = MultiServerMCPClient()
+    # tools = await client.get_tools()
+    tools = []
+    agent = create_react_agent(model, tools)
 
     # 라우팅을 위한 시스템 메시지 구성
     # 사용자 입력과 이력서 정보를 바탕으로 적절한 에이전트 실행 순서 결정
@@ -113,7 +115,7 @@ If the assistant's reply is already clear and appropriate, return it unchanged.
 """
     prompt = PromptTemplate.from_template(system_message)
     chain = prompt | model | StrOutputParser()
-
+  
     # 응답 개선 실행
     answer = chain.invoke({"user_input": state.messages[0].content, "assistant_response": state.messages[-1].content})
 

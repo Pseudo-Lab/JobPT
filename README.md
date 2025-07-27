@@ -76,24 +76,17 @@
 <img src="./assets/demo2_ph2.png" width="70%" height="70%"/>
 
 
-## 시스템 구동 방법
+## 환경 세팅
 
-프로젝트 패키지 설치
+1. 프로젝트 패키지 설치 (system/requirements.txt를 참고)
 
 ```
 pip install -r requirements.txt
 ```
 
-system 폴더에 `.env` 파일 생성
-```code
-OPENAI_API_KEY=<your_openai_key>
-UPSTAGE_API_KEY=<your_upstage_key>
-SMITHERY_API_KEY=<your_smithery_key>
-PINECONE_API_KEY=<your_pinecone_key>
-LANGFUSE_PUBLIC_KEY=<your_langfuse_key>
-LANGFUSE_SECRET_KEY=<your_langfuse_key>
-```
+2. system 폴더에 `.env.sample`을 참고해 API KEY 삽입
 
+## 시스템 구동 방법
 API 실행
 
 ```
