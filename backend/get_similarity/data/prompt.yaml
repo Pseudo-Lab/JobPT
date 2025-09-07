@@ -1,0 +1,100 @@
+prompts:
+  resume alignment evaluation:
+    description: "evaluates the alignment between a resume and a JD"
+    prompt_template: |
+      Based on the following two input data, evaluate how appealing the user’s resume would be to the company posting this JD. \n
+      The first text is the user’s resume, and the second text is the Job Description (JD).\n
+      Identify the key competencies required in the JD and assess whether these are included in the resume.\n
+
+      Then, rate the resume on a scale of 10 according to the criteria below:\n
+      Core Competency Match (1-5 points): Extract and evaluate the primary keywords and core competencies mentioned in the JD to see if they are included in the resume.\n
+      Additional Skills Match (1-3 points): Assess whether additional competencies or preferred skills from the JD are present in the resume.\n
+      Overall Assessment (1-2 points): Provide an overall assessment of how well the resume aligns with the JD and how appealing it may be for this position.\n
+
+      Output Requirements:\n
+      Rate the Core Competency and Additional Skills match on a scale of 10 based on the alignment between the JD and resume.\n
+      Explain in detail the reasoning behind this score.\n
+
+      Input data:
+      JD:\n
+      {context}
+
+      Resume:\n
+      {question}
+
+      Output format:
+      Score: 
+      Reason:
+    prompt_template_1: |
+      Let's analyze the alignment between a Korean candidate's resume and an international job description through a systematic evaluation process.
+
+      Step 1: Evaluate each criterion systematically:
+
+      1. Technical Skills Match
+      - Core technical requirements alignment
+      - Demonstrated expertise level
+      - Tools and technologies proficiency
+
+      2. Experience Relevance
+      - Role-specific experience match
+      - Project scope and responsibility level
+      - Industry relevance
+
+      3. Educational Background
+      - Degree requirements match
+      - Institution recognition
+      - Relevant certifications
+
+      4. Communication Skills
+      - English proficiency evidence
+      - Written communication clarity
+      - Cross-cultural communication experience
+
+      5. Cultural Fit & Soft Skills
+      - International environment adaptability
+      - Leadership and teamwork examples
+      - Company culture alignment
+
+      6. Achievement Impact
+      - Quantified results
+      - Achievement significance
+      - Level-appropriate accomplishments
+
+      7. Career Progression
+      - Career path logic
+      - Growth trajectory
+      - Role transitions
+
+      8. Industry Knowledge
+      - Sector expertise
+      - Industry trends awareness
+      - Professional certifications
+
+      9. Visa/Work Authorization
+      - Current status clarity
+      - Work permit eligibility
+      - Sponsorship requirements
+      - If no information about visa status is found in either the CV or JD, assign.
+
+      Input data:
+      JD:
+      {context}
+
+      Resume:
+      {question}
+
+      Output format:
+      1. Overall Analysis: 
+      - Sentence 1: introduction
+      - Sentence 2: summary
+      - Sentence 3: conclusion
+
+      2. Top 3 Priority Improvements:
+      - [List the three most critical areas to focus on]
+
+      3. Criterion-by-Criterion Analysis:
+      [For each of the 9 criteria]:
+      - Current Status: [One-sentence evaluation]
+      - Improvement Needed: [Specific, actionable suggestion]
+
+      **(IMPORTANT) Please highlight important keywords and phrases by placing (<code style="background-color: #EEB4FE; color: darkblue;">highlighted words</code>) before and after them in your response. which if highlighted in the markdown.
