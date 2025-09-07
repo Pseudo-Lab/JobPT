@@ -1,5 +1,0 @@
-.pdfViewer .textLayer {
-  user-select: text !important;
-  -webkit-user-select: text !important;
-  cursor: text !important;
-}
