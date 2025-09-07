@@ -1,0 +1,36 @@
+# requirements.txt for JobPT UI (Next.js + React + PDF + Markdown)
+# This file lists all Node.js packages needed to run the UI with npm or yarn
+# (for Python backend, see system/requirements.txt)
+
+# Core
+next==15.2.4
+react==19.0.0
+react-dom==19.0.0
+
+# PDF viewing/highlighting
+pdfjs-dist==3.4.120
+react-pdf-highlighter==8.0.0-rc.0
+canvas==3.1.0
+
+# Markdown & sanitization
+marked==15.0.7
+dompurify==3.2.4
+
+# Form handling
+form-data==4.0.2
+formdata-node==6.0.3
+
+# Tailwind CSS
+@tailwindcss/postcss==4
+@types/node==20
+@types/react==19
+@types/react-dom==19
+tailwindcss==4
+
+# Linting & TypeScript
+eslint==9
+eslint-config-next==15.2.4
+typescript==5
+
+# (dev only)
+@eslint/eslintrc==3
