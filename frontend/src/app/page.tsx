@@ -9,6 +9,22 @@ import { ResultView } from "./components/evaluate";
 import ManualJDForm from "./components/evaluate/ManualJDForm";
 import type { SectionBox, RawElement } from "./components/types";
 
+interface UpstageElement {
+    id: string;
+    category: string;
+    content: {
+        markdown?: string;
+        text?: string;
+    };
+    page: number;
+    coordinates: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    };
+}
+
 export default function Home() {
     // 기본 상태 관리
     const [file, setFile] = useState<File | null>(null);
@@ -20,14 +36,14 @@ export default function Home() {
     const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
     const [isPdf, setIsPdf] = useState(false);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-    const [pdfError, setPdfError] = useState<string | null>(null);
-    const [sectionBoxes, setSectionBoxes] = useState<SectionBox[]>([]);
-    const [rawElements, setRawElements] = useState<RawElement[]>([]);
+    const [pdfError] = useState<string | null>(null);
+    const [, setSectionBoxes] = useState<SectionBox[]>([]);
+    const [, setRawElements] = useState<RawElement[]>([]);
     const [viewMode, setViewMode] = useState<"upload" | "result" | "manualJD">("upload");
     // JD/CV 수동입력용 상태
-    const [manualCompany, setManualCompany] = useState("");
-    const [manualJDUrl, setManualJDUrl] = useState("");
-    const [manualJDText, setManualJDText] = useState("");
+    const [, setManualCompany] = useState("");
+    const [, setManualJDUrl] = useState("");
+    const [, setManualJDText] = useState("");
     const [resumePath, setResumePath] = useState("");
     // 사용자 복붙 이력서 상태
     const [userResume, setUserResume] = useState<string>(() => {
@@ -44,9 +60,6 @@ export default function Home() {
     const [remote, setRemote] = useState<boolean[]>([]); // 예: [true, false]
     const [jobType, setJobType] = useState<string[]>([]); // 예: ['fulltime', 'parttime']
 
-    const handleSectionClick = (box: SectionBox) => {
-        console.log("Clicked section:", box.id, box.text);
-    };
 
     // 채팅창 높이 조정
     const adjustChatHeight = () => {
@@ -96,7 +109,7 @@ export default function Home() {
         userMessageDiv.className = "mb-3 text-right";
         userMessageDiv.innerHTML = `
       <div class="inline-block px-4 py-2 rounded-lg bg-indigo-600 text-white max-w-[90%]">
-        <div class="prose prose-sm">${DOMPurify.sanitize(marked.parseInline(message))}</div>
+        <div class="prose prose-sm">${DOMPurify.sanitize(marked.parseInline(message) as string)}</div>
       </div>
     `;
         chatMessages.appendChild(userMessageDiv);
@@ -143,7 +156,7 @@ export default function Home() {
 
             const botMessageDiv = document.createElement("div");
             botMessageDiv.className = "mb-3 text-left";
-            const sanitizedHtml = DOMPurify.sanitize(marked.parse(data.response));
+            const sanitizedHtml = DOMPurify.sanitize(marked.parseInline(data.response) as string);
             botMessageDiv.innerHTML = `
         <div class="inline-block px-4 py-2 rounded-lg bg-gray-200 text-gray-800 max-w-[90%]">
           <div class="prose prose-sm">${sanitizedHtml}</div>
@@ -158,7 +171,7 @@ export default function Home() {
 
             const errorMessageDiv = document.createElement("div");
             errorMessageDiv.className = "mb-3 text-left";
-            const errorHtml = DOMPurify.sanitize(marked.parseInline("죄송합니다. 오류가 발생했습니다. 잠시 후 다시 시도해주세요."));
+            const errorHtml = DOMPurify.sanitize(marked.parseInline("죄송합니다. 오류가 발생했습니다. 잠시 후 다시 시도해주세요.") as string);
             errorMessageDiv.innerHTML = `
         <div class="inline-block px-4 py-2 rounded-lg bg-red-100 text-red-800 max-w-[90%]">
           <div class="prose prose-sm">${errorHtml}</div>
@@ -275,7 +288,7 @@ export default function Home() {
                     setPdfUrl(upstageData.pdfUrl);
                 }
 
-                const boxes = (upstageData.elements || []).map((e: any) => ({
+                const boxes = (upstageData.elements || []).map((e: UpstageElement) => ({
                     id: String(e.id),
                     title: e.category,
                     x: 0,
@@ -286,7 +299,7 @@ export default function Home() {
                 }));
                 setSectionBoxes(boxes);
                 setRawElements(
-                    (upstageData.elements || []).map((e: any) => ({
+                    (upstageData.elements || []).map((e: UpstageElement) => ({
                         id: e.id,
                         page: e.page,
                         coordinates: e.coordinates,
@@ -354,7 +367,7 @@ export default function Home() {
                 if (upstageData.pdfUrl) {
                     setPdfUrl(upstageData.pdfUrl);
                 }
-                const boxes = (upstageData.elements || []).map((e: any) => ({
+                const boxes = (upstageData.elements || []).map((e: UpstageElement) => ({
                     id: String(e.id),
                     title: e.category,
                     x: 0,
@@ -365,7 +378,7 @@ export default function Home() {
                 }));
                 setSectionBoxes(boxes);
                 setRawElements(
-                    (upstageData.elements || []).map((e: any) => ({
+                    (upstageData.elements || []).map((e: UpstageElement) => ({
                         id: e.id,
                         page: e.page,
                         coordinates: e.coordinates,
@@ -407,8 +420,6 @@ export default function Home() {
                     <ResultView
                         pdfError={pdfError}
                         isPdf={isPdf}
-                        sectionBoxes={sectionBoxes}
-                        handleSectionClick={handleSectionClick}
                         thumbnailUrl={thumbnailUrl}
                         company={company}
                         JD={JD}
@@ -416,7 +427,6 @@ export default function Home() {
                         output={output}
                         handleBackToUpload={handleBackToUpload}
                         pdfUrl={pdfUrl}
-                        rawElements={rawElements}
                         userResumeDraft={userResumeDraft}
                         setUserResumeDraft={setUserResumeDraft}
                         userResume={userResume}

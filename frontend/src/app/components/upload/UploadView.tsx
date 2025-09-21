@@ -1,4 +1,4 @@
-import React, { useState, memo } from "react";
+import React, { memo } from "react";
 import { UploadViewProps } from "../types/upload";
 
 import Link from 'next/link';
@@ -21,7 +21,6 @@ const UploadView: React.FC<UploadViewProps> = memo(({
   setJobType,
   handleManualJD
 }) => {
-  const [noPreference, setNoPreference] = useState(location === "");
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] space-y-8">
       <h1 className="text-4xl font-bold text-indigo-700">📄 JobPT</h1>

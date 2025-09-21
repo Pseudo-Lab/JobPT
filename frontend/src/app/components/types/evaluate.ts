@@ -6,8 +6,6 @@ export interface ManualJDFormProps {
 export interface ResultViewProps {
   pdfError: string | null;
   isPdf: boolean;
-  sectionBoxes: SectionBox[];
-  handleSectionClick: (box: SectionBox) => void;
   thumbnailUrl: string | null;
   company: string;
   JD: string;
@@ -15,7 +13,6 @@ export interface ResultViewProps {
   output: string;
   handleBackToUpload: () => void;
   pdfUrl: string | null;
-  rawElements: RawElement[];
   userResumeDraft: string;
   setUserResumeDraft: (val: string) => void;
   userResume: string;
@@ -35,6 +32,11 @@ export type SectionBox = {
 export type RawElement = {
   id: string;
   page: number;
-  coordinates: any;
+  coordinates: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
   content: { text: string; markdown: string };
 }; 

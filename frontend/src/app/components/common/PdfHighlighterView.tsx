@@ -9,9 +9,6 @@ export type RawElement = {
   content: { text?: string; markdown?: string };
 };
 
-type PdfHighlighterViewProps = {
-  pdfUrl: string;
-};
 
 const PdfHighlighterView: React.FC<{ pdfUrl: string }> = ({ pdfUrl }) => {
   const scrollRef = useRef<HTMLDivElement>(null);

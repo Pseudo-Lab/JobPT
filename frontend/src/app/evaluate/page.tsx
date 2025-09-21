@@ -2,9 +2,6 @@
 "use client";
 
 import Link from 'next/link';
-import { useRef } from 'react';
-import DOMPurify from 'dompurify';
-
 import { useEffect, useState } from 'react';
 
 
