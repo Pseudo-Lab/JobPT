@@ -30,6 +30,16 @@ const nextConfig: NextConfig = {
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
+  
+  // PDF.js 정적 파일 서빙 설정
+  async rewrites() {
+    return [
+      {
+        source: '/pdfjs/:path*',
+        destination: '/node_modules/pdfjs-dist/web/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
