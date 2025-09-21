@@ -192,18 +192,18 @@ const UploadView: React.FC<UploadViewProps> = memo(({
         </div>
       )}
 
-      <p className={`mt-2 flex items-center justify-center gap-2 ${status === "Processing..." ? "text-amber-600 animate-pulse" : status === "Complete!" ? "text-green-600" : status.includes("Error") ? "text-red-600" : "text-gray-500"}`}>
+      <div className={`mt-2 flex flex-col items-center justify-center gap-2 ${status === "Processing..." ? "text-amber-600 animate-pulse" : status === "Complete!" ? "text-green-600" : status.includes("Error") ? "text-red-600" : "text-gray-500"}`}>
         {status === "Processing..." && (
           <Image 
             src="/logo/loading.gif" 
             alt="loading" 
-            width={16} 
-            height={16} 
-            style={{ background: '#fff', borderRadius: 4 }} 
+            width={50} 
+            height={50} 
+            style={{ background: '#fff', borderRadius: 6 }} 
           />
         )}
-        {status}
-      </p>
+        <p className="text-lg">{status}</p>
+      </div>
     </div>
   );
 });
