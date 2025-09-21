@@ -108,6 +108,7 @@ async def run(data: MatchRequest):
     # PDF를 JPG로 변환 후 저장
     image_paths = convert_pdf_to_jpg(resume_path, output_folder)
     resume_content = []
+    # 이력서 각 페이지(이미지)별로 텍스트 변환(Upstage API)
     for image_path in image_paths:
         resume = run_parser(image_path)
         resume_content.append(resume[0])
@@ -118,7 +119,8 @@ async def run(data: MatchRequest):
     resume_cache[resume_path] = resume_content_text
     print(f"이력서 내용이 캐시에 저장됨: {resume_path}")
 
-    res, job_description, job_url, c_name = matching(resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache)
+    # 채용공고 추천
+    res, job_description, job_url, c_name = await matching(resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache)
 
     analysis_cache[resume_path] = {"output": res, "JD": job_description, "JD_url": job_url, "name": c_name}
     print(f"분석 결과가 캐시에 저장됨: {resume_path}")
@@ -263,6 +265,7 @@ async def evaluate(request: EvaluateRequest):
 
 # 개발용 실행 명령
 if __name__ == "__main__":
-    nltk.download("punkt")
-    nltk.download("punkt_tab")
+    ### 한국어 BM25 retrieval 추가시 활용
+    # nltk.download("punkt")
+    # nltk.download("punkt_tab")
     uvicorn.run("main:app", host="0.0.0.0", port=8000)
