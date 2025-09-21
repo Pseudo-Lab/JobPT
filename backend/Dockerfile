@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # 의존성 파일 복사 및 설치
-COPY backend/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 보수적으로 requests 설치 보장
@@ -37,19 +37,18 @@ RUN pip install --no-cache-dir requests==2.31.0
 RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
 
 # 백엔드 코드 복사
-RUN mkdir -p /app/backend
-COPY backend/ /app/backend/
-COPY data/ /app/data/
+RUN mkdir -p /app
+COPY ./ /app
 
 # 업로드 디렉토리 생성
-RUN mkdir -p /app/backend/uploaded_resumes
+RUN mkdir -p /app/uploaded_resumes
 
 # 포트 노출
 EXPOSE 8000
 
 # 환경변수 설정
-ENV PYTHONPATH=/app/backend
+ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# 서버 실행 (코드는 /backend에 복사되므로 경로는 /backend/main.py)
-CMD ["python", "backend/main.py"]
+# 서버 실행
+CMD ["python", "main.py"]

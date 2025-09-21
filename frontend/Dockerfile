@@ -1,5 +1,5 @@
 FROM node:22-bookworm-slim AS frontend
-WORKDIR /frontend
+WORKDIR /app
 
 # 빌드에 필요한 패키지
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 # Python 패키지 설치 (requests 등)
 # package.json만 복사 (lock은 복사 금지!)
-COPY frontend/package.json ./
+COPY package.json ./
 
 # optional deps 켜두기
 # RUN npm config set optional true
@@ -28,7 +28,7 @@ COPY frontend/package.json ./
 RUN npm install
 
 # 소스 복사
-COPY frontend/ .
+COPY . .
 
 # 실행
 ENV NODE_ENV=production

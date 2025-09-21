@@ -3,11 +3,11 @@ version: "3.8"
 services:
     backend:
         build:
-            context: .
-            dockerfile: Dockerfile.backend
+            context: ./backend
+            dockerfile: Dockerfile
         container_name: jobpt-backend
         ports:
-            - "8000:8000"
+            - "${BACKEND_PORT}:8000"
         environment:
             - OPENAI_API_KEY=${OPENAI_API_KEY}
             - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
@@ -16,7 +16,7 @@ services:
             - UPSTAGE_API_KEY=${UPSTAGE_API_KEY:-}
         volumes:
             - ./data:/app/data
-            - ./backend/uploaded_resumes:/app/backend/uploaded_resumes
+            - ./uploaded_resumes:/app/uploaded_resumes
             - /tmp:/tmp
         networks:
             - jobpt-network
@@ -29,17 +29,17 @@ services:
 
     frontend:
         build:
-            context: .
-            dockerfile: Dockerfile.frontend
+            context: ./frontend
+            dockerfile: Dockerfile
         container_name: jobpt-frontend
         ports:
-            - "3000:3000"
+            - "${FRONTEND_PORT}:3000"
         environment:
             - NODE_ENV=production
-            - NEXT_PUBLIC_API_URL=http://localhost:8000
+            - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
         volumes:
             # 백엔드 업로드 디렉토리를 프론트의 public/uploads로 마운트하여 3000/uploads 경로에서도 접근 가능
-            - ./backend/uploaded_resumes:/frontend/public/uploads
+            - ./uploaded_resumes:/app/public/uploads
         depends_on:
             - backend
         networks:
