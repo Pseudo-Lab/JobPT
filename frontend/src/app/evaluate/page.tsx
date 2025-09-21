@@ -68,7 +68,6 @@ export default function EvaluatePage() {
         setLoading(false);
         clearInterval(interval);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
