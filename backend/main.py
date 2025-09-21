@@ -49,9 +49,11 @@ if not logger.handlers:
 logger.setLevel(logging.INFO)
 
 # CORS 설정
+raw = os.environ.get("FRONTEND_CORS_ORIGIN", "")
+origins = [o.strip() for o in raw.split(",") if o.strip()] or ["http://localhost:3000"]  # 안전 기본값
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
