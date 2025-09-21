@@ -1,20 +1,60 @@
-version: "3"
+version: "3.8"
 
 services:
-    api:
-        image: ${DOCKER_USERNAME}/jobpt:api
-        network_mode: "host"
+    backend:
+        build:
+            context: .
+            dockerfile: Dockerfile.backend
+        container_name: jobpt-backend
+        ports:
+            - "8000:8000"
         environment:
             - OPENAI_API_KEY=${OPENAI_API_KEY}
+            - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
+            - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
+            - PINECONE_API_KEY=${PINECONE_API_KEY:-}
+            - UPSTAGE_API_KEY=${UPSTAGE_API_KEY:-}
         volumes:
-            - ./data:/app/data
+            - ./data:/backend/data
+            - ./backend/uploaded_resumes:/backend/uploaded_resumes
             - /tmp:/tmp
+        networks:
+            - jobpt-network
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
 
-    web:
-        image: ${DOCKER_USERNAME}/jobpt:web
-        network_mode: "host"
+    frontend:
+        build:
+            context: .
+            dockerfile: Dockerfile.frontend
+        container_name: jobpt-frontend
+        ports:
+            - "3000:3000"
         environment:
-            - OPENAI_API_KEY=${OPENAI_API_KEY}
+            - NODE_ENV=production
+            - NEXT_PUBLIC_API_URL=http://localhost:8000
         volumes:
-            - ./data:/app/data
-            - /tmp:/tmp
+            # 백엔드 업로드 디렉토리를 프론트의 public/uploads로 마운트하여 3000/uploads 경로에서도 접근 가능
+            - ./backend/uploaded_resumes:/frontend/public/uploads:ro
+        depends_on:
+            - backend
+        networks:
+            - jobpt-network
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+
+networks:
+    jobpt-network:
+        driver: bridge
+
+volumes:
+    jobpt-data:
+        driver: local

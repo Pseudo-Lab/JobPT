@@ -69,7 +69,7 @@ Your task is to revise the **Selected Resume** section to improve clarity, impac
     model = ChatOpenAI(model=AGENT_MODEL, temperature=0)
 
     client = MultiServerMCPClient()
-    tools = await client.get_tools() + [search]
+    tools = client.get_tools() + [search]
 
     # React 에이전트 생성
     agent = create_react_agent(model, tools)
