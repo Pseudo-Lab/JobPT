@@ -15,6 +15,19 @@ from configs import *  # 필요한 모든 설정 import
 client = OpenAI()
 
 
+def parse_json_loose(text: str) -> dict:
+    # 코드펜스 제거
+    cleaned = re.sub(r"```[a-zA-Z]*\n?|```", "", text).strip()
+    # 첫 번째 {...} 블록만 추출
+    m = re.search(r"\{[\s\S]*\}", cleaned)
+    if not m:
+        raise ValueError("No JSON object found in LLM output")
+    obj = m.group(0)
+    # 따옴표 없는 키에 따옴표 부여: {sequence: "x"} -> {"sequence": "x"}
+    obj = re.sub(r"(\{|,)\s*([A-Za-z_][A-Za-z0-9_]*)\s*:", r'\1 "\2":', obj)
+    return json.loads(obj)
+
+
 async def router(state: State):
     """
     사용자 입력을 분석하여 적절한 에이전트 실행 순서를 결정하는 라우터 함수
@@ -77,9 +90,14 @@ Suggestion Agent: 사용자가 지정한 이력서 부분과 요약된 회사 �
     result = response["messages"][-1].content
     print("=============router=============")
     print(result)
-    result = re.sub(r"(\w+):", r'"\1":', result)
-    state.route_decision = json.loads(result).get("sequence")
-    response["messages"][-1].content = json.loads(result).get("sequence")
+    try:
+        data = parse_json_loose(result)
+        seq = data.get("sequence", "END")
+    except Exception as e:
+        print("router json parse error:", e)
+        seq = "END"
+    state.route_decision = seq
+    response["messages"][-1].content = seq
     return {"messages": [response["messages"][-1]]}
 
 

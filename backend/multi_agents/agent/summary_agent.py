@@ -13,24 +13,28 @@ async def summary_agent(state: State) -> Dict[str, List[AIMessage]]:
     model = ChatOpenAI(model=AGENT_MODEL, temperature=0, api_key=OPENAI_API_KEY)
 
     # Option 1 from error message: client = MultiServerMCPClient(...)
-    client = MultiServerMCPClient(
-        {
-            "tavily-mcp": {
-                "command": "npx",
-                "args": [
-                    "-y",
-                    "@smithery/cli@latest",
-                    "run",
-                    "@tavily-ai/tavily-mcp",
-                    "--key",
-                    os.getenv("SMITHERY_API_KEY"),
-                ],
-                "transport": "stdio",
+    try:
+        client = MultiServerMCPClient(
+            {
+                "tavily-mcp": {
+                    "command": "npx",
+                    "args": [
+                        "-y",
+                        "@smithery/cli@latest",
+                        "run",
+                        "@tavily-ai/tavily-mcp",
+                        "--key",
+                        os.getenv("SMITHERY_API_KEY"),
+                    ],
+                    "transport": "stdio",
+                }
             }
-        }
-    )
-    tools = await client.get_tools()
-    agent = create_react_agent(model, tools)
+        )
+        tools = await client.get_tools()
+        agent = create_react_agent(model, tools)
+    except Exception as e:
+        print("summary_agent mcp error:", e)
+        agent = create_react_agent(model, [])
 
     system_message = f"""당신은 기업 관련 정보를 수집하고 요약하는 데 특화된 어시스턴트입니다. 
     입력으로 회사명이 주어지면, 웹과 관련 플랫폼(뉴스 기사, 회사 웹사이트, 블로그, YouTube 포함)을 검색하여 해당 회사에 대한 핵심 인사이트를 수집하고 요약하는 것이 임무입니다.
