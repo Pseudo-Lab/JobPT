@@ -7,7 +7,7 @@ import pickle
 from langchain_community.retrievers import BM25Retriever  #로컬에서 그대로 받는거라 강조는 안되지만 필요
 from configs import COLLECTION, DB_PATH, DB_TYPE
 
-def matching(resume, location, remote, jobtype):
+async def matching(resume, location, remote, jobtype):
     """
     사용자의 이력서와 필터링을 위한 메타데이터를 입력 받고 적합한 채용공고를 반환합니다.
 
@@ -36,11 +36,13 @@ def matching(resume, location, remote, jobtype):
     print("Loading vector DB...")
     db = get_db(DB_PATH, emb_model, COLLECTION, DB_TYPE)
     ## lexical DB 로딩
-    with open("backend/get_similarity/data/bm25_retriever_final.pkl", "rb") as f:
-        lexical_retriever = pickle.load(f)
+    ### 한국어 BM25 retrieval 추가시 활용
+    # with open("backend/get_similarity/data/bm25_retriever_final.pkl", "rb") as f:
+    #     lexical_retriever = pickle.load(f)
+    lexical_retriever = None
 
     retriever = get_retriever(db, emb_model, filter=search_filter)
-    jd, jd_url, c_name = search_jd(retriever, lexical_retriever, resume)
-    answer = generation(resume, jd)
+    jd, jd_url, c_name = await search_jd(retriever, lexical_retriever, resume)
+    answer = await generation(resume, jd)
 
     return answer, jd, jd_url, c_name

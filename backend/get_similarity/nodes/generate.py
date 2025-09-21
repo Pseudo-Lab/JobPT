@@ -19,7 +19,7 @@ llm = ChatOpenAI(model=RAG_MODEL)
 #         return ""
 
 
-def generation(resume, jd_description):
+async def generation(resume, jd_description):
     # YAML 로드 부분
     try:
         with open(PROMPT_YAML, "r", encoding="utf-8") as file:
