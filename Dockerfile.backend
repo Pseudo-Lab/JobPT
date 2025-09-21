@@ -2,7 +2,7 @@
 FROM python:3.11-slim
 
 # 작업 디렉터리 설정
-WORKDIR /backend
+WORKDIR /app
 
 # 필요한 시스템 패키지 설치
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -37,18 +37,19 @@ RUN pip install --no-cache-dir requests==2.31.0
 RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
 
 # 백엔드 코드 복사
-COPY backend/ /backend/
-COPY data/ /backend/data/
+RUN mkdir -p /app/backend
+COPY backend/ /app/backend/
+COPY data/ /app/data/
 
 # 업로드 디렉토리 생성
-RUN mkdir -p /backend/uploaded_resumes
+RUN mkdir -p /app/backend/uploaded_resumes
 
 # 포트 노출
 EXPOSE 8000
 
 # 환경변수 설정
-ENV PYTHONPATH=/backend
+ENV PYTHONPATH=/app/backend
 ENV PYTHONUNBUFFERED=1
 
 # 서버 실행 (코드는 /backend에 복사되므로 경로는 /backend/main.py)
-CMD ["python", "main.py"]
+CMD ["python", "backend/main.py"]

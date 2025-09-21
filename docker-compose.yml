@@ -15,8 +15,8 @@ services:
             - PINECONE_API_KEY=${PINECONE_API_KEY:-}
             - UPSTAGE_API_KEY=${UPSTAGE_API_KEY:-}
         volumes:
-            - ./data:/backend/data
-            - ./backend/uploaded_resumes:/backend/uploaded_resumes
+            - ./data:/app/data
+            - ./backend/uploaded_resumes:/app/backend/uploaded_resumes
             - /tmp:/tmp
         networks:
             - jobpt-network
@@ -39,7 +39,7 @@ services:
             - NEXT_PUBLIC_API_URL=http://localhost:8000
         volumes:
             # 백엔드 업로드 디렉토리를 프론트의 public/uploads로 마운트하여 3000/uploads 경로에서도 접근 가능
-            - ./backend/uploaded_resumes:/frontend/public/uploads:ro
+            - ./backend/uploaded_resumes:/frontend/public/uploads
         depends_on:
             - backend
         networks:
