@@ -18,8 +18,7 @@ const UploadView: React.FC<UploadViewProps> = memo(({
   jobType,
   setLocation,
   setRemote,
-  setJobType,
-  handleManualJD
+  setJobType
 }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] space-y-8">
@@ -190,23 +189,6 @@ const UploadView: React.FC<UploadViewProps> = memo(({
               />
             ) : (
               <><span role="img" aria-label="분석">🔍</span> 분석하기</>
-            )}
-          </button>
-          <button
-            onClick={handleManualJD}
-            className="px-6 py-3 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 font-medium text-lg shadow-md transition duration-300 transform hover:scale-105 flex items-center justify-center min-w-[120px]"
-            disabled={status === "Processing..."}
-          >
-            {status === "Processing..." ? (
-              <Image 
-                src="/logo/loading.gif" 
-                alt="loading" 
-                width={28} 
-                height={28} 
-                style={{ background: '#fff', borderRadius: 8 }} 
-              />
-            ) : (
-              <><span role="img" aria-label="업로드">📤</span> JD/CV 업로드하기</>
             )}
           </button>
           <Link href="/evaluate">
