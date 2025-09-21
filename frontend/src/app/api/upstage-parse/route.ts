@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
+import os from "os";
+import { spawnSync } from "child_process";
 
 export const runtime = "nodejs"; // 파일 업로드 지원
 
@@ -13,10 +17,6 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     // 임시 경로와 public/uploads 경로에 파일 저장
-    const fs = require("fs");
-    const path = require("path");
-    const os = require("os");
-    const { spawnSync } = require("child_process");
     const tmpDir = os.tmpdir();
     const tmpFilename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${file.name}`;
     const tmpFilePath = path.join(tmpDir, tmpFilename);
