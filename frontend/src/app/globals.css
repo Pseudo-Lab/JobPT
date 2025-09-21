@@ -1,7 +1,7 @@
-@import "./styles/theme/variables.css";
-@import "./styles/common/base.css";
-@import "./styles/common/animations.css";
-@import "./styles/components/forms.css";
+@import "../styles/theme/variables.css";
+@import "../styles/common/base.css";
+@import "../styles/common/animations.css";
+@import "../styles/components/forms.css";
 
 @import "tailwindcss";
 

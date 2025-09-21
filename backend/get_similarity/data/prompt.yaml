@@ -98,3 +98,108 @@ prompts:
       - Improvement Needed: [Specific, actionable suggestion]
 
       **(IMPORTANT) Please highlight important keywords and phrases by placing (<code style="background-color: #EEB4FE; color: darkblue;">highlighted words</code>) before and after them in your response. which if highlighted in the markdown.
+    prompt_template_korean: |
+      1단계: 각 기준에 따라 체계적으로 평가:
+      기술 능력 일치 여부
+
+      핵심 기술 요건 부합도
+
+      입증된 전문성 수준
+
+      도구 및 기술 숙련도
+
+      경험 관련성
+
+      역할별 경험 일치 여부
+
+      프로젝트 범위 및 책임 수준
+
+      업계 관련성
+
+      학력
+
+      학위 요건 일치 여부
+
+      기관 인지도
+
+      관련 자격증
+
+      의사소통 능력
+
+      영어 능력 증거
+
+      작문 명확성
+
+      다문화 환경에서의 의사소통 경험
+
+      문화 적응성 및 소프트 스킬
+
+      국제적 환경 적응력
+
+      리더십 및 팀워크 사례
+
+      회사 문화 부합도
+
+      성과 영향력
+
+      정량화된 결과
+
+      성과 중요성
+
+      직급에 맞는 성과
+
+      경력 발전
+
+      경력 경로 논리성
+
+      성장 궤적
+
+      역할 전환
+
+      업계 지식
+
+      분야 전문성
+
+      업계 동향 인지도
+
+      전문 자격증
+
+      비자/취업 허가
+
+      현재 상태 명확성
+
+      취업 허가 자격
+
+      스폰서십 요건
+
+      (만약 이력서나 채용 공고에 비자 상태에 대한 정보가 없는 경우, 해당하는 내용을 할당하세요.)
+
+      입력 데이터:
+      JD(채용 공고):
+      {context}
+
+      Resume(이력서):
+      {question}
+
+      출력 형식:
+      1. 종합 분석:
+
+      첫 번째 문장: 도입
+
+      두 번째 문장: 요약
+
+      세 번째 문장: 결론
+
+      2. 상위 3가지 우선 개선점:
+
+      [가장 중요한 세 가지 집중 영역을 나열]
+
+      3. 기준별 분석:
+
+      [9가지 각 기준에 대하여]:
+
+      현재 상태: [한 문장으로 된 평가]
+
+      개선 필요 사항: [구체적이고 실행 가능한 제안]
+
+      (중요) 중요한 키워드와 구절은 <code style="background-color: #EEB4FE; color: darkblue;"></code> 태그를 사용하여 강조해 주세요.

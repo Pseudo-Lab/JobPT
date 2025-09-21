@@ -27,7 +27,7 @@ def rrf(multi_scores, k=1):        #n*10개의 입력, id로 들어옴
 
 
 
-def search_jd(retriever, lexical_retriever, resume):
+async def search_jd(retriever, lexical_retriever, resume):
     """
     사용자의 이력서를 기반으로 벡터 DB에서 채용공고를 검색하고
     LLM을 이용해 CV, JD 리뷰를 수행하는 함수
@@ -43,17 +43,20 @@ def search_jd(retriever, lexical_retriever, resume):
     """
     print("\n=== Generation 함수 시작 ===")
     print("입력된 resume:", resume[:100], "...")  # 긴 텍스트는 일부만 출력
+    job_descriptions = retriever.invoke(resume)
 
+    ### 한국어 BM25 retrieval 추가시 활용
+    if lexical_retriever:
+        lexical_job_descriptions = lexical_retriever.invoke(resume)
+        sem_rank = make_rank(job_descriptions, k=10)
+        lex_rank = make_rank(lexical_job_descriptions, k=10)
+        job_descriptions = search_dict[rrf([sem_rank, lex_rank], k=1.2)[0][0]]
 
     # Retriever 실행
     print("\n=== Retriever 실행 ===")
-    job_descriptions = retriever.invoke(resume)
     # print("job_descriptions:", job_descriptions)      # retrieval된 모든 결과 출력
 
-    lexical_job_descriptions = lexical_retriever.invoke(resume)
-    sem_rank = make_rank(job_descriptions, k=10)
-    lex_rank = make_rank(lexical_job_descriptions, k=10)
-    job_descriptions = search_dict[rrf([sem_rank, lex_rank], k=1.2)[0][0]]
+
 
     # 결과가 없는 경우 처리
     if not job_descriptions:

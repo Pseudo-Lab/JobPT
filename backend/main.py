@@ -115,28 +115,19 @@ async def run(data: MatchRequest):
         resume_path = data.resume_path
         output_folder = "data"
 
-        logger.info(f"[{trace_id}] converting PDF to images...")
+        # PDF를 JPG로 변환 후 저장
         image_paths = convert_pdf_to_jpg(resume_path, output_folder)
-        logger.info(f"[{trace_id}] converted_pages={len(image_paths)}")
-
         resume_content = []
+        # 이력서 각 페이지(이미지)별로 텍스트 변환(Upstage API)
         for image_path in image_paths:
-            parsed = run_parser(image_path)
-            resume_content.append(parsed[0])
+            resume = run_parser(image_path)
+            resume_content.append(resume[0])
 
         resume_content_text = "".join(resume_content)
         logger.info(f"[{trace_id}] parsed_pages={len(resume_content)} total_chars={len(resume_content_text)}")
 
-        # 캐시 저장
-        resume_cache[resume_path] = resume_content_text
-        logger.info(f"[{trace_id}] resume cached path={resume_path}")
-
-        logger.info(
-            f"[{trace_id}] calling matching location={location_cache} remote={remote_cache} jobtype={job_type_cache}"
-        )
-        res, job_description, job_url, c_name = matching(
-            resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache
-        )
+        # 채용공고 추천
+        res, job_description, job_url, c_name = await matching(resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache)
 
         analysis_cache[resume_path] = {
             "output": res,
@@ -297,6 +288,7 @@ async def evaluate(request: EvaluateRequest):
 
 # 개발용 실행 명령
 if __name__ == "__main__":
-    nltk.download("punkt")
-    nltk.download("punkt_tab")
+    ### 한국어 BM25 retrieval 추가시 활용
+    # nltk.download("punkt")
+    # nltk.download("punkt_tab")
     uvicorn.run("main:app", host="0.0.0.0", port=8000)

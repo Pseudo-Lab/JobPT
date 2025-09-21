@@ -2,9 +2,6 @@
 "use client";
 
 import Link from 'next/link';
-import { useRef } from 'react';
-import DOMPurify from 'dompurify';
-
 import { useEffect, useState } from 'react';
 
 
@@ -71,7 +68,6 @@ export default function EvaluatePage() {
         setLoading(false);
         clearInterval(interval);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
