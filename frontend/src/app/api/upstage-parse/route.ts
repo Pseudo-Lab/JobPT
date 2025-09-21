@@ -16,24 +16,30 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // 임시 경로와 public/uploads 경로에 파일 저장
-    const tmpDir = os.tmpdir();
+    // backend/uploaded_resumes 경로에 파일 저장
     const tmpFilename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${file.name}`;
-    const tmpFilePath = path.join(tmpDir, tmpFilename);
-    fs.writeFileSync(tmpFilePath, buffer);
-
-    // public/uploads 경로에도 복사 (Next.js에서 public은 process.cwd()/public)
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
+    const backendDir = path.join(process.cwd(), "..", "backend", "uploaded_resumes");
+    
+    // 디렉토리가 없으면 생성
+    if (!fs.existsSync(backendDir)) {
+        fs.mkdirSync(backendDir, { recursive: true });
     }
-    const publicFilePath = path.join(uploadsDir, tmpFilename);
-    fs.copyFileSync(tmpFilePath, publicFilePath);
+    
+    const filePath = path.join(backendDir, tmpFilename);
+    fs.writeFileSync(filePath, buffer);
+
+    // public/uploads 경로에도 복사 (웹에서 접근 가능하도록)
+    const publicDir = path.join(process.cwd(), "public", "uploads");
+    if (!fs.existsSync(publicDir)) {
+        fs.mkdirSync(publicDir, { recursive: true });
+    }
+    const publicFilePath = path.join(publicDir, tmpFilename);
+    fs.copyFileSync(filePath, publicFilePath);
     const pdfUrl = `/uploads/${tmpFilename}`;
 
     // 2. 업로드된 파일을 upstage_parser.py로 파싱 (python에서 결과 저장)
     const pyPath = path.join(process.cwd(), "upstage_parser.py");
-    const py = spawnSync("python3", [pyPath, tmpFilePath], { encoding: "utf-8" });
+    const py = spawnSync("python3", [pyPath, filePath], { encoding: "utf-8" });
 
     // 3. 결과 확인 및 반환 (성공/실패만 반환)
     if (py.error) {
