@@ -179,40 +179,29 @@ const UploadView: React.FC<UploadViewProps> = memo(({
             onClick={handleAnalyze}
             disabled={status === "Processing..."}
           >
-            {status === "Processing..." ? (
-              <Image 
-                src="/logo/loading.gif" 
-                alt="loading" 
-                width={28} 
-                height={28} 
-                style={{ background: '#fff', borderRadius: 8 }} 
-              />
-            ) : (
-              <><span role="img" aria-label="분석">🔍</span> 분석하기</>
-            )}
+            <><span role="img" aria-label="분석">🔍</span> 분석하기</>
           </button>
           <Link href="/evaluate">
             <button
               className="px-6 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium text-lg shadow-md transition duration-300 transform hover:scale-105 flex items-center justify-center min-w-[120px]"
               disabled={status === "Processing..."}
             >
-              {status === "Processing..." ? (
-                <Image 
-                  src="/logo/loading.gif" 
-                  alt="loading" 
-                  width={28} 
-                  height={28} 
-                  style={{ background: '#fff', borderRadius: 8 }} 
-                />
-              ) : (
-                <><span role="img" aria-label="평가">📝</span> 평가받기</>
-              )}
+              <><span role="img" aria-label="평가">📝</span> 평가받기</>
             </button>
           </Link>
         </div>
       )}
 
-      <p className={`mt-2 ${status === "Processing..." ? "text-amber-600 animate-pulse" : status === "Complete!" ? "text-green-600" : status.includes("Error") ? "text-red-600" : "text-gray-500"}`}>
+      <p className={`mt-2 flex items-center justify-center gap-2 ${status === "Processing..." ? "text-amber-600 animate-pulse" : status === "Complete!" ? "text-green-600" : status.includes("Error") ? "text-red-600" : "text-gray-500"}`}>
+        {status === "Processing..." && (
+          <Image 
+            src="/logo/loading.gif" 
+            alt="loading" 
+            width={16} 
+            height={16} 
+            style={{ background: '#fff', borderRadius: 4 }} 
+          />
+        )}
         {status}
       </p>
     </div>
