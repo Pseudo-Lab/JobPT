@@ -67,7 +67,7 @@ class MatchRequest(BaseModel):
     resume_path: str
 
 
-@app.post("/upload")
+@app.post("/api/upload")
 async def upload_resume(
     file: UploadFile = File(...), location: str = Form(""), remote: str = Form("any"), job_type: str = Form("any")
 ):
@@ -103,7 +103,7 @@ async def upload_resume(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/matching")
+@app.post("/api/matching")
 async def run(data: MatchRequest):
     """
     사용자의 이력서를 기반으로 벡터 DB에서 채용공고를 검색하고
@@ -155,7 +155,7 @@ async def run(data: MatchRequest):
 # langfuse_handler = CallbackHandler(public_key=LANGFUSE_PUBLIC_KEY, secret_key=LANGFUSE_SECRET_KEY, host="https://cloud.langfuse.com")
 
 
-@app.post("/chat")
+@app.post("/api/chat")
 async def chat(request: Request):
     data = await request.json()
     session_id = data["session_id"]
@@ -193,7 +193,7 @@ async def chat(request: Request):
     return {"response": answer}
 
 
-@app.post("/mock_chat")
+@app.post("/api/mock_chat")
 async def chat(request_data: dict = Body(...)):
     message = request_data.get("message", "")
     resume_path = request_data.get("resume_path", "")
@@ -272,7 +272,7 @@ class EvaluateRequest(BaseModel):
     model: int = 1
 
 
-@app.post("/evaluate")
+@app.post("/api/evaluate")
 async def evaluate(request: EvaluateRequest):
     try:
         analyzer = ATSAnalyzer(request.resume_path, request.jd_text, model=request.model)

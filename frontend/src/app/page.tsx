@@ -140,7 +140,7 @@ export default function Home() {
                 user_resume: userResume,
             };
 
-            const response = await fetch("http://localhost:8000/chat", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(requestData),
@@ -254,14 +254,14 @@ export default function Home() {
         formData.append("job_type", JSON.stringify(jobType));
 
         try {
-            const uploadRes = await fetch("http://localhost:8000/upload", {
+            const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
                 method: "POST",
                 body: formData,
             });
             const { resume_path } = await uploadRes.json();
             setResumePath(resume_path);
 
-            const res = await fetch("http://localhost:8000/matching", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/matching`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ resume_path }),
