@@ -165,7 +165,8 @@ async def chat(request: Request):
     company_name = data.get("company", "")
     resume_path = data.get("resume_path", "")
 
-    if resume_cache[resume_path] is None:
+    resume_content_text = ""
+    if resume_path not in resume_cache:
         output_folder = "data"
         image_paths = convert_pdf_to_jpg(resume_path, output_folder)
         resume_content = []
@@ -173,6 +174,7 @@ async def chat(request: Request):
             resume = run_parser(image_path)
             resume_content.append(resume[0])
         resume_content_text = "".join(resume_content)
+        resume_cache[resume_path] = resume_content_text
     else:
         resume_content_text = resume_cache[resume_path]
 

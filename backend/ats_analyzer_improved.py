@@ -32,6 +32,8 @@ class ATSAnalyzer:
             jd_text (str): Job description text
             model (int): Model selection (1=OpenAI, 2=Groq)
         """
+        if cv_path.startswith('/uploads/'):
+            cv_path = cv_path.replace('/uploads/', 'uploaded_resumes/', 1)
         self.cv_path = cv_path
         self.jd_text = jd_text
         self.cv_text = ""

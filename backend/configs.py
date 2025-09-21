@@ -11,7 +11,7 @@ DB_TYPE = "Pinecone"    #["Chroma", "Pinecone"]
 PINECONE_INDEX = "korea-jd-test"
 DB_PATH = "Pinecone"    #크로마에서만 사용
 COLLECTION = "semantic_0"   #크로마에서만 사용
-PROMPT_YAML = "backend/get_similarity/data/prompt.yaml"
+PROMPT_YAML = "get_similarity/data/prompt.yaml"
 
 ### General api key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
