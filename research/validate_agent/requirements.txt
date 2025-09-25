@@ -1,8 +1,26 @@
 # Core Libraries
-python-docx==1.1.2 
+python-docx==1.1.2
 
 # File Processing
 PyPDF2==3.0.1
 
 # Visualization
-matplotlib==3.9.3            
+matplotlib==3.9.3
+
+# LLM APIs
+openai>=1.0.0
+groq>=0.4.0
+google-generativeai>=0.3.0
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# Text Processing
+langdetect>=1.0.9
+markdown>=3.4.0
+
+# Data Processing
+numpy>=1.24.0
