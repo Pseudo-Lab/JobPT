@@ -2,6 +2,7 @@ import json
 import base64
 import requests
 from typing import List, Dict, Any, Optional
+from config import OPENAI_API_KEY, GITHUB_TOKEN, GITHUB_URL, QUERY
 
 class GitHubToolAgent:
     def __init__(self, github_token:str, openai_api_key: str):
@@ -199,10 +200,10 @@ class GitHubToolAgent:
         return "분석을 완료할 수 없습니다 (최대 반복 횟수 초과)"
 
 if __name__ == "__main__":
-    OPENAI_API_KEY = ""
-    GITHUB_TOKEN = ""
-    GITHUB_URL = "https://github.com/Pseudo-Lab"
-    QUERY = "JobPT 레포에서 최신 커밋에 대해 요약 설명해줘"
+    OPENAI_API_KEY = OPENAI_API_KEY
+    GITHUB_TOKEN = GITHUB_TOKEN
+    GITHUB_URL = GITHUB_URL
+    QUERY = QUERY
     
     agent = GitHubToolAgent(GITHUB_TOKEN, OPENAI_API_KEY)
     result = agent.analyze(GITHUB_URL, QUERY)

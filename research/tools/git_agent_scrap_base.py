@@ -2,6 +2,7 @@ import json
 import requests
 from bs4 import BeautifulSoup
 from typing import List, Dict, Any, Optional
+from config import OPENAI_API_KEY, GITHUB_TOKEN, GITHUB_URL, QUERY
 
 class GitHubScraperAgent:
     def __init__(self, openai_api_key: str):
@@ -367,9 +368,9 @@ if __name__ == "__main__":
         print("pip install beautifulsoup4 requests")
         exit(1)
     
-    OPENAI_API_KEY = ""
-    GITHUB_URL = "https://github.com/Pseudo-Lab"
-    QUERY = "JobPT 레포에서 cv를 위해서 정보 요약하고 주요 코드 요약해서 알려줘"
+    OPENAI_API_KEY = OPENAI_API_KEY
+    GITHUB_URL = GITHUB_URL
+    QUERY = QUERY
     
     agent = GitHubScraperAgent(OPENAI_API_KEY)
     result = agent.analyze(GITHUB_URL, QUERY)
