@@ -124,6 +124,7 @@ def refine_answer(state: State) -> dict:
 - Assistant Draft Response: {assistant_response}
 
 만약 Assistant Draft Response가 'END'라면, 사용자 입력에 집중하여 즉흥적으로 답변을 생성하세요.
+절대 'END'라고 그대로 반환하지 마세요.
 
 당신의 임무는 초안을 **가볍게 다듬는 것**이며, 의미, 톤, 구조는 변경하지 마세요.  
 핵심 세부 사항은 모두 유지해야 합니다.  
