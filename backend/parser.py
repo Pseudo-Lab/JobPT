@@ -60,8 +60,10 @@ import base64
 def convert_pdf_to_jpg(pdf_path, output_folder):
     image_paths = []
     try:
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
+        # processed/images 하위에 저장
+        images_dir = os.path.join(output_folder, "images")
+        if not os.path.exists(images_dir):
+            os.makedirs(images_dir)
 
         pdf_filename = os.path.splitext(os.path.basename(pdf_path))[0]
         doc = fitz.open(pdf_path)
@@ -69,7 +71,7 @@ def convert_pdf_to_jpg(pdf_path, output_folder):
         for i in range(doc.page_count):
             page = doc.load_page(i)
             pix = page.get_pixmap()
-            output_file = os.path.join(output_folder, f"{pdf_filename}_{i+1}.jpg")
+            output_file = os.path.join(images_dir, f"{pdf_filename}_{i+1}.jpg")
             pix.save(output_file)
             print(f"페이지 {i+1}을(를) 저장했습니다: {output_file}")
             image_paths.append(output_file)

@@ -41,9 +41,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 업로드 디렉토리 설정
-UPLOAD_DIR = "uploaded_resumes"
+# 통합된 파일 저장소 설정 (configs에서 가져오기)
+from configs import UPLOAD_PATH, PROCESSED_PATH, CACHE_PATH
+
+UPLOAD_DIR = os.path.join(UPLOAD_PATH, "resumes")
+PROCESSED_DIR = PROCESSED_PATH
+CACHE_DIR = CACHE_PATH
+
+# 디렉토리 생성
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(PROCESSED_DIR, exist_ok=True)
+os.makedirs(CACHE_DIR, exist_ok=True)
 
 
 # /matching - 이력서 분석 및 JD 매칭
@@ -103,7 +111,7 @@ async def run(data: MatchRequest):
             - name: 회사 이름
     """
     resume_path = data.resume_path
-    output_folder = "data"
+    output_folder = PROCESSED_DIR
 
     # PDF를 JPG로 변환 후 저장
     image_paths = convert_pdf_to_jpg(resume_path, output_folder)
@@ -141,7 +149,7 @@ async def chat(request: Request):
     resume_path = data.get("resume_path", "")
 
     if resume_cache[resume_path] is None:
-        output_folder = "data"
+        output_folder = PROCESSED_DIR
         image_paths = convert_pdf_to_jpg(resume_path, output_folder)
         resume_content = []
         for image_path in image_paths:
