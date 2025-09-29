@@ -16,19 +16,19 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // backend/uploaded_resumes 경로에 파일 저장
+    // 통합된 data 디렉토리에 파일 저장
     const tmpFilename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${file.name}`;
-    const backendDir = path.join(process.cwd(), "..", "backend", "uploaded_resumes");
+    const dataDir = path.join(process.cwd(), "..", "data", "uploads", "resumes");
     
     // 디렉토리가 없으면 생성
-    if (!fs.existsSync(backendDir)) {
-        fs.mkdirSync(backendDir, { recursive: true });
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
     }
     
-    const filePath = path.join(backendDir, tmpFilename);
+    const filePath = path.join(dataDir, tmpFilename);
     fs.writeFileSync(filePath, buffer);
 
-    // public/uploads 경로에도 복사 (웹에서 접근 가능하도록)
+    // 웹에서 접근 가능하도록 public/uploads에도 복사 (임시)
     const publicDir = path.join(process.cwd(), "public", "uploads");
     if (!fs.existsSync(publicDir)) {
         fs.mkdirSync(publicDir, { recursive: true });

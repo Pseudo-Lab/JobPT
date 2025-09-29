@@ -1,11 +1,8 @@
 from configs import UPSTAGE_API_KEY
 import requests
-from pdf2image import convert_from_path
-import fitz  # PyMuPDF
 import os
 
 from typing import Optional
-from PIL import Image
 import io
 import base64
 
@@ -57,34 +54,37 @@ import base64
 #     return image, parsed_content_list
 
 
-def convert_pdf_to_jpg(pdf_path, output_folder):
-    image_paths = []
-    try:
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
+# convert_pdf_to_jpg 함수는 더 이상 사용하지 않음 (PDF 직접 처리로 변경)
+# def convert_pdf_to_jpg(pdf_path, output_folder):
+#     image_paths = []
+#     try:
+#         # processed/images 하위에 저장
+#         images_dir = os.path.join(output_folder, "images")
+#         if not os.path.exists(images_dir):
+#             os.makedirs(images_dir)
+#
+#         pdf_filename = os.path.splitext(os.path.basename(pdf_path))[0]
+#         doc = fitz.open(pdf_path)
+#
+#         for i in range(doc.page_count):
+#             page = doc.load_page(i)
+#             pix = page.get_pixmap()
+#             output_file = os.path.join(images_dir, f"{pdf_filename}_{i+1}.jpg")
+#             pix.save(output_file)
+#             print(f"페이지 {i+1}을(를) 저장했습니다: {output_file}")
+#             image_paths.append(output_file)
+#         print(f"변환 완료! 총 {doc.page_count} 페이지를 변환했습니다.")
+#         return image_paths
+#     except Exception as e:
+#         print(f"에러가 발생했습니다: {str(e)}")
 
-        pdf_filename = os.path.splitext(os.path.basename(pdf_path))[0]
-        doc = fitz.open(pdf_path)
-
-        for i in range(doc.page_count):
-            page = doc.load_page(i)
-            pix = page.get_pixmap()
-            output_file = os.path.join(output_folder, f"{pdf_filename}_{i+1}.jpg")
-            pix.save(output_file)
-            print(f"페이지 {i+1}을(를) 저장했습니다: {output_file}")
-            image_paths.append(output_file)
-        print(f"변환 완료! 총 {doc.page_count} 페이지를 변환했습니다.")
-        return image_paths
-    except Exception as e:
-        print(f"에러가 발생했습니다: {str(e)}")
-
-def run_parser(image_path):
+def run_parser(pdf_path):
     """
-    Upstage API를 사용하여 이미지에서 텍스트를 추출합니다.
+    Upstage API를 사용하여 PDF에서 텍스트를 추출합니다.
     """
     url = "https://api.upstage.ai/v1/document-digitization"
     headers = {"Authorization": f"Bearer {UPSTAGE_API_KEY}"}
-    files = {"document": open(image_path, "rb")}
+    files = {"document": open(pdf_path, "rb")}
     data = {
         "ocr": "force",
         "base64_encoding": "['table']",
@@ -122,6 +122,6 @@ def run_parser(image_path):
     full_contents = response_data.get('content', {}).get('text', '')
     contents = "\n".join(contents)
 
-    print(f"{image_path}에서 텍스트 추출 완료")
+    print(f"{pdf_path}에서 텍스트 추출 완료")
     return contents, coordinates, full_contents
 
