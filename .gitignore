@@ -19,4 +19,7 @@ resume_JD_similarity/data/**
 **chroma_db**
 **bin**
 ui/public/uploads/**
-data/uploads/** 
+backend/test_api.py
+backend/test_ats.py
+backend/ats_report.html
+data/uploads/**
