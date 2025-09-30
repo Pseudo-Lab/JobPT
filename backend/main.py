@@ -19,7 +19,7 @@ from configs import *
 # from langfuse import Langfuse
 # from langfuse.callback import CallbackHandler
 
-from ats_analyzer_improved import ATSAnalyzer
+from ATS_agent.ats_analyzer_improved import ATSAnalyzer
 
 
 # 캐시 저장소
