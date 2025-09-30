@@ -6,7 +6,7 @@ import shutil
 import uuid
 import os
 
-from parser import run_parser, convert_pdf_to_jpg
+from parser import run_parser
 from get_similarity.main import matching
 from openai import OpenAI
 import uvicorn
@@ -41,9 +41,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 업로드 디렉토리 설정
-UPLOAD_DIR = "uploaded_resumes"
+# 통합된 파일 저장소 설정 (configs에서 가져오기)
+from configs import UPLOAD_PATH, PROCESSED_PATH, CACHE_PATH
+
+UPLOAD_DIR = os.path.join(UPLOAD_PATH, "resumes")
+PROCESSED_DIR = PROCESSED_PATH
+CACHE_DIR = CACHE_PATH
+
+# 디렉토리 생성
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(PROCESSED_DIR, exist_ok=True)
+os.makedirs(CACHE_DIR, exist_ok=True)
 
 
 # /matching - 이력서 분석 및 JD 매칭
@@ -103,17 +111,10 @@ async def run(data: MatchRequest):
             - name: 회사 이름
     """
     resume_path = data.resume_path
-    output_folder = "data"
 
-    # PDF를 JPG로 변환 후 저장
-    image_paths = convert_pdf_to_jpg(resume_path, output_folder)
-    resume_content = []
-    # 이력서 각 페이지(이미지)별로 텍스트 변환(Upstage API)
-    for image_path in image_paths:
-        resume = run_parser(image_path)
-        resume_content.append(resume[0])
-
-    resume_content_text = "".join(resume_content)
+    # PDF를 직접 파싱 (JPG 변환 없이)
+    resume = run_parser(resume_path)
+    resume_content_text = resume[0]  # 첫 번째 반환값이 텍스트
 
     # 캐시 저장
     resume_cache[resume_path] = resume_content_text
@@ -141,13 +142,9 @@ async def chat(request: Request):
     resume_path = data.get("resume_path", "")
 
     if resume_cache[resume_path] is None:
-        output_folder = "data"
-        image_paths = convert_pdf_to_jpg(resume_path, output_folder)
-        resume_content = []
-        for image_path in image_paths:
-            resume = run_parser(image_path)
-            resume_content.append(resume[0])
-        resume_content_text = "".join(resume_content)
+        # PDF를 직접 파싱 (JPG 변환 없이)
+        resume = run_parser(resume_path)
+        resume_content_text = resume[0]  # 첫 번째 반환값이 텍스트
     else:
         resume_content_text = resume_cache[resume_path]
     
