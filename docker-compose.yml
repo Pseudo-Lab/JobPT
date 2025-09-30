@@ -14,6 +14,7 @@ services:
             - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
             - PINECONE_API_KEY=${PINECONE_API_KEY:-}
             - UPSTAGE_API_KEY=${UPSTAGE_API_KEY:-}
+            - FRONTEND_CORS_ORIGIN=${FRONTEND_CORS_ORIGIN:-}
         volumes:
             - ./data:/app/data
             - ./uploaded_resumes:/app/uploaded_resumes
