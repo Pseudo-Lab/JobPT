@@ -78,25 +78,35 @@
 
 ## 환경 세팅
 
-1. 프로젝트 패키지 설치 (system/requirements.txt를 참고)
+1.  프로젝트 루트 디렉토리에 `.env.example` 파일을 참고하여 `.env` 파일을 생성하고 API 키 및 환경 변수를 설정합니다.
 
-```
-pip install -r requirements.txt
-```
+    -   `FRONTEND_CORS_ORIGIN`: CORS 정책을 적용할 프론트엔드 주소를 입력합니다. (e.g., `http://localhost:3000`)
+    -   `NODE_ENV`: 프론트엔드 `NODE_ENV` 환경을 설정합니다. (`development` 또는 `production`)
 
-2. system 폴더에 `.env.sample`을 참고해 API KEY 삽입
+2.  (Optional) 로컬 환경에서 직접 실행할 경우, 각 서비스의 `requirements.txt` 또는 `package.json`을 참고하여 의존성을 설치합니다.
 
 ## 시스템 구동 방법
+
+### Docker를 이용한 실행
+
+프로젝트 루트 디렉토리에서 다음 명령어를 실행하여 Docker Compose로 전체 서비스를 실행합니다.
+
+```bash
+docker compose up [-d] [--build]
+```
+
+### 로컬 환경에서 직접 실행
+
 API 실행
 
-```
-python system/main.py
+```bash
+python backend/main.py
 ```
 
 웹 화면 실행
 
-```
-npm run dev
+```bash
+npm --prefix frontend run dev
 ```
 
 API 호출 예시 (api_test.py 참조)

@@ -36,7 +36,7 @@ services:
         ports:
             - "${FRONTEND_PORT}:3000"
         environment:
-            - NODE_ENV=production
+            - NODE_ENV=${NODE_ENV}
             - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
         volumes:
             # 백엔드 업로드 디렉토리를 프론트의 public/uploads로 마운트하여 3000/uploads 경로에서도 접근 가능
