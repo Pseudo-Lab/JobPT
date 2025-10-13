@@ -15,6 +15,19 @@ from configs import *  # 필요한 모든 설정 import
 client = OpenAI()
 
 
+def parse_json_loose(text: str) -> dict:
+    # 코드펜스 제거
+    cleaned = re.sub(r"```[a-zA-Z]*\n?|```", "", text).strip()
+    # 첫 번째 {...} 블록만 추출
+    m = re.search(r"\{[\s\S]*\}", cleaned)
+    if not m:
+        raise ValueError("No JSON object found in LLM output")
+    obj = m.group(0)
+    # 따옴표 없는 키에 따옴표 부여: {sequence: "x"} -> {"sequence": "x"}
+    obj = re.sub(r"(\{|,)\s*([A-Za-z_][A-Za-z0-9_]*)\s*:", r'\1 "\2":', obj)
+    return json.loads(obj)
+
+
 async def router(state: State):
     """
     사용자 입력을 분석하여 적절한 에이전트 실행 순서를 결정하는 라우터 함수
@@ -38,33 +51,34 @@ async def router(state: State):
 user_input: {user_input}
 user_resume: {user_resume}
 ---
-This system uses a Summary Agent and a Suggestion Agent to help improve resumes.
+이 시스템은 이력서를 개선하기 위해 Summary Agent와 Suggestion Agent를 사용합니다.
 
-Summary Agent: Finds and summarizes company information related to the job description the user has provided.
-Suggestion Agent: Based on the user's specified part of the resume and the summarized company information, it generates concrete improvement suggestions.
+Summary Agent: 사용자가 제공한 채용공고와 관련된 회사 정보를 찾아 요약합니다.  
+Suggestion Agent: 사용자가 지정한 이력서 부분과 요약된 회사 정보를 기반으로 구체적인 개선 제안을 생성합니다.  
 
-Please select one of the following agent execution sequences and output it in a single line (choose exactly one of the options below):
+아래의 실행 시퀀스 중 하나를 선택하여 한 줄로 출력하세요 (옵션 중 정확히 하나만 선택):  
 
-1. END: When the input is a simple question that does not require the Summary or Suggestion Agents, or when user_resume is empty.
-2. summary: When only the Summary Agent is needed.
-3. summary_suggestion: When the user wants to improve their resume using both the Summary and Suggestion Agents.
-4. suggestion: When only the Suggestion Agent is needed, without requiring company summary information.
+1. END: 입력이 단순 질문으로 Summary 또는 Suggestion Agent가 필요하지 않거나, user_resume이 비어 있을 때  
+2. summary: Summary Agent만 필요한 경우  
+3. summary_suggestion: 이력서를 개선하기 위해 Summary Agent와 Suggestion Agent 모두 필요한 경우  
+4. suggestion: 회사 요약 정보 없이 Suggestion Agent만 필요한 경우  
 
-For each request, output the result in JSON format.
-Only return key of 'sequence', don't return any other key.
-Example each output:
+각 요청마다 JSON 형식으로 결과를 출력하세요.  
+출력 시 'sequence' 키만 포함하고, 그 외 키는 절대 포함하지 마세요.  
+
+출력 예시:  
 {{
     sequence: "END"
-}}
+}}  
 {{
     sequence: "summary"
-}}
+}}  
 {{
     sequence: "summary_suggestion"
-}}
+}}  
 {{
     sequence: "suggestion"
-}}
+}}  
 """
     # 시스템 메시지에 현재 상태 정보 삽입
     system_message = system_message.format(user_input=state.messages, user_resume=state.user_resume)
@@ -76,9 +90,14 @@ Example each output:
     result = response["messages"][-1].content
     print("=============router=============")
     print(result)
-    result = re.sub(r"(\w+):", r'"\1":', result)
-    state.route_decision = json.loads(result).get("sequence")
-    response["messages"][-1].content = json.loads(result).get("sequence")
+    try:
+        data = parse_json_loose(result)
+        seq = data.get("sequence", "END")
+    except Exception as e:
+        print("router json parse error:", e)
+        seq = "END"
+    state.route_decision = seq
+    response["messages"][-1].content = seq
     return {"messages": [response["messages"][-1]]}
 
 
@@ -98,24 +117,26 @@ def refine_answer(state: State) -> dict:
     # 응답 개선을 위한 시스템 메시지
     # 원본 의미와 구조를 유지하면서 명확성과 문법을 개선
     system_message = """
-You are an assistant helping to finalize a user-facing response.
+당신은 사용자에게 제공될 최종 답변을 다듬는 어시스턴트입니다.
 
-Below are the original user input and the assistant's draft reply:
+아래는 원래 사용자 입력과 어시스턴트의 초안 답변입니다:
 - User Input: {user_input}
 - Assistant Draft Response: {assistant_response}
 
-if Assistant Draft Response is 'END', focus on user input and generate answer spontaneously.
+만약 Assistant Draft Response가 'END'라면, 사용자 입력에 집중하여 즉흥적으로 답변을 생성하세요.
+절대 'END'라고 그대로 반환하지 마세요.
 
-Your task is to **lightly polish the draft** without changing its meaning, tone, or structure. Keep all key details intact. 
-Focus only on improving clarity, grammar, or flow if necessary.
+당신의 임무는 초안을 **가볍게 다듬는 것**이며, 의미, 톤, 구조는 변경하지 마세요.  
+핵심 세부 사항은 모두 유지해야 합니다.  
+명확성, 문법, 흐름 개선이 필요한 경우에만 손보세요.  
 
-Do NOT remove important information or rephrase in a way that could alter the intent.
+중요한 정보를 삭제하거나 의도를 바꿀 수 있는 식으로 다시 표현하지 마세요.  
 
-If the assistant's reply is already clear and appropriate, return it unchanged.
+어시스턴트의 답변이 이미 명확하고 적절하다면 그대로 반환하세요.
 """
     prompt = PromptTemplate.from_template(system_message)
     chain = prompt | model | StrOutputParser()
-  
+
     # 응답 개선 실행
     answer = chain.invoke({"user_input": state.messages[0].content, "assistant_response": state.messages[-1].content})
 

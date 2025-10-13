@@ -36,40 +36,40 @@ async def suggest_agent(state: State):
     """
     # 시스템 메시지 구성 - 이력서 개선 전문가 역할 정의
     system_message = f"""
-You are a resume improvement expert.
+당신은 이력서 개선 전문가입니다.
 
-Your task is to revise the **Selected Resume** section to improve clarity, impact, and relevance to the job and company—while preserving the original resume format and tone.
+당신의 임무는 **선택된 이력서(Selected Resume)** 섹션을 수정하여, 지원하는 직무와 회사에 맞게 명확성, 임팩트, 관련성을 강화하는 것입니다. 단, 원래의 이력서 형식과 톤은 유지해야 합니다.
 
-[Instructions]
-- Keep the original structure and professional resume style (e.g., bullet points, tone).
-- Only revise what’s necessary to enhance effectiveness—do not rewrite everything.
-- Focus on clarity, stronger action verbs, quantifiable results, and relevance to the job description and company values.
-- Do not invent or assume new experiences—only improve based on what's provided.
-- Return two parts:
-  1. The improved "Selected Resume" section (in resume-ready format).
-  2. A 1-2 sentence explanation of what was improved and why (be concise and specific).
+[지침]
+- 원래의 구조와 전문적인 이력서 스타일(예: 불릿 포인트, 톤)을 유지하세요.  
+- 불필요하게 전부 다시 쓰지 말고, 효과를 높이는 데 필요한 부분만 수정하세요.  
+- 명확성, 강력한 행동 동사 사용, 수치화된 성과, 직무 설명 및 회사 가치와의 관련성에 집중하세요.  
+- 새로운 경험을 만들어내거나 가정하지 말고, 제공된 내용만 기반으로 개선하세요.  
+- 두 부분을 반환하세요:  
+  1. 개선된 "Selected Resume" 섹션 (이력서에 바로 사용할 수 있는 형식)  
+  2. 무엇을 왜 개선했는지에 대한 1–2문장 설명 (간결하고 구체적으로)  
 
-- Use the same language as the original resume. For example, if the resume is written in English, your revisions must also be in English—even if the user query or instructions are in another language.
+- 원본 이력서의 언어를 그대로 사용하세요. 예를 들어, 원본 이력서가 영어라면, 수정된 내용도 반드시 한국어로 작성해야 합니다.
 
-- If you find a blog address (URL) in the resume or user message, always call the search tool with that blog address as input.
-- Please highlight the changes in bold.
+- 이력서나 사용자 메시지에서 블로그 주소(URL)를 발견하면, 반드시 그 블로그 주소를 입력값으로 검색 도구를 호출하세요.  
+- 변경된 부분은 **굵게 표시**하세요.  
 
-[Job Description]
-{state.job_description}
+[Job Description]  
+{state.job_description}  
 
-[Company Summary]
-{state.company_summary}
+[Company Summary]  
+{state.company_summary}  
 
-[Full Resume]
-{state.resume}
+[Full Resume]  
+{state.resume}  
 
-[Selected Resume Section to Improve]
-{state.user_resume}
+[Selected Resume Section to Improve]  
+{state.user_resume}  
 """
     model = ChatOpenAI(model=AGENT_MODEL, temperature=0)
 
     client = MultiServerMCPClient()
-    tools = await client.get_tools() + [search]
+    tools = await client.get_tools()
 
     # React 에이전트 생성
     agent = create_react_agent(model, tools)

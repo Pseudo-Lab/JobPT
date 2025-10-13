@@ -1,0 +1,36 @@
+FROM node:22-bookworm-slim AS frontend
+WORKDIR /app
+
+# 빌드에 필요한 패키지
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3 \
+    python3-pip \
+    python3-requests \
+    python3-dotenv \
+    pkg-config \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    libpng-dev \
+    libfreetype6-dev \
+    git \
+ && rm -rf /var/lib/apt/lists/*
+# Python 패키지 설치 (requests 등)
+# package.json만 복사 (lock은 복사 금지!)
+COPY package.json ./
+
+# optional deps 켜두기
+# RUN npm config set optional true
+
+# 의존성 설치 → 리눅스 기준으로 새로운 lock 생성
+RUN npm install
+
+# 소스 복사
+COPY . .
+
+# 실행
+ENV NODE_ENV=production
+EXPOSE 3000
+CMD ["npm", "run", "dev"]

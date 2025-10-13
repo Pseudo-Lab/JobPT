@@ -32,6 +32,8 @@ class ATSAnalyzer:
             jd_text (str): Job description text
             model (int): Model selection (1=OpenAI, 2=Groq)
         """
+        if cv_path.startswith('/uploads/'):
+            cv_path = cv_path.replace('/uploads/', 'uploaded_resumes/', 1)
         self.cv_path = cv_path
         self.jd_text = jd_text
         self.cv_text = ""
@@ -50,9 +52,6 @@ class ATSAnalyzer:
         self.total_tokens = 0
         self.total_time = 0
         self.model = model
-
-        # Load environment variables
-        load_dotenv()
 
     def extract_and_preprocess(self):
         """Extract text from resume file and preprocess it"""
@@ -1150,33 +1149,13 @@ class ATSAnalyzer:
             str: The LLM response
         """
         try:
-            # Check if .env file exists and load it
-            env_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
-            if not os.path.exists(env_file_path):
-                print(f"Warning: .env file not found at {env_file_path}")
-                print("Creating a default .env file with placeholders for API keys")
-                with open(env_file_path, 'w') as f:
-                    f.write("# API Keys for ATS Analyzer\n")
-                    f.write("# Replace with your actual API keys\n\n")
-                    f.write("# OpenAI API Key\n")
-                    f.write("OPENAI_API_KEY=your_openai_api_key_here\n\n")
-                    f.write("# Groq API Key (optional, only needed if using model=2)\n")
-                    f.write("GROQ_API_KEY=your_groq_api_key_here\n")
-                print(f"Please edit {env_file_path} and add your API keys")
 
-                # Fallback to dummy response if no API keys are available
-                return self._generate_dummy_response(prompt)
-
-            # Reload environment variables
-            from dotenv import load_dotenv
-            load_dotenv(env_file_path)
 
             if model == 1:
                 # Get OpenAI API key from environment variables
                 openai_api_key = OPENAI_API_KEY
                 if not openai_api_key or openai_api_key == "your_openai_api_key_here":
-                    print("Error: OpenAI API key not found or not set in .env file")
-                    print(f"Please edit {env_file_path} and add your OpenAI API key")
+                    print("Error: OpenAI API key not found or not set in environment variables.")
                     # Fallback to model 2 if OpenAI API key is not available
                     if model == 1:
                         print("Attempting to use Groq API instead...")
@@ -1210,8 +1189,7 @@ class ATSAnalyzer:
                 # Get Groq API key from environment variables
                 groq_api_key = GROQ_API_KEY
                 if not groq_api_key or groq_api_key == "your_groq_api_key_here":
-                    print("Error: Groq API key not found or not set in .env file")
-                    print(f"Please edit {env_file_path} and add your Groq API key")
+                    print("Error: Groq API key not found or not set in environment variables.")
                     print("Falling back to OpenAI API...")
                     return self.call_llm(prompt, model=1)
 

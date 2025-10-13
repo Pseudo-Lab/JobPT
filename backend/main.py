@@ -11,8 +11,15 @@ from get_similarity.main import matching
 from openai import OpenAI
 import uvicorn
 import nltk
+import logging
 
-from multi_agents.states.states import State, get_session_state, end_session, add_user_input_to_state, add_assistant_response_to_state
+from multi_agents.states.states import (
+    State,
+    get_session_state,
+    end_session,
+    add_user_input_to_state,
+    add_assistant_response_to_state,
+)
 from multi_agents.graph import create_graph
 from configs import *
 
@@ -32,13 +39,24 @@ job_type_cache = ""  # ['fulltime' 'parttime']
 
 app = FastAPI()
 
+# 로거 설정
+logger = logging.getLogger("jobpt")
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _formatter = logging.Formatter("[%(levelname)s] %(asctime)s %(message)s")
+    _handler.setFormatter(_formatter)
+    logger.addHandler(_handler)
+logger.setLevel(logging.INFO)
+
 # CORS 설정
+raw = os.environ.get("FRONTEND_CORS_ORIGIN", "")
+origins = [o.strip() for o in raw.split(",") if o.strip()] or ["http://localhost:3000"]  # 안전 기본값
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 개발 단계에선 모두 허용
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # 통합된 파일 저장소 설정 (configs에서 가져오기)
@@ -59,15 +77,16 @@ class MatchRequest(BaseModel):
     resume_path: str
 
 
-
-@app.post("/upload")
-async def upload_resume(file: UploadFile = File(...), location: str = Form(""), remote: str = Form("any"), job_type: str = Form("any")):
+@app.post("/api/upload")
+async def upload_resume(
+    file: UploadFile = File(...), location: str = Form(""), remote: str = Form("any"), job_type: str = Form("any")
+):
     """
     사용자의 이력서를 업로드하고, 이력서의 정보를 캐시{file_path}에 저장합니다.
 
     Args:
         file: 사용자가 업로드한 이력서 파일(PDF)
-        
+
         아래 3개의 인자는 검색시 메타데이터 필터링을 위해 사용됨(e.g. Location=USA)
         location: 근무 희망 위치 ['USA', 'Germany', 'UK']
         remote: 원격 근무 여부 ['True', 'False']
@@ -94,46 +113,59 @@ async def upload_resume(file: UploadFile = File(...), location: str = Form(""), 
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
-
-@app.post("/matching")
+@app.post("/api/matching")
 async def run(data: MatchRequest):
     """
     사용자의 이력서를 기반으로 벡터 DB에서 채용공고를 검색하고
     LLM을 이용해 CV, JD 리뷰를 수행하는 함수
-    Args:
-        data: MatchRequest
-    Returns:
-        JSONResponse: 
-            - JD: 첫 번째 문서(top-similarity)의 채용공고 전문
-            - JD_url: 채용공고 URL
-            - output: LLM을 통한 CV, JD 리뷰
-            - name: 회사 이름
     """
-    resume_path = data.resume_path
+    trace_id = str(uuid.uuid4())
+    logger.info(f"[{trace_id}] /matching start resume_path={data.resume_path}")
+    try:
+        resume_path = data.resume_path
+        output_folder = "data"
 
-    # PDF를 직접 파싱 (JPG 변환 없이)
-    resume = run_parser(resume_path)
-    resume_content_text = resume[0]  # 첫 번째 반환값이 텍스트
+        # PDF를 JPG로 변환 후 저장
+        image_paths = convert_pdf_to_jpg(resume_path, output_folder)
+        resume_content = []
+        # 이력서 각 페이지(이미지)별로 텍스트 변환(Upstage API)
+        for image_path in image_paths:
+            resume = run_parser(image_path)
+            resume_content.append(resume[0])
 
-    # 캐시 저장
-    resume_cache[resume_path] = resume_content_text
-    print(f"이력서 내용이 캐시에 저장됨: {resume_path}")
+        resume_content_text = "".join(resume_content)
+        logger.info(f"[{trace_id}] parsed_pages={len(resume_content)} total_chars={len(resume_content_text)}")
 
-    # 채용공고 추천
-    res, job_description, job_url, c_name = await matching(resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache)
+        # 채용공고 추천
+        res, job_description, job_url, c_name = await matching(resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache)
 
-    analysis_cache[resume_path] = {"output": res, "JD": job_description, "JD_url": job_url, "name": c_name}
-    print(f"분석 결과가 캐시에 저장됨: {resume_path}")
+        analysis_cache[resume_path] = {
+            "output": res,
+            "JD": job_description,
+            "JD_url": job_url,
+            "name": c_name,
+        }
+        logger.info(f"[{trace_id}] matching success company={c_name} url={job_url}")
 
-    return {"JD": job_description, "JD_url": job_url, "output": res, "name": c_name}
+        return {"JD": job_description, "JD_url": job_url, "output": res, "name": c_name, "trace_id": trace_id}
+    except Exception as e:
+        print(f"matching 에러 발생 {e}")
+        logger.exception(f"[{trace_id}] /matching failed: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "matching_failed",
+                "message": str(e),
+                "trace_id": trace_id,
+            },
+        )
 
 
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답
 # langfuse_handler = CallbackHandler(public_key=LANGFUSE_PUBLIC_KEY, secret_key=LANGFUSE_SECRET_KEY, host="https://cloud.langfuse.com")
 
 
-@app.post("/chat")
+@app.post("/api/chat")
 async def chat(request: Request):
     data = await request.json()
     session_id = data["session_id"]
@@ -141,13 +173,23 @@ async def chat(request: Request):
     company_name = data.get("company", "")
     resume_path = data.get("resume_path", "")
 
+    resume_content_text = ""
+    if resume_path not in resume_cache:
+        output_folder = "data"
+        image_paths = convert_pdf_to_jpg(resume_path, output_folder)
+        resume_content = []
+        for image_path in image_paths:
+            resume = run_parser(image_path)
+            resume_content.append(resume[0])
+        resume_content_text = "".join(resume_content)
+        resume_cache[resume_path] = resume_content_text
     if resume_cache[resume_path] is None:
         # PDF를 직접 파싱 (JPG 변환 없이)
         resume = run_parser(resume_path)
         resume_content_text = resume[0]  # 첫 번째 반환값이 텍스트
     else:
         resume_content_text = resume_cache[resume_path]
-    
+
     print(resume_content_text)
     state = get_session_state(
         session_id,
@@ -167,7 +209,7 @@ async def chat(request: Request):
     return {"response": answer}
 
 
-@app.post("/mock_chat")
+@app.post("/api/mock_chat")
 async def chat(request_data: dict = Body(...)):
     message = request_data.get("message", "")
     resume_path = request_data.get("resume_path", "")
@@ -246,7 +288,7 @@ class EvaluateRequest(BaseModel):
     model: int = 1
 
 
-@app.post("/evaluate")
+@app.post("/api/evaluate")
 async def evaluate(request: EvaluateRequest):
     try:
         analyzer = ATSAnalyzer(request.resume_path, request.jd_text, model=request.model)
