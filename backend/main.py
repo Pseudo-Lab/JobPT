@@ -6,7 +6,7 @@ import shutil
 import uuid
 import os
 
-from parser import run_parser, convert_pdf_to_jpg
+from parser import run_parser
 from get_similarity.main import matching
 from openai import OpenAI
 import uvicorn
@@ -59,9 +59,17 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],
 )
 
-# 업로드 디렉토리 설정
-UPLOAD_DIR = "uploaded_resumes"
+# 통합된 파일 저장소 설정 (configs에서 가져오기)
+from configs import UPLOAD_PATH, PROCESSED_PATH, CACHE_PATH
+
+UPLOAD_DIR = os.path.join(UPLOAD_PATH, "resumes")
+PROCESSED_DIR = PROCESSED_PATH
+CACHE_DIR = CACHE_PATH
+
+# 디렉토리 생성
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(PROCESSED_DIR, exist_ok=True)
+os.makedirs(CACHE_DIR, exist_ok=True)
 
 
 # /matching - 이력서 분석 및 JD 매칭
@@ -175,6 +183,10 @@ async def chat(request: Request):
             resume_content.append(resume[0])
         resume_content_text = "".join(resume_content)
         resume_cache[resume_path] = resume_content_text
+    if resume_cache[resume_path] is None:
+        # PDF를 직접 파싱 (JPG 변환 없이)
+        resume = run_parser(resume_path)
+        resume_content_text = resume[0]  # 첫 번째 반환값이 텍스트
     else:
         resume_content_text = resume_cache[resume_path]
 

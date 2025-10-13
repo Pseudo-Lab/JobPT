@@ -16,8 +16,11 @@ PROMPT_YAML = "get_similarity/data/prompt.yaml"
 ### General api key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 UPSTAGE_API_KEY=os.getenv("UPSTAGE_API_KEY", "")
-JD_MATCH_PROMPT = "prompt_template_korean"
+JD_MATCH_PROMPT = "prompt_template_korean_2"
 JD_PATH = "./data/jd_origin"
+UPLOAD_PATH = "./data/uploads"
+PROCESSED_PATH = "./data/processed"
+CACHE_PATH = "./data/cache"
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY", "")
 LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY", "")
