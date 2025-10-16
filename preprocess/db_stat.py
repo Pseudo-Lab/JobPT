@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import JSONResponse
 import uvicorn
 import os
 from dotenv import load_dotenv
@@ -10,6 +11,8 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
 from tqdm import tqdm
 
+from utils import preprocess
+
 load_dotenv(dotenv_path="../backend/.env")
 
 pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
@@ -18,7 +21,10 @@ collection = "korea-jd-test"
 
 
 app = FastAPI()
-async def check_index(collection: str="korea-jd-test"):
+def check_index(collection: str="korea-jd-test"):
+    """
+    인덱스 존재 여부를 조회합니다.
+    """
     index_name = collection
     if pc.has_index(index_name):
         return {"message": True}
@@ -38,7 +44,7 @@ async def stat(collection: str="korea-jd-test"):
         [vector_count]에 표기되는 백터 개수는 데이터 개수가 아니라 청킹이 완료된 백터 개수입니다.
     """
     index_name = collection
-    result = await check_index(collection)
+    result = check_index(collection)
     if result["message"]:
         index = pc.Index(index_name)
         stat = index.describe_index_stats()
@@ -48,46 +54,27 @@ async def stat(collection: str="korea-jd-test"):
         return {"message": "인덱스가 존재하지 않습니다"}
 
 
-@app.get("/update_index")
-async def update_index(collection: str="korea-jd-test", data_path: str="data/data.csv"):
-    index_name = collection
-    result = await check_index(collection)
-    if result["message"]:
+@app.post("/update_index")
+async def update_index(file: UploadFile, collection: str="korea-jd-test"):
+    if not file.filename.endswith('.csv'):
+        # CSV 파일이 아닌 경우 오류 처리
+        return JSONResponse(
+            status_code=400, 
+            content={"message": "CSV 파일만 업로드할 수 있습니다."}
+        )
+    try: 
+        uploaded_file = file.file
+        df = pd.read_csv(uploaded_file)
+        total_chunks = preprocess(df)
+
+        index_name = collection
+        result = check_index(collection)
         index = pc.Index(index_name)
-        df = pd.read_csv(data_path)
-        sentences = list(df["sentence"])
-        ### 청킹엔 특정한 처리가 들어가진 않았음, 추후 추가된다면 모듈화 예정
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=100, separators=["<chunk_sep>","\r\n","\n\n", "\n", "\t", " ", ""])
-        total_chunks = []
-
-        ### 구분자 기반 메타데이터 파싱
-        for i, desciption in enumerate(sentences):
-            parts = df.iloc[i]["company_name"].split(" ")
-            parts1 = parts[0].split("∙")
-            parts2 = parts[1].split("∙")
-            if len(parts) > 2:
-                parts3 = parts[2].split("∙")[0]
-            else:
-                parts3 = "0년"
-
-            company = parts1[0]
-            location = parts2[0]
-            experience = parts2[1]
-            requirement = parts3
-
-            meta_data = [{"description":df.iloc[i]["description"],
-            "job_url": df.iloc[i]["url"],
-            "company": company,
-            "location": location,
-            "experience": experience,
-            "requirement": requirement}]
-            chunks = text_splitter.create_documents([desciption], meta_data)
-            total_chunks.extend(chunks)
 
         emb_model = OpenAIEmbeddings()
         vector_store = PineconeVectorStore(index=index, embedding=emb_model)
 
-        ### 데이터가 남아있을때 데이터 제거(소량일때만 사용 예정), 추후 모듈화
+        ### 데이터가 남아있을때 데이터 제거(소량일때만 사용), 추후 모듈화
         if len(index.describe_index_stats()["namespaces"]) > 0:
             index.delete(delete_all=True, namespace="")
 
@@ -98,14 +85,16 @@ async def update_index(collection: str="korea-jd-test", data_path: str="data/dat
             end = start + batch_size
             batch_docs = total_chunks[start:end]
             vector_store.add_documents(documents=batch_docs)
+        return JSONResponse(
+            status_code=200, 
+            content={"message": "인덱스가 업데이트되었습니다"}
+        )
 
-
-        return {"message": "인덱스가 업데이트되었습니다"}
-    else:
-        return {"message": "인덱스가 존재하지 않습니다"}
-
-
-
+    except Exception as e:
+        return JSONResponse(
+            status_code=500, 
+            content={"message": str(e)}
+        )
 
 
 if __name__ == "__main__":
