@@ -23,8 +23,6 @@ from multi_agents.states.states import (
 from multi_agents.graph import create_graph
 from configs import *
 
-from configs import LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY
-from langfuse import Langfuse
 from langfuse.langchain import CallbackHandler
 
 from ATS_agent.ats_analyzer_improved import ATSAnalyzer
@@ -150,9 +148,6 @@ async def run(data: MatchRequest):
 
 
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답
-# langfuse_handler = CallbackHandler(
-#     publicKey=LANGFUSE_PUBLIC_KEY, secretKey=LANGFUSE_SECRET_KEY, host="https://cloud.langfuse.com"
-# )
 langfuse_handler = CallbackHandler()
 
 
