@@ -23,8 +23,9 @@ from multi_agents.states.states import (
 from multi_agents.graph import create_graph
 from configs import *
 
-# from langfuse import Langfuse
-# from langfuse.callback import CallbackHandler
+from configs import LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY
+from langfuse import Langfuse
+from langfuse.langchain import CallbackHandler
 
 from ATS_agent.ats_analyzer_improved import ATSAnalyzer
 
@@ -121,48 +122,38 @@ async def run(data: MatchRequest):
     """
     trace_id = str(uuid.uuid4())
     logger.info(f"[{trace_id}] /matching start resume_path={data.resume_path}")
-    try:
-        resume_path = data.resume_path
-        output_folder = "data"
+    resume_path = data.resume_path
 
-        # PDF를 JPG로 변환 후 저장
-        image_paths = convert_pdf_to_jpg(resume_path, output_folder)
-        resume_content = []
-        # 이력서 각 페이지(이미지)별로 텍스트 변환(Upstage API)
-        for image_path in image_paths:
-            resume = run_parser(image_path)
-            resume_content.append(resume[0])
+    # PDF를 JPG로 변환 후 저장
+    # PDF를 직접 파싱 (JPG 변환 없이)
+    resume = run_parser(resume_path)
+    resume_content_text = resume[0]  # 첫 번째 반환값이 텍스트
 
-        resume_content_text = "".join(resume_content)
-        logger.info(f"[{trace_id}] parsed_pages={len(resume_content)} total_chars={len(resume_content_text)}")
+    # 캐시 저장
+    resume_cache[resume_path] = resume_content_text
+    logger.info(f"[{trace_id}] parsed_pages={len(resume_content_text)} total_chars={len(resume_content_text)}")
 
-        # 채용공고 추천
-        res, job_description, job_url, c_name = await matching(resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache)
+    # 채용공고 추천
+    res, job_description, job_url, c_name = await matching(
+        resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache
+    )
 
-        analysis_cache[resume_path] = {
-            "output": res,
-            "JD": job_description,
-            "JD_url": job_url,
-            "name": c_name,
-        }
-        logger.info(f"[{trace_id}] matching success company={c_name} url={job_url}")
+    analysis_cache[resume_path] = {
+        "output": res,
+        "JD": job_description,
+        "JD_url": job_url,
+        "name": c_name,
+    }
+    logger.info(f"[{trace_id}] matching success company={c_name} url={job_url}")
 
-        return {"JD": job_description, "JD_url": job_url, "output": res, "name": c_name, "trace_id": trace_id}
-    except Exception as e:
-        print(f"matching 에러 발생 {e}")
-        logger.exception(f"[{trace_id}] /matching failed: {e}")
-        return JSONResponse(
-            status_code=500,
-            content={
-                "error": "matching_failed",
-                "message": str(e),
-                "trace_id": trace_id,
-            },
-        )
+    return {"JD": job_description, "JD_url": job_url, "output": res, "name": c_name, "trace_id": trace_id}
 
 
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답
-# langfuse_handler = CallbackHandler(public_key=LANGFUSE_PUBLIC_KEY, secret_key=LANGFUSE_SECRET_KEY, host="https://cloud.langfuse.com")
+# langfuse_handler = CallbackHandler(
+#     publicKey=LANGFUSE_PUBLIC_KEY, secretKey=LANGFUSE_SECRET_KEY, host="https://cloud.langfuse.com"
+# )
+langfuse_handler = CallbackHandler()
 
 
 @app.post("/api/chat")
@@ -173,16 +164,6 @@ async def chat(request: Request):
     company_name = data.get("company", "")
     resume_path = data.get("resume_path", "")
 
-    resume_content_text = ""
-    if resume_path not in resume_cache:
-        output_folder = "data"
-        image_paths = convert_pdf_to_jpg(resume_path, output_folder)
-        resume_content = []
-        for image_path in image_paths:
-            resume = run_parser(image_path)
-            resume_content.append(resume[0])
-        resume_content_text = "".join(resume_content)
-        resume_cache[resume_path] = resume_content_text
     if resume_cache[resume_path] is None:
         # PDF를 직접 파싱 (JPG 변환 없이)
         resume = run_parser(resume_path)
@@ -203,7 +184,7 @@ async def chat(request: Request):
     add_user_input_to_state(state, user_input)
     graph, state = await create_graph(state)
 
-    result = await graph.ainvoke(state)
+    result = await graph.ainvoke(state, config={"callbacks": [langfuse_handler]})
     answer = result["messages"][-1].content
     add_assistant_response_to_state(state, answer)
     return {"response": answer}
