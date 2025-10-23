@@ -139,9 +139,8 @@ send_post_request("data/joannadrummond-cv.pdf")
 |--------|------|------|
 | `main` | 운영(Production) | 실제 배포된 안정 버전 |
 | `dev` | 개발(Development) | 기능 통합 및 테스트 |
-| `release/x.y.z` | 배포 준비(Release Candidate) | QA 및 안정화 단계 |
-| `feature/*` | 기능 개발(Feature) | 새 기능 단위 개발 |
+| `feat/*` | 기능 개발(Feature) | 새 기능 단위 개발 |
 | `hotfix/*` | 긴급 수정(Hotfix) | 운영 중 빠른 버그 수정 |
 
-모든 코드는 Pull Request(PR)를 통해서만 병합되며, 직접 push는 허용되지 않습니다.
+모든 코드 변경은 Pull Request(PR)를 통해 제출해야 합니다. `main`과 `dev` 브랜치는 보호되어 있어 직접 Push가 불가능합니다.
 > 자세한 개발 및 브랜치 운영 가이드는 [CONTRIBUTING.md](./CONTRIBUTING.md)에서 확인할 수 있습니다.
