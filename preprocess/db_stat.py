@@ -10,11 +10,15 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
 from tqdm import tqdm
+import yaml
 
-from utils import preprocess
+from utils import *
 
 load_dotenv(dotenv_path="../backend/.env")
+prompts = yaml.safe_load(open("prompts.yaml", "r", encoding="utf-8"))
 
+### Summarizer model
+model = Upstage(api_key=os.getenv("UPSTAGE_API_KEY"))
 pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 collection = "korea-jd-test"
 
@@ -54,6 +58,19 @@ async def stat(collection: str="korea-jd-test"):
         return {"message": "인덱스가 존재하지 않습니다"}
 
 
+@app.get("/check_unique_columns")
+async def check_unique_column(file: UploadFile,):
+    """
+    데이터프레임의 고유 컬럼을 조회합니다.
+    ### 추후 구현 예정
+    """
+    uploaded_file = file.file
+    df = pd.read_csv(uploaded_file)
+
+
+
+
+
 @app.post("/update_index")
 async def update_index(file: UploadFile, collection: str="korea-jd-test"):
     if not file.filename.endswith('.csv'):
@@ -63,12 +80,24 @@ async def update_index(file: UploadFile, collection: str="korea-jd-test"):
             content={"message": "CSV 파일만 업로드할 수 있습니다."}
         )
     try: 
-        uploaded_file = file.file
-        df = pd.read_csv(uploaded_file)
-        total_chunks = preprocess(df)
-
+        ### 요약전 인덱스 부터 chk
         index_name = collection
         result = check_index(collection)
+
+        uploaded_file = file.file
+        df = pd.read_csv(uploaded_file)
+        ### request를 무조건 list(dict{role, content})로 전달해야함
+        summaries = []
+        for i in tqdm(range(len(df)), desc="JD 요약 중"):
+            request = [
+                {"role": "system", "content": prompts["prompts_ver1"]["system"]},
+                {"role": "user", "content": prompts["prompts_ver1"]["user"].format(jd=df.iloc[i]["description"])}
+            ]
+            summaries.append(model.summary(request))
+        print(summaries[:10])
+        df["summary"] = summaries
+        total_chunks = preprocess(df)
+
         index = pc.Index(index_name)
 
         emb_model = OpenAIEmbeddings()
