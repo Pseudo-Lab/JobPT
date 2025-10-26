@@ -11,7 +11,7 @@ from langchain_openai import OpenAIEmbeddings
 from tqdm import tqdm
 import argparse
 ### 전역변수 가져와서 넣기
-table = pd.read_csv("/home/yhkim/code/JobPT/backend/get_similarity/data/korean_jd_105.csv")
+# table = pd.read_csv("/home/yhkim/code/JobPT/backend/get_similarity/data/korean_jd_105.csv")
 
 
 
