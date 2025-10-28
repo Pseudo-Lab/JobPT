@@ -7,7 +7,6 @@ services:
       dockerfile: Dockerfile
       labels:
         - "org.pseudolab.project=jobpt"
-    container_name: jobpt-frontend
     restart: unless-stopped
     env_file:
       - .env
@@ -44,7 +43,6 @@ services:
       dockerfile: Dockerfile
       labels:
         - "org.pseudolab.project=jobpt"
-    container_name: jobpt-backend
     restart: unless-stopped
     env_file:
       - .env
