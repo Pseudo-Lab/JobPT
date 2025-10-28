@@ -15,7 +15,7 @@ services:
       NODE_ENV: ${ENVIRONMENT:-development}
       NEXT_PUBLIC_API_URL: "https://${APP_HOST}"
     volumes:
-      - ./uploaded_resumes:/app/public/uploads
+      - jobpt_resumes:/app/public/uploads
     depends_on:
       - backend
     networks:
@@ -57,8 +57,8 @@ services:
       UPSTAGE_API_KEY: ${UPSTAGE_API_KEY:-}
       FRONTEND_CORS_ORIGIN: ${FRONTEND_CORS_ORIGIN:-http://localhost:3000}
     volumes:
-      - ./data:/app/data
-      - ./uploaded_resumes:/app/uploaded_resumes
+      - jobpt_data:/app/data
+      - jobpt_resumes:/app/uploaded_resumes
       - /tmp:/tmp
     networks:
       - traefik
@@ -96,3 +96,7 @@ networks:
     external: true
   internal:
     driver: bridge
+
+volumes:
+  jobpt_data:
+  jobpt_resumes:
