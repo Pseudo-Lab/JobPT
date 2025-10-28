@@ -42,7 +42,7 @@ jobs:
       - name: 🚀 Deploy to DEV
         run: |
           docker compose down --remove-orphans
-          docker compose -p ${{ github.ref_name }} up -d --build
+          docker compose -p deploy up -d --build
 
       - name: Cleanup old Docker images
         run: docker image prune -f
