@@ -10,11 +10,49 @@ on:
 
 jobs:
   # ========================================
-  # 🧪 test 배포 (deploy 브랜치)
+  # 🧪 Production 배포 (main 브랜치)
   # ========================================
-  deploy-test:
-    if: github.ref_name == 'ci/deploy-test'
-    name: 🧪 Deploy JobPT (Test / Deploy branch)
+  deploy-prod:
+    if: github.ref_name == 'main'
+    name: 🚀 Deploy JobPT (Production)
+    runs-on: oracle
+    environment: prod_deploy
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file for PROD
+        run: |
+          set -e
+          echo "APP_HOST=${{ vars.APP_HOST }}" > .env
+          echo "ENVIRONMENT=${{ vars.ENVIRONMENT }}" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          echo "UPSTAGE_API_KEY=${{ secrets.UPSTAGE_API_KEY }}" >> .env
+          echo "SMITHERY_API_KEY=${{ secrets.SMITHERY_API_KEY }}" >> .env
+          echo "PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}" >> .env
+          echo "TAVILY_API_KEY=${{ secrets.TAVILY_API_KEY }}" >> .env
+          echo "FRONTEND_CORS_ORIGIN=${{ vars.FRONTEND_CORS_ORIGIN }}" >> .env
+          echo "LANGFUSE_PUBLIC_KEY=${{ secrets.LANGFUSE_PUBLIC_KEY }}" >> .env
+          echo "LANGFUSE_SECRET_KEY=${{ secrets.LANGFUSE_SECRET_KEY }}" >> .env
+
+      - name: 🚀 Deploy to PROD
+        run: |
+          docker compose down --remove-orphans || true
+          docker compose -p ${{ github.ref_name }} up -d --build
+
+      - name: Cleanup old Docker images
+        run: docker image prune -f
+
+  # ========================================
+  # 🧪 Development 배포 (dev 브랜치)
+  # ========================================
+  deploy-dev:
+    if: github.ref_name == 'dev'
+    name: 🧪 Deploy JobPT (Development)
     runs-on: oracle
     environment: dev_deploy
 
@@ -28,8 +66,8 @@ jobs:
       - name: Create .env file for DEV
         run: |
           set -e
-          echo "APP_HOST=${{ vars.APP_HOST }}" >> .env
-          echo "ENVIRONMENT=development" >> .env
+          echo "APP_HOST=${{ vars.APP_HOST }}" > .env
+          echo "ENVIRONMENT=${{ vars.ENVIRONMENT }}" >> .env
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
           echo "UPSTAGE_API_KEY=${{ secrets.UPSTAGE_API_KEY }}" >> .env
           echo "SMITHERY_API_KEY=${{ secrets.SMITHERY_API_KEY }}" >> .env
@@ -41,8 +79,8 @@ jobs:
 
       - name: 🚀 Deploy to DEV
         run: |
-          docker compose down --remove-orphans
-          docker compose -p deploy up -d --build
+          docker compose down --remove-orphans || true
+          docker compose -p ${{ github.ref_name }} up -d --build
 
       - name: Cleanup old Docker images
         run: docker image prune -f
