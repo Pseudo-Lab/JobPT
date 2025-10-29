@@ -1,61 +1,100 @@
 version: "3.8"
 
 services:
-    backend:
-        build:
-            context: ./backend
-            dockerfile: Dockerfile
-        container_name: jobpt-backend
-        ports:
-            - "${BACKEND_PORT}:8000"
-        environment:
-            - OPENAI_API_KEY=${OPENAI_API_KEY}
-            - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
-            - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
-            - PINECONE_API_KEY=${PINECONE_API_KEY:-}
-            - UPSTAGE_API_KEY=${UPSTAGE_API_KEY:-}
-            - FRONTEND_CORS_ORIGIN=${FRONTEND_CORS_ORIGIN:-}
-        volumes:
-            - ./data:/app/data
-            - ./uploaded_resumes:/app/uploaded_resumes
-            - /tmp:/tmp
-        networks:
-            - jobpt-network
-        restart: unless-stopped
-        healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
-            interval: 30s
-            timeout: 10s
-            retries: 3
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      labels:
+        - "org.pseudolab.project=jobpt"
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: ${ENVIRONMENT:-development}
+      NEXT_PUBLIC_API_URL: "https://${APP_HOST}"
+    volumes:
+      - jobpt_resumes:/app/public/uploads
+    depends_on:
+      - backend
+    networks:
+      - traefik
+      - internal
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik
 
-    frontend:
-        build:
-            context: ./frontend
-            dockerfile: Dockerfile
-        container_name: jobpt-frontend
-        ports:
-            - "${FRONTEND_PORT}:3000"
-        environment:
-            - NODE_ENV=${NODE_ENV}
-            - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-        volumes:
-            # 백엔드 업로드 디렉토리를 프론트의 public/uploads로 마운트하여 3000/uploads 경로에서도 접근 가능
-            - ./uploaded_resumes:/app/public/uploads
-        depends_on:
-            - backend
-        networks:
-            - jobpt-network
-        restart: unless-stopped
-        healthcheck:
-            test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
-            interval: 30s
-            timeout: 10s
-            retries: 3
+      # --- Traefik Router (Frontend) ---
+      - traefik.http.routers.jobpt-web.rule=Host(`${APP_HOST}`)
+      - traefik.http.routers.jobpt-web.entrypoints=websecure
+      - traefik.http.routers.jobpt-web.tls=true
+      - traefik.http.routers.jobpt-web.tls.certresolver=le
+      - traefik.http.services.jobpt-web.loadbalancer.server.port=3000
+
+      # --- HTTP → HTTPS 리다이렉트 ---
+      - traefik.http.routers.jobpt-web-http.rule=Host(`${APP_HOST}`)
+      - traefik.http.routers.jobpt-web-http.entrypoints=web
+      - traefik.http.routers.jobpt-web-http.middlewares=redirect-to-https@file
+      - traefik.http.routers.jobpt-web-http.service=jobpt-web
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      labels:
+        - "org.pseudolab.project=jobpt"
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      PINECONE_API_KEY: ${PINECONE_API_KEY:-}
+      UPSTAGE_API_KEY: ${UPSTAGE_API_KEY:-}
+      FRONTEND_CORS_ORIGIN: ${FRONTEND_CORS_ORIGIN:-http://localhost:3000}
+    volumes:
+      - jobpt_data:/app/data
+      - jobpt_resumes:/app/uploaded_resumes
+      - /tmp:/tmp
+    networks:
+      - traefik
+      - internal
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+
+      # --- Traefik Router (Backend /api) ---
+      - traefik.http.routers.jobpt-api.rule=Host(`${APP_HOST}`) && PathPrefix(`/api`)
+      - traefik.http.routers.jobpt-api.entrypoints=websecure
+      - traefik.http.routers.jobpt-api.tls=true
+      - traefik.http.routers.jobpt-api.tls.certresolver=le
+      - traefik.http.services.jobpt-api.loadbalancer.server.port=8000
+
+      # FastAPI Docs router
+      - traefik.http.routers.jobpt-api-docs.rule=Host(`${APP_HOST}`) && (PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`))
+      - traefik.http.routers.jobpt-api-docs.entrypoints=websecure
+      - traefik.http.routers.jobpt-api-docs.tls=true
+      - traefik.http.routers.jobpt-api-docs.tls.certresolver=le
+      - traefik.http.routers.jobpt-api-docs.service=jobpt-api
+
+      # /api prefix 제거 미들웨어 연결
+      - traefik.http.middlewares.jobpt-api-stripprefix.stripprefix.prefixes=/api
+      - traefik.http.routers.jobpt-api.middlewares=jobpt-api-stripprefix
+
+      # HTTP → HTTPS 리다이렉트 (Backend)
+      - traefik.http.routers.jobpt-api-http.rule=Host(`${APP_HOST}`) && PathPrefix(`/api`)
+      - traefik.http.routers.jobpt-api-http.entrypoints=web
+      - traefik.http.routers.jobpt-api-http.middlewares=redirect-to-https@file
+      - traefik.http.routers.jobpt-api-http.service=jobpt-api
 
 networks:
-    jobpt-network:
-        driver: bridge
+  traefik:
+    external: true
+  internal:
+    driver: bridge
 
 volumes:
-    jobpt-data:
-        driver: local
+  jobpt_data:
+  jobpt_resumes:
