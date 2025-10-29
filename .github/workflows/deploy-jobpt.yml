@@ -41,7 +41,6 @@ jobs:
 
       - name: 🚀 Deploy to PROD
         run: |
-          docker compose down --remove-orphans || true
           docker compose -p ${{ github.ref_name }} up -d --build
 
       - name: Cleanup old Docker images
@@ -79,7 +78,7 @@ jobs:
 
       - name: 🚀 Deploy to DEV
         run: |
-          docker compose down --remove-orphans || true
+          docker compose -p ${{ github.ref_name }} down --remove-orphans || true
           docker compose -p ${{ github.ref_name }} up -d --build
 
       - name: Cleanup old Docker images
