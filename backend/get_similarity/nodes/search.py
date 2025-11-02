@@ -82,3 +82,38 @@ async def search_jd(retriever, lexical_retriever, resume):
 
 
     return top_job_description, top_job_url, top_company_name
+
+
+async def search_jd_summary(retriever, lexical_retriever, resume):
+    print("\n=== Summary 검색 함수 시작 ===")
+    print("입력된 resume:", resume[:100], "...")  # 긴 텍스트는 일부만 출력
+    job_descriptions = retriever.invoke(resume)
+    if lexical_retriever:
+        print("Lexical Retriever 실행")
+        lexical_job_descriptions = lexical_retriever.invoke(resume)
+        sem_rank = make_rank(job_descriptions, k=10)
+        lex_rank = make_rank(lexical_job_descriptions, k=10)
+        job_descriptions = search_dict[rrf([sem_rank, lex_rank], k=1.2)[0][0]]
+    else:
+        print("Lexical Retriever 없음")
+
+    if not job_descriptions:
+        print("검색된 문서가 없습니다!")
+        return "No matches found", "", ""
+
+        # Metadata 접근(4개의 채용공고 요약 포함)
+    try:
+        top_job_summaries = [j.metadata["summary"] for j in job_descriptions[:4]]
+        top_job_urls = [j.metadata["job_url"] for j in job_descriptions[:4]]
+        top_company_names = [j.metadata["company"] for j in job_descriptions[:4]]
+        for i in range(4):
+            print("==================================================")
+            print(f"\n{i+1}번째 문서 전문 및 메타데이터 확인:")
+            print("job_url:", top_job_urls[i])
+            print("company:", top_company_names[i])
+    except Exception as e:
+        print("메타데이터 접근 중 에러:", str(e))
+        return "Error accessing metadata","", ""
+
+    return top_job_summaries, top_job_urls, top_company_names
+    

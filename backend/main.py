@@ -145,19 +145,20 @@ async def run(data: MatchRequest):
     logger.info(f"[{trace_id}] parsed_pages={len(resume_content_text)} total_chars={len(resume_content_text)}")
 
     # 채용공고 추천
-    res, job_description, job_url, c_name = await matching(
-        resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache
-    )
+    # res, job_description, job_url, c_name = await matching(
+    #     resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache
+    # )
+
+    jd_summaries, jd_urls, c_names = await matching(resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache)
 
     analysis_cache[resume_path] = {
-        "output": res,
-        "JD": job_description,
-        "JD_url": job_url,
-        "name": c_name,
+        "output": jd_summaries,
+        "JD": jd_urls,
+        "name": c_names,
     }
-    logger.info(f"[{trace_id}] matching success company={c_name} url={job_url}")
+    logger.info(f"[{trace_id}] matching success company={c_names} url={jd_urls}")
 
-    return {"JD": job_description, "JD_url": job_url, "output": res, "name": c_name, "trace_id": trace_id}
+    return {"JD": jd_summaries, "JD_url": jd_urls, "name": c_names, "trace_id": trace_id}
 
 
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답
@@ -296,4 +297,4 @@ if __name__ == "__main__":
     ### 한국어 BM25 retrieval 추가시 활용
     # nltk.download("punkt")
     # nltk.download("punkt_tab")
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=7000)

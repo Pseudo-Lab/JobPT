@@ -1,5 +1,5 @@
 from get_similarity.nodes.retrieval import get_retriever
-from get_similarity.nodes.search import search_jd
+from get_similarity.nodes.search import search_jd, search_jd_summary
 from get_similarity.nodes.generate import generation
 from langchain_openai import OpenAIEmbeddings
 from get_similarity.nodes.db_load import get_db
@@ -42,7 +42,11 @@ async def matching(resume, location, remote, jobtype):
     lexical_retriever = None
 
     retriever = get_retriever(db, emb_model, filter=search_filter)
-    jd, jd_url, c_name = await search_jd(retriever, lexical_retriever, resume)
-    answer = await generation(resume, jd)
 
-    return answer, jd, jd_url, c_name
+    # ## 기존 1개 결과 Retrieval, Generation 방식
+    # jd, jd_url, c_name = await search_jd(retriever, lexical_retriever, resume)
+    # answer = await generation(resume, jd)
+
+
+    jd_summaries, jd_urls, c_names = await search_jd_summary(retriever, lexical_retriever, resume)
+    return jd_summaries, jd_urls, c_names

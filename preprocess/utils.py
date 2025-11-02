@@ -10,6 +10,8 @@ from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
 from tqdm import tqdm
 import argparse
+from openai import OpenAI # openai==1.52.2
+
 ### 전역변수 가져와서 넣기
 # table = pd.read_csv("/home/yhkim/code/JobPT/backend/get_similarity/data/korean_jd_105.csv")
 
@@ -36,12 +38,11 @@ def make_chunks(sentences, table):
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=100, separators=["<chunk_sep>","\r\n","\n\n", "\n", "\t", " ", ""])
     total_chunks = []
     for i, desciption in enumerate(sentences):
-        meta_data = [{"description":table.iloc[i]["description"],
-        "job_url": table.iloc[i]["url"],
+        meta_data = [{"job_url": table.iloc[i]["url"],
         "company": table.iloc[i]["company_name"],
         "location": table.iloc[i]["location"],
         "experience_requirement": table.iloc[i]["experience_requirement"],
-        
+        "summary": table.iloc[i]["summary"]
         }]
         chunks = text_splitter.create_documents([desciption], meta_data)
 
@@ -65,3 +66,25 @@ def preprocess(table):
     print(f"청크 개수: {len(total_chunks)}")
 
     return total_chunks
+
+
+
+
+class Upstage:
+    def __init__(self, api_key: str):
+        self.client = OpenAI(
+            api_key=api_key,
+            base_url="https://api.upstage.ai/v1"
+        )
+
+    def summary(self, messages: list[dict]):
+        response = self.client.chat.completions.create(
+            model="solar-pro2",
+            messages=messages,
+            max_tokens=2048,
+            temperature=0.3,
+            frequency_penalty=0.1,
+            top_p=0.9
+
+        )
+        return response.choices[0].message.content
