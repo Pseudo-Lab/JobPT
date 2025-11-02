@@ -99,7 +99,7 @@ async def search_jd_summary(retriever, lexical_retriever, resume):
 
     if not job_descriptions:
         print("검색된 문서가 없습니다!")
-        return "No matches found", "", "", ""
+        return "No matches found", "", ""
 
         # Metadata 접근(4개의 채용공고 요약 포함)
     try:

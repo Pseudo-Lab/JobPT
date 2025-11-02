@@ -145,7 +145,7 @@ async def run(data: MatchRequest):
     }
     logger.info(f"[{trace_id}] matching success company={c_names} url={jd_urls}")
 
-    return {"JD": jd_summaries, "JD_url": jd_urls, "output": jd_summaries, "name": c_names, "trace_id": trace_id}
+    return {"JD": jd_summaries, "JD_url": jd_urls, "name": c_names, "trace_id": trace_id}
 
 
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답
