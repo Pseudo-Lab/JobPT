@@ -1,12 +1,12 @@
 from typing import cast
 
 from langgraph.prebuilt import create_react_agent
-from langchain_openai import ChatOpenAI
+from langchain_upstage import ChatUpstage
 from langchain_core.messages import AIMessage, SystemMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from multi_agents.states.states import State
 from langchain_core.tools import tool
-from configs import AGENT_MODEL  # 필요한 설정만 import
+from configs import AGENT_MODEL, UPSTAGE_API_KEY  # 필요한 설정만 import
 
 
 @tool
@@ -66,7 +66,12 @@ async def suggest_agent(state: State):
 [Selected Resume Section to Improve]  
 {state.user_resume}  
 """
-    model = ChatOpenAI(model=AGENT_MODEL, temperature=0)
+    # Upstage API 사용 (solar-pro2)
+    model = ChatUpstage(
+        model=AGENT_MODEL, 
+        temperature=0,
+        api_key=UPSTAGE_API_KEY
+    )
 
     client = MultiServerMCPClient()
     tools = await client.get_tools()

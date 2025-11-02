@@ -46,7 +46,7 @@ export default function EvaluatePage() {
       clearInterval(interval);
       return;
     }
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/evaluate`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/evaluate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ resume_path: resumePath, jd_text: jdText, model: 1 })

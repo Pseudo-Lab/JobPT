@@ -50,5 +50,5 @@ EXPOSE 8000
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# 서버 실행
+# 서버 실행 (docker-compose에서 command로 override 가능)
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

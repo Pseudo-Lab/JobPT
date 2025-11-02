@@ -1,6 +1,6 @@
 import asyncio
 from langgraph.prebuilt import create_react_agent
-from langchain_openai import ChatOpenAI
+from langchain_upstage import ChatUpstage
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_core.messages import AIMessage, SystemMessage
 from multi_agents.states.states import State
@@ -10,7 +10,12 @@ from configs import *
 
 async def summary_agent(state: State) -> Dict[str, List[AIMessage]]:
 
-    model = ChatOpenAI(model=AGENT_MODEL, temperature=0, api_key=OPENAI_API_KEY)
+    # Upstage API 사용 (solar-pro2)
+    model = ChatUpstage(
+        model=AGENT_MODEL, 
+        temperature=0, 
+        api_key=UPSTAGE_API_KEY
+    )
 
     # Option 1 from error message: client = MultiServerMCPClient(...)
     try:

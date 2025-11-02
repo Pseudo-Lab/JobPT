@@ -8,7 +8,8 @@ import os
 
 from parser import run_parser
 from get_similarity.main import matching
-from openai import OpenAI
+from langchain_upstage import ChatUpstage
+from langchain_core.messages import HumanMessage, SystemMessage
 import uvicorn
 import nltk
 import logging
@@ -238,7 +239,15 @@ async def chat(request_data: dict = Body(...)):
     """
 
     try:
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        # Upstage ChatUpstage 사용 (OpenAI 대신)
+        from configs import UPSTAGE_API_KEY
+        chat_model = ChatUpstage(
+            model="solar-pro2",
+            api_key=UPSTAGE_API_KEY,
+            temperature=0.7,
+            max_tokens=800
+        )
+        
         # Build a detailed, professional system prompt in English, including user preferences
         preference_info = []
         if request_data.get("location"):
@@ -258,15 +267,14 @@ async def chat(request_data: dict = Body(...)):
             f"{preference_text}"
         )
 
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
-            max_tokens=800,
-            temperature=0.7,
-        )
-        return {"response": response.choices[0].message.content.strip()}
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=prompt)
+        ]
+        response = chat_model.invoke(messages)
+        return {"response": response.content.strip()}
     except Exception as e:
-        print("OpenAI API 호출 오류:", e)
+        print("Upstage API 호출 오류:", e)
         return {"response": f"AI 응답 생성에 실패했습니다. 오류: {str(e)}"}
 
 

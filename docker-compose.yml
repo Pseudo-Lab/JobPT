@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   frontend:
     build:
@@ -12,30 +10,19 @@ services:
       - .env
     environment:
       NODE_ENV: ${ENVIRONMENT:-development}
-      NEXT_PUBLIC_API_URL: "https://${APP_HOST}"
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
     volumes:
       - jobpt_resumes:/app/public/uploads
+      # 개발 모드: 소스 코드 실시간 반영
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
     depends_on:
       - backend
     networks:
-      - traefik
       - internal
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=traefik
-
-      # --- Traefik Router (Frontend) ---
-      - traefik.http.routers.jobpt-web.rule=Host(`${APP_HOST}`)
-      - traefik.http.routers.jobpt-web.entrypoints=websecure
-      - traefik.http.routers.jobpt-web.tls=true
-      - traefik.http.routers.jobpt-web.tls.certresolver=le
-      - traefik.http.services.jobpt-web.loadbalancer.server.port=3000
-
-      # --- HTTP → HTTPS 리다이렉트 ---
-      - traefik.http.routers.jobpt-web-http.rule=Host(`${APP_HOST}`)
-      - traefik.http.routers.jobpt-web-http.entrypoints=web
-      - traefik.http.routers.jobpt-web-http.middlewares=redirect-to-https@file
-      - traefik.http.routers.jobpt-web-http.service=jobpt-web
 
   backend:
     build:
@@ -54,44 +41,20 @@ services:
       PINECONE_API_KEY: ${PINECONE_API_KEY:-}
       UPSTAGE_API_KEY: ${UPSTAGE_API_KEY:-}
       FRONTEND_CORS_ORIGIN: ${FRONTEND_CORS_ORIGIN:-http://localhost:3000}
+    ports:
+      - "8000:8000"
     volumes:
       - jobpt_data:/app/data
       - jobpt_resumes:/app/uploaded_resumes
       - /tmp:/tmp
+      # 개발 모드: 소스 코드 실시간 반영
+      - ./backend:/app
+    # 개발 모드: uvicorn 자동 리로드 활성화
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     networks:
-      - traefik
       - internal
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=traefik
-
-      # --- Traefik Router (Backend /api) ---
-      - traefik.http.routers.jobpt-api.rule=Host(`${APP_HOST}`) && PathPrefix(`/api`)
-      - traefik.http.routers.jobpt-api.entrypoints=websecure
-      - traefik.http.routers.jobpt-api.tls=true
-      - traefik.http.routers.jobpt-api.tls.certresolver=le
-      - traefik.http.services.jobpt-api.loadbalancer.server.port=8000
-
-      # FastAPI Docs router
-      - traefik.http.routers.jobpt-api-docs.rule=Host(`${APP_HOST}`) && (PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`))
-      - traefik.http.routers.jobpt-api-docs.entrypoints=websecure
-      - traefik.http.routers.jobpt-api-docs.tls=true
-      - traefik.http.routers.jobpt-api-docs.tls.certresolver=le
-      - traefik.http.routers.jobpt-api-docs.service=jobpt-api
-
-      # /api prefix 제거 미들웨어 연결
-      - traefik.http.middlewares.jobpt-api-stripprefix.stripprefix.prefixes=/api
-      - traefik.http.routers.jobpt-api.middlewares=jobpt-api-stripprefix
-
-      # HTTP → HTTPS 리다이렉트 (Backend)
-      - traefik.http.routers.jobpt-api-http.rule=Host(`${APP_HOST}`) && PathPrefix(`/api`)
-      - traefik.http.routers.jobpt-api-http.entrypoints=web
-      - traefik.http.routers.jobpt-api-http.middlewares=redirect-to-https@file
-      - traefik.http.routers.jobpt-api-http.service=jobpt-api
 
 networks:
-  traefik:
-    external: true
   internal:
     driver: bridge
 

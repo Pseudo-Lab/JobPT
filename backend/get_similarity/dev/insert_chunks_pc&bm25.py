@@ -6,11 +6,11 @@ Pinecone에 업로드하고 BM25 retriever를 생성하는 코드입니다.
 import os
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain_upstage import UpstageEmbeddings
 from langchain.embeddings import CacheBackedEmbeddings
 from langchain.storage import LocalFileStore
 from langchain_chroma import Chroma
-from configs import JD_PATH, COLLECTION, DB_PATH,PINECONE_INDEX
+from configs import JD_PATH, COLLECTION, DB_PATH, PINECONE_INDEX, UPSTAGE_API_KEY
 from langchain_pinecone import PineconeVectorStore
 from langchain_community.retrievers import BM25Retriever
 import string
@@ -27,7 +27,6 @@ from dotenv import load_dotenv
 import pandas as pd
 
 load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
 
 def preprocess(df):
     df.dropna(subset=['description', 'is_remote'], inplace=True)
@@ -51,13 +50,17 @@ def clean_tokens(text: str):
 
 def load_emb_model(cache=True):
     """embedding model을 로드하고 캐싱하는 함수입니다."""
-    embedding = OpenAIEmbeddings()
+    # Upstage Embedding 사용 (4096 차원)
+    embedding = UpstageEmbeddings(
+        api_key=UPSTAGE_API_KEY,
+        model="embedding-query"
+    )
 
     # Embedding model 캐싱하기
     if cache:
         cache_path = "./cache/"
         store = LocalFileStore(cache_path)
-        cached_embedder = CacheBackedEmbeddings.from_bytes_store(embedding, store, namespace=embedding.model)
+        cached_embedder = CacheBackedEmbeddings.from_bytes_store(embedding, store, namespace="upstage-embedding-query")
         return cached_embedder
     return embedding
 
@@ -91,9 +94,9 @@ def insert_chunks(total_chunks, collection: str):
         if len(index.describe_index_stats()["namespaces"]) > 0:
             index.delete(delete_all=True, namespace="")
     else:
-        ## openAI의 embedding dimension과 동일
-        ## dimension은 embedding model을 변경한다면 설정하기
-        pc.create_index(index_name, dimension=1536, metric="cosine",
+        ## Upstage Embedding의 dimension (4096)
+        ## Upstage embedding-query 모델은 4096 차원
+        pc.create_index(index_name, dimension=4096, metric="cosine",
             spec=ServerlessSpec(
             cloud="aws",
             region="us-east-1"
@@ -121,26 +124,35 @@ def insert_chunks(total_chunks, collection: str):
 
 
 def classify_jobpype(df):
+    # DataFrame 복사본으로 작업하여 SettingWithCopyWarning 방지
+    df = df.copy()
     remove_index = []
     for idx, data in df.iterrows():
         job_type = data["job_type"]
-        if "fulltime" in job_type:
+        # NaN이나 float 타입 체크
+        if pd.isna(job_type) or not isinstance(job_type, str):
+            remove_index.append(idx)
+            continue
+            
+        job_type_lower = job_type.lower()
+        if "fulltime" in job_type_lower:
             label="fulltime"
-        elif "parttime" in job_type:
+        elif "parttime" in job_type_lower:
             label="parttime"
-        elif "contract" in job_type:
+        elif "contract" in job_type_lower:
             label="fulltime"
-        elif "internship" in job_type:
+        elif "internship" in job_type_lower:
             label="fulltime"
         else:
             remove_index.append(idx)
+            continue
 
         df.at[idx, "job_type"] = label
 
-    for index in remove_index:
-        print(f"Removing index: {index}")
-        df.drop(index, inplace=True)
-        
+    # 인덱스 제거를 한 번에 수행
+    if remove_index:
+        print(f"제거할 인덱스: {len(remove_index)}개")
+        df = df.drop(index=remove_index)
     return df
 
 
@@ -149,14 +161,26 @@ def classify_jobpype(df):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--jd_folder",type=str, help="JD csv 폴더 경로", default="../research/Retrieval/updated_jd")
-    jd_folder = parser.parse_args().jd_folder
-    # collection_name = PINECONE_INDEX        #in system/configs.py, (jd-dataset)
-    collection_name = "test-index"  #phase1 vectorDB 인덱스
+    parser.add_argument("--jd_folder",type=str, help="JD csv 폴더 경로", default=JD_PATH)
+    parser.add_argument("--index_name", type=str, help="Pinecone 인덱스 이름", default=PINECONE_INDEX)
+    args = parser.parse_args()
+    jd_folder = args.jd_folder
+    collection_name = args.index_name  # configs.py의 PINECONE_INDEX 사용 또는 명령줄 인자로 지정
 
 
+    # 경로를 절대 경로로 변환
+    jd_folder = os.path.abspath(jd_folder)
+    print(f"JD 폴더 경로: {jd_folder}")
+    
+    if not os.path.exists(jd_folder):
+        raise FileNotFoundError(f"JD 폴더를 찾을 수 없습니다: {jd_folder}")
+    
     full_paths = []
-    for jd_path in os.listdir(jd_folder):
+    csv_files = [f for f in os.listdir(jd_folder) if f.endswith('.csv')]
+    if not csv_files:
+        raise FileNotFoundError(f"JD 폴더에 CSV 파일이 없습니다: {jd_folder}")
+    
+    for jd_path in csv_files:
         full_paths.append(os.path.join(jd_folder, jd_path))
 
     all_dfs = []

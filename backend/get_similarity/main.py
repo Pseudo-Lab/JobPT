@@ -5,7 +5,7 @@ from langchain_openai import OpenAIEmbeddings
 from get_similarity.nodes.db_load import get_db
 import pickle
 from langchain_community.retrievers import BM25Retriever  #로컬에서 그대로 받는거라 강조는 안되지만 필요
-from configs import COLLECTION, DB_PATH, DB_TYPE
+from configs import COLLECTION, DB_PATH, DB_TYPE, OPENAI_API_KEY
 
 async def matching(resume, location, remote, jobtype):
     """
@@ -30,7 +30,15 @@ async def matching(resume, location, remote, jobtype):
     if jobtype:
         search_filter["job_type"] = jobtype
 
-    emb_model = OpenAIEmbeddings()
+    # ===== EMBEDDING: OpenAI 사용 =====
+    # - Pinecone 인덱스가 OpenAI embedding (1536차원)으로 생성됨
+    # - Chat 모델은 Upstage solar-pro2 사용 (generation 함수에서)
+    # - 주의: OpenAI quota가 부족하면 에러 발생 가능
+    # ====================================
+    emb_model = OpenAIEmbeddings(
+        model="text-embedding-3-small",
+        openai_api_key=OPENAI_API_KEY
+    )
 
     print(">>>>"*30)
     print("Loading vector DB...")
@@ -42,7 +50,9 @@ async def matching(resume, location, remote, jobtype):
     lexical_retriever = None
 
     retriever = get_retriever(db, emb_model, filter=search_filter)
+    # OpenAI embedding은 더 긴 텍스트도 처리 가능하므로 원본 사용
     jd, jd_url, c_name = await search_jd(retriever, lexical_retriever, resume)
+    # generation에는 원본 resume 사용 (LLM은 더 긴 컨텍스트 처리 가능)
     answer = await generation(resume, jd)
 
     return answer, jd, jd_url, c_name

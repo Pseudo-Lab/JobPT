@@ -13,6 +13,7 @@ langchain-chroma==0.2.3
 langchain-experimental==0.3.4
 langchain-openai==0.3.16
 langchain-pinecone==0.2.6
+langchain-upstage>=0.1.0
 
 langgraph==0.5.4
 markdown2==2.5.3

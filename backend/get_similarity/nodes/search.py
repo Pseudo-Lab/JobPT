@@ -1,9 +1,13 @@
-from langchain_openai import ChatOpenAI
+from langchain_upstage import ChatUpstage
 from configs import *
 import numpy as np
 from collections import defaultdict
 
-llm = ChatOpenAI(model=RAG_MODEL)
+# Upstage API 사용 (solar-pro2)
+llm = ChatUpstage(
+    model=RAG_MODEL,
+    api_key=UPSTAGE_API_KEY
+)
 search_dict = defaultdict(list)
 
 def make_rank(results,k, full=False):
@@ -42,7 +46,8 @@ async def search_jd(retriever, lexical_retriever, resume):
         top_company_name: 첫 번째 문서의 회사 이름
     """
     print("\n=== Generation 함수 시작 ===")
-    print("입력된 resume:", resume[:100], "...")  # 긴 텍스트는 일부만 출력
+    print(f"입력된 resume 길이: {len(resume)} 문자")
+    print("입력된 resume 내용:", resume[:200], "...")  # 긴 텍스트는 일부만 출력
     job_descriptions = retriever.invoke(resume)
 
     ### 한국어 BM25 retrieval 추가시 활용
