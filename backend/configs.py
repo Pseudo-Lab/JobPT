@@ -8,7 +8,7 @@ load_dotenv()
 PINECONE_API_KEY=os.getenv("PINECONE_API_KEY", "")
 RAG_MODEL = os.getenv("RAG_MODEL", "gpt-4o-mini")  # default: gpt-4o-mini
 DB_TYPE = "Pinecone"    #["Chroma", "Pinecone"]
-PINECONE_INDEX = "korea-jd-test"
+PINECONE_INDEX = "korea-jd-dev"
 DB_PATH = "Pinecone"    #크로마에서만 사용
 COLLECTION = "semantic_0"   #크로마에서만 사용
 PROMPT_YAML = "get_similarity/data/prompt.yaml"

@@ -72,8 +72,14 @@ async def check_unique_column(file: UploadFile,):
 
 
 @app.post("/update_index")
-async def update_index(file: UploadFile, collection: str="korea-jd-test"):
+async def update_index(file: UploadFile, collection: str="korea-jd-dev"):
+    """
+    - korea-jd-dev: 개발용
+    - korea-jd-prod: 배포용
+
+    """
     if not file.filename.endswith('.csv'):
+        
         # CSV 파일이 아닌 경우 오류 처리
         return JSONResponse(
             status_code=400, 
