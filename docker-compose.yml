@@ -25,17 +25,17 @@ services:
       - traefik.docker.network=traefik
 
       # --- Traefik Router (Frontend) ---
-      - traefik.http.routers.jobpt-web.rule=Host(`${APP_HOST}`)
-      - traefik.http.routers.jobpt-web.entrypoints=websecure
-      - traefik.http.routers.jobpt-web.tls=true
-      - traefik.http.routers.jobpt-web.tls.certresolver=le
-      - traefik.http.services.jobpt-web.loadbalancer.server.port=3000
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-web.rule=Host(`${APP_HOST}`)
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-web.entrypoints=websecure
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-web.tls=true
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-web.tls.certresolver=le
+      - traefik.http.services.jobpt-${ENVIRONMENT}-web.loadbalancer.server.port=3000
 
       # --- HTTP → HTTPS 리다이렉트 ---
-      - traefik.http.routers.jobpt-web-http.rule=Host(`${APP_HOST}`)
-      - traefik.http.routers.jobpt-web-http.entrypoints=web
-      - traefik.http.routers.jobpt-web-http.middlewares=redirect-to-https@file
-      - traefik.http.routers.jobpt-web-http.service=jobpt-web
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-web-http.rule=Host(`${APP_HOST}`)
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-web-http.entrypoints=web
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-web-http.middlewares=redirect-to-https@file
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-web-http.service=jobpt-${ENVIRONMENT}-web
 
   backend:
     build:
@@ -66,28 +66,28 @@ services:
       - traefik.docker.network=traefik
 
       # --- Traefik Router (Backend /api) ---
-      - traefik.http.routers.jobpt-api.rule=Host(`${APP_HOST}`) && PathPrefix(`/api`)
-      - traefik.http.routers.jobpt-api.entrypoints=websecure
-      - traefik.http.routers.jobpt-api.tls=true
-      - traefik.http.routers.jobpt-api.tls.certresolver=le
-      - traefik.http.services.jobpt-api.loadbalancer.server.port=8000
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api.rule=Host(`${APP_HOST}`) && PathPrefix(`/api`)
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api.entrypoints=websecure
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api.tls=true
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api.tls.certresolver=le
+      - traefik.http.services.jobpt-${ENVIRONMENT}-api.loadbalancer.server.port=8000
 
       # FastAPI Docs router
-      - traefik.http.routers.jobpt-api-docs.rule=Host(`${APP_HOST}`) && (PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`))
-      - traefik.http.routers.jobpt-api-docs.entrypoints=websecure
-      - traefik.http.routers.jobpt-api-docs.tls=true
-      - traefik.http.routers.jobpt-api-docs.tls.certresolver=le
-      - traefik.http.routers.jobpt-api-docs.service=jobpt-api
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-docs.rule=Host(`${APP_HOST}`) && (PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`))
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-docs.entrypoints=websecure
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-docs.tls=true
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-docs.tls.certresolver=le
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-docs.service=jobpt-${ENVIRONMENT}-api
 
       # /api prefix 제거 미들웨어 연결
-      - traefik.http.middlewares.jobpt-api-stripprefix.stripprefix.prefixes=/api
-      - traefik.http.routers.jobpt-api.middlewares=jobpt-api-stripprefix
+      - traefik.http.middlewares.jobpt-${ENVIRONMENT}-api-stripprefix.stripprefix.prefixes=/api
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api.middlewares=jobpt-${ENVIRONMENT}-api-stripprefix
 
       # HTTP → HTTPS 리다이렉트 (Backend)
-      - traefik.http.routers.jobpt-api-http.rule=Host(`${APP_HOST}`) && PathPrefix(`/api`)
-      - traefik.http.routers.jobpt-api-http.entrypoints=web
-      - traefik.http.routers.jobpt-api-http.middlewares=redirect-to-https@file
-      - traefik.http.routers.jobpt-api-http.service=jobpt-api
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-http.rule=Host(`${APP_HOST}`) && PathPrefix(`/api`)
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-http.entrypoints=web
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-http.middlewares=redirect-to-https@file
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-http.service=jobpt-${ENVIRONMENT}-api
 
 networks:
   traefik:
