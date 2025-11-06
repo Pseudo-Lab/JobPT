@@ -17,20 +17,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreetype6-dev \
     git \
  && rm -rf /var/lib/apt/lists/*
-# Python 패키지 설치 (requests 등)
-# package.json만 복사 (lock은 복사 금지!)
+
+# package.json만 복사
 COPY package.json ./
 
-# optional deps 켜두기
-# RUN npm config set optional true
-
-# 의존성 설치 → 리눅스 기준으로 새로운 lock 생성
+# npm install (lock이 없으면 자동 생성)
 RUN npm install
 
 # 소스 복사
 COPY . .
 
-# 실행
+# 환경 설정
 ENV NODE_ENV=production
+ENV PORT=3000
+
+# 운영 / 개발 겸용 실행 명령
+# NODE_ENV 값에 따라 자동으로 dev 또는 start 실행
+CMD ["sh", "-c", "if [ \"$NODE_ENV\" = \"production\" ]; then npm run build && npm run start; else npm run dev; fi"]
+
 EXPOSE 3000
-CMD ["npm", "run", "dev"]

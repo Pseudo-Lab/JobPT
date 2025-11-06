@@ -32,11 +32,23 @@ from ATS_agent.ats_analyzer_improved import ATSAnalyzer
 resume_cache = {}
 analysis_cache = {}
 
-location_cache = ""  # ['USA' 'Germany' 'UK']
-remote_cache = ""  # [ True False]
-job_type_cache = ""  # ['fulltime' 'parttime']
+location_cache = ""
+remote_cache = ""
+job_type_cache = ""
 
-app = FastAPI()
+env = os.getenv("ENVIRONMENT", "development").lower()
+
+is_prod = env == "production"
+
+app = FastAPI(
+    title="JobPT",
+    description="JobPT Backend Service",
+    version="1.0.0",
+    docs_url=None if is_prod else "/docs",
+    redoc_url=None if is_prod else "/redoc",
+    openapi_url=None if is_prod else "/openapi.json",
+    servers=[{"url": "/api"}],  # Swagger에서 /api prefix 붙여 호출
+)
 
 # 로거 설정
 logger = logging.getLogger("jobpt")
@@ -49,7 +61,7 @@ logger.setLevel(logging.INFO)
 
 # CORS 설정
 raw = os.environ.get("FRONTEND_CORS_ORIGIN", "")
-origins = [o.strip() for o in raw.split(",") if o.strip()] or ["http://localhost:3000"]  # 안전 기본값
+origins = [o.strip() for o in raw.split(",") if o.strip()] or ["http://localhost:3000"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -57,6 +69,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
 )
+
 
 # 통합된 파일 저장소 설정 (configs에서 가져오기)
 from configs import UPLOAD_PATH, PROCESSED_PATH, CACHE_PATH
@@ -76,7 +89,7 @@ class MatchRequest(BaseModel):
     resume_path: str
 
 
-@app.post("/api/upload")
+@app.post("/upload")
 async def upload_resume(
     file: UploadFile = File(...), location: str = Form(""), remote: str = Form("any"), job_type: str = Form("any")
 ):
@@ -112,7 +125,7 @@ async def upload_resume(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/matching")
+@app.post("/matching")
 async def run(data: MatchRequest):
     """
     사용자의 이력서를 기반으로 벡터 DB에서 채용공고를 검색하고
@@ -132,26 +145,27 @@ async def run(data: MatchRequest):
     logger.info(f"[{trace_id}] parsed_pages={len(resume_content_text)} total_chars={len(resume_content_text)}")
 
     # 채용공고 추천
-    res, job_description, job_url, c_name = await matching(
-        resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache
-    )
+    # res, job_description, job_url, c_name = await matching(
+    #     resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache
+    # )
+
+    jd_summaries, jd_urls, c_names = await matching(resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache)
 
     analysis_cache[resume_path] = {
-        "output": res,
-        "JD": job_description,
-        "JD_url": job_url,
-        "name": c_name,
+        "output": jd_summaries,
+        "JD": jd_urls,
+        "name": c_names,
     }
-    logger.info(f"[{trace_id}] matching success company={c_name} url={job_url}")
+    logger.info(f"[{trace_id}] matching success company={c_names} url={jd_urls}")
 
-    return {"JD": job_description, "JD_url": job_url, "output": res, "name": c_name, "trace_id": trace_id}
+    return {"JD": jd_summaries, "JD_url": jd_urls, "name": c_names, "trace_id": trace_id}
 
 
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답
 langfuse_handler = CallbackHandler()
 
 
-@app.post("/api/chat")
+@app.post("/chat")
 async def chat(request: Request):
     data = await request.json()
     session_id = data["session_id"]
@@ -185,7 +199,7 @@ async def chat(request: Request):
     return {"response": answer}
 
 
-@app.post("/api/mock_chat")
+@app.post("/mock_chat")
 async def chat(request_data: dict = Body(...)):
     message = request_data.get("message", "")
     resume_path = request_data.get("resume_path", "")
@@ -264,7 +278,7 @@ class EvaluateRequest(BaseModel):
     model: int = 1
 
 
-@app.post("/api/evaluate")
+@app.post("/evaluate")
 async def evaluate(request: EvaluateRequest):
     try:
         analyzer = ATSAnalyzer(request.resume_path, request.jd_text, model=request.model)
