@@ -16,6 +16,7 @@ class State:
     user_resume: str = field(default="")
     route_decision: str = field(default="")
     company_name: str = field(default="")
+    github_url: str = field(default="")
 
 
 # 세션별 State 인스턴스를 저장하는 딕셔너리
@@ -36,6 +37,7 @@ def start_session(session_id: str, **kwargs):
         user_resume=kwargs.get("user_resume", ""),
         route_decision=kwargs.get("route_decision", ""),
         company_name=kwargs.get("company_name", ""),
+        github_url=kwargs.get("github_url", ""),
     )
     session_states[session_id] = state
 
