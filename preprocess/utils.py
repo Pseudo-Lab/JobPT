@@ -48,7 +48,11 @@ def make_chunks(sentences, table):
 
         for chunk in chunks:
             chunk.page_content = chunk.page_content.replace("<chunk_sep>","")
-        total_chunks.extend(chunks)
+            # 빈 chunk는 추가하지 않음
+            if chunk.page_content and chunk.page_content.strip():
+                total_chunks.append(chunk)
+            else:
+                print(f"⚠️ Chunk {i} is empty, skipping...")
     return total_chunks
 
 
