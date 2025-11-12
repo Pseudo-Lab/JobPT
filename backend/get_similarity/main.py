@@ -1,7 +1,8 @@
 from get_similarity.nodes.retrieval import get_retriever
 from get_similarity.nodes.search import search_jd, search_jd_summary
 from get_similarity.nodes.generate import generation
-from langchain_openai import OpenAIEmbeddings
+# from langchain_openai import OpenAIEmbeddings
+from langchain_upstage import UpstageEmbeddings
 from get_similarity.nodes.db_load import get_db
 import pickle
 from langchain_community.retrievers import BM25Retriever  #로컬에서 그대로 받는거라 강조는 안되지만 필요
@@ -30,7 +31,7 @@ async def matching(resume, location, remote, jobtype):
     if jobtype:
         search_filter["job_type"] = jobtype
 
-    emb_model = OpenAIEmbeddings()
+    emb_model = UpstageEmbeddings(model="solar-embedding-1-large")
 
     print(">>>>"*30)
     print("Loading vector DB...")
