@@ -109,7 +109,7 @@ export default function Home() {
         userMessageDiv.className = "mb-3 text-right";
         userMessageDiv.innerHTML = `
       <div class="inline-block px-4 py-2 rounded-lg bg-indigo-600 text-white max-w-[90%]">
-        <div class="prose prose-sm">${DOMPurify.sanitize(marked(message) as string)}</div>
+        <div class="markdown-content">${DOMPurify.sanitize(marked(message) as string)}</div>
       </div>
     `;
         chatMessages.appendChild(userMessageDiv);
@@ -159,7 +159,7 @@ export default function Home() {
             const sanitizedHtml = DOMPurify.sanitize(marked(data.response) as string);
             botMessageDiv.innerHTML = `
         <div class="inline-block px-4 py-2 rounded-lg bg-gray-200 text-gray-800 max-w-[90%]">
-          <div class="prose prose-sm">${sanitizedHtml}</div>
+          <div class="markdown-content">${sanitizedHtml}</div>
         </div>
       `;
             chatMessages.appendChild(botMessageDiv);
@@ -174,7 +174,7 @@ export default function Home() {
             const errorHtml = DOMPurify.sanitize(marked("죄송합니다. 오류가 발생했습니다. 잠시 후 다시 시도해주세요.") as string);
             errorMessageDiv.innerHTML = `
         <div class="inline-block px-4 py-2 rounded-lg bg-red-100 text-red-800 max-w-[90%]">
-          <div class="prose prose-sm">${errorHtml}</div>
+          <div class="markdown-content">${errorHtml}</div>
         </div>
       `;
             chatMessages.appendChild(errorMessageDiv);
