@@ -245,7 +245,11 @@ async def mock_chat(request_data: dict = Body(...)):
     """
 
     try:
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        from configs import UPSTAGE_API_KEY
+        client = OpenAI(
+            api_key=UPSTAGE_API_KEY,
+            base_url="https://api.upstage.ai/v1"
+        )
         # Build a detailed, professional system prompt in English, including user preferences
         preference_info = []
         if request_data.get("location"):
@@ -266,7 +270,7 @@ async def mock_chat(request_data: dict = Body(...)):
         )
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="solar-pro2",
             messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
             max_tokens=800,
             temperature=0.7,
