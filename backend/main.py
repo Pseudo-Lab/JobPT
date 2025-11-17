@@ -104,8 +104,8 @@ async def upload_resume(
     Args:
         file: 사용자가 업로드한 이력서 파일(PDF)
 
-        아래 3개의 인자는 검색시 메타데이터 필터링을 위해 사용됨(e.g. Location=USA)
-        location: 근무 희망 위치 ['USA', 'Germany', 'UK']
+        아래 3개의 인자는 검색시 메타데이터 필터링을 위해 사용됨(e.g. Location=Korea)
+        location: 근무 희망 위치 ['Korea']
         remote: 원격 근무 여부 ['True', 'False']
         job_type: 근무 유형 ['fulltime', 'parttime']
     Returns:

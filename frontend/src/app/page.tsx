@@ -56,7 +56,7 @@ export default function Home() {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const [location, setLocation] = useState<string[]>([]); // 예: ['USA', 'Germany']
+    const [location, setLocation] = useState<string[]>(['Korea']); // 기본값: ['Korea']
     const [remote, setRemote] = useState<boolean[]>([]); // 예: [true, false]
     const [jobType, setJobType] = useState<string[]>([]); // 예: ['fulltime', 'parttime']
 

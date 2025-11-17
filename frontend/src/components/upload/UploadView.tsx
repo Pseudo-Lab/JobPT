@@ -70,38 +70,16 @@ const UploadView: React.FC<UploadViewProps> = memo(({
         <div>
           <label className="block text-sm font-medium text-gray-700">📍 선호 지역</label>
           <div className="mt-1 flex gap-4">
-            <label className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition-colors ${location[0]==='USA' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700'}`}>
+            <label className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition-colors ${location[0]==='Korea' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700'}`}>
   <input
     type="radio"
     name="location-category"
-    value="USA"
-    checked={location[0] === 'USA'}
-    onChange={() => setLocation(['USA'])}
+    value="Korea"
+    checked={location[0] === 'Korea'}
+    onChange={() => setLocation(['Korea'])}
     className="accent-indigo-500"
   />
-  USA
-</label>
-<label className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition-colors ${location[0]==='Germany' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700'}`}>
-  <input
-    type="radio"
-    name="location-category"
-    value="Germany"
-    checked={location[0] === 'Germany'}
-    onChange={() => setLocation(['Germany'])}
-    className="accent-indigo-500"
-  />
-  Germany
-</label>
-<label className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition-colors ${location[0]==='UK' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700'}`}>
-  <input
-    type="radio"
-    name="location-category"
-    value="UK"
-    checked={location[0] === 'UK'}
-    onChange={() => setLocation(['UK'])}
-    className="accent-indigo-500"
-  />
-  UK
+  대한민국
 </label>
           </div>
         </div>

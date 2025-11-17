@@ -14,7 +14,7 @@ async def matching(resume, location, remote, jobtype):
 
     Args:
         resume: 사용자의 이력서 텍스트
-        location: 근무 희망 위치 ['USA', 'Germany', 'UK']
+        location: 근무 희망 위치 ['Korea']
         remote: 원격 근무 여부 ['True', 'False']
         jobtype: 근무 유형 ['fulltime', 'parttime']
     Returns:
