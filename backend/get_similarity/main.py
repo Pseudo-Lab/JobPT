@@ -24,12 +24,12 @@ async def matching(resume, location, remote, jobtype):
         c_name: 채용공고를 올린 회사 이름
     """
     search_filter = {}
-    if location:
-        search_filter["location"] = location
-    if remote :
-        search_filter["is_remote"] = remote
-    if jobtype:
-        search_filter["job_type"] = jobtype
+    # if location:
+    #     search_filter["location"] = location
+    # if remote :
+    #     search_filter["is_remote"] = remote
+    # if jobtype:
+    #     search_filter["job_type"] = jobtype
 
     emb_model = UpstageEmbeddings(model="solar-embedding-1-large")
 
