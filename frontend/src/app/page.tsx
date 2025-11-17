@@ -56,7 +56,7 @@ export default function Home() {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const [location, setLocation] = useState<string[]>([]); // 예: ['USA', 'Germany']
+    const [location, setLocation] = useState<string[]>(['Korea']); // 기본값: ['Korea']
     const [remote, setRemote] = useState<boolean[]>([]); // 예: [true, false]
     const [jobType, setJobType] = useState<string[]>([]); // 예: ['fulltime', 'parttime']
 
@@ -109,7 +109,7 @@ export default function Home() {
         userMessageDiv.className = "mb-3 text-right";
         userMessageDiv.innerHTML = `
       <div class="inline-block px-4 py-2 rounded-lg bg-indigo-600 text-white max-w-[90%]">
-        <div class="prose prose-sm">${DOMPurify.sanitize(marked.parseInline(message) as string)}</div>
+        <div class="prose prose-sm">${DOMPurify.sanitize(marked(message) as string)}</div>
       </div>
     `;
         chatMessages.appendChild(userMessageDiv);
@@ -156,7 +156,7 @@ export default function Home() {
 
             const botMessageDiv = document.createElement("div");
             botMessageDiv.className = "mb-3 text-left";
-            const sanitizedHtml = DOMPurify.sanitize(marked.parseInline(data.response) as string);
+            const sanitizedHtml = DOMPurify.sanitize(marked(data.response) as string);
             botMessageDiv.innerHTML = `
         <div class="inline-block px-4 py-2 rounded-lg bg-gray-200 text-gray-800 max-w-[90%]">
           <div class="prose prose-sm">${sanitizedHtml}</div>
@@ -171,7 +171,7 @@ export default function Home() {
 
             const errorMessageDiv = document.createElement("div");
             errorMessageDiv.className = "mb-3 text-left";
-            const errorHtml = DOMPurify.sanitize(marked.parseInline("죄송합니다. 오류가 발생했습니다. 잠시 후 다시 시도해주세요.") as string);
+            const errorHtml = DOMPurify.sanitize(marked("죄송합니다. 오류가 발생했습니다. 잠시 후 다시 시도해주세요.") as string);
             errorMessageDiv.innerHTML = `
         <div class="inline-block px-4 py-2 rounded-lg bg-red-100 text-red-800 max-w-[90%]">
           <div class="prose prose-sm">${errorHtml}</div>

@@ -1,11 +1,12 @@
 from typing import Literal
 from typing_extensions import TypedDict
 from states.states import State
-from langchain_openai import ChatOpenAI
+from langchain_upstage import ChatUpstage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import AIMessage
 from typing import cast
+from configs import AGENT_MODEL, UPSTAGE_API_KEY
 
 members = ["summary_agent", "suggestion_agent"]
 
@@ -58,7 +59,7 @@ class Router(TypedDict):
     next: Literal["summary_agent", "suggestion_agent", "FINISH"]
 
 def supervisor_node(state: State) -> State:
-    llm = ChatOpenAI(model="gpt-4o") # gpt-4o-mini로 하면 잘 안된다.
+    llm = ChatUpstage(model=AGENT_MODEL, api_key=UPSTAGE_API_KEY)
 
     # Collect all AIMessage contents
     agent_outputs = "\n".join([
@@ -83,7 +84,7 @@ def supervisor_node(state: State) -> State:
     return {"next": next_}
 
 def refine_answer(state: State) -> State:
-    model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
 
     system_template = """
     Below are the user input and the results from each agent.
