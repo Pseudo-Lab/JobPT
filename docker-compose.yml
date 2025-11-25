@@ -14,8 +14,6 @@ services:
       NODE_ENV: ${ENVIRONMENT:-development}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
       APP_HOST: ${APP_HOST:-localhost}
-    ports:
-      - "3000:3000"
     volumes:
       - jobpt_resumes:/app/public/uploads
       - ./frontend:/app
@@ -59,8 +57,6 @@ services:
       PINECONE_API_KEY: ${PINECONE_API_KEY:-}
       UPSTAGE_API_KEY: ${UPSTAGE_API_KEY:-}
       FRONTEND_CORS_ORIGIN: ${FRONTEND_CORS_ORIGIN:-http://localhost:3000}
-    ports:
-      - "8000:8000"
     volumes:
       - jobpt_data:/app/data
       - jobpt_resumes:/app/uploaded_resumes
