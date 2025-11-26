@@ -11,12 +11,11 @@ services:
     env_file:
       - .env
     environment:
-      NODE_ENV: ${ENVIRONMENT:-development}
+      NODE_ENV: ${ENVIRONMENT:-production}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
       APP_HOST: ${APP_HOST:-localhost}
     volumes:
       - jobpt_resumes:/app/public/uploads
-      - ./frontend:/app
       - /app/node_modules
       - /app/.next
     depends_on:
@@ -51,7 +50,7 @@ services:
     env_file:
       - .env
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
       PINECONE_API_KEY: ${PINECONE_API_KEY:-}
@@ -61,7 +60,6 @@ services:
       - jobpt_data:/app/data
       - jobpt_resumes:/app/uploaded_resumes
       - /tmp:/tmp
-      - ./backend:/app
     networks:
       - traefik
       - internal
