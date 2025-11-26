@@ -29,6 +29,7 @@ jobs:
           set -e
           echo "APP_HOST=${{ vars.APP_HOST }}" > .env
           echo "ENVIRONMENT=${{ vars.ENVIRONMENT }}" >> .env
+          echo "NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}" >> .env
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
           echo "UPSTAGE_API_KEY=${{ secrets.UPSTAGE_API_KEY }}" >> .env
           echo "SMITHERY_API_KEY=${{ secrets.SMITHERY_API_KEY }}" >> .env
@@ -66,6 +67,7 @@ jobs:
           set -e
           echo "APP_HOST=${{ vars.APP_HOST }}" > .env
           echo "ENVIRONMENT=${{ vars.ENVIRONMENT }}" >> .env
+          echo "NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}" >> .env
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
           echo "UPSTAGE_API_KEY=${{ secrets.UPSTAGE_API_KEY }}" >> .env
           echo "SMITHERY_API_KEY=${{ secrets.SMITHERY_API_KEY }}" >> .env
