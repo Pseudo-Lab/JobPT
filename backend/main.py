@@ -27,6 +27,13 @@ from langfuse.langchain import CallbackHandler
 
 from ATS_agent.ats_analyzer_improved import ATSAnalyzer
 
+from db.database import engine, Base
+from db import models
+from routers import auth
+
+# Create database tables
+models.Base.metadata.create_all(bind=engine)
+
 
 # 캐시 저장소
 resume_cache = {}
@@ -48,12 +55,23 @@ app = FastAPI(
     docs_url=None if is_prod else "/api/docs",
     redoc_url=None if is_prod else "/api/redoc",
     openapi_url=None if is_prod else "/api/openapi.json",
-    servers=[{"url": "/api"}],  # Swagger에서 /api prefix 붙여 호출
 )
+
+# # Middleware to strip /api prefix for local development
+# @app.middleware("http")
+# async def strip_api_prefix(request: Request, call_next):
+#     if request.url.path.startswith("/api"):
+#         request.scope["path"] = request.url.path[4:]
+#     response = await call_next(request)
+#     return response
 
 # /api prefix를 모든 라우트에 추가
 from fastapi import APIRouter
 api_router = APIRouter(prefix="/api")
+
+# API router를 앱에 등록
+app.include_router(api_router)
+app.include_router(auth.router)
 
 # 로거 설정
 logger = logging.getLogger("jobpt")
@@ -301,9 +319,6 @@ async def evaluate(request: EvaluateRequest):
         print(f"ATS 분석 오류: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# API router를 앱에 등록
-app.include_router(api_router)
 
 
 # 개발용 실행 명령
