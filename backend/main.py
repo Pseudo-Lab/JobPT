@@ -37,18 +37,10 @@ location_cache = ""
 remote_cache = ""
 job_type_cache = ""
 
-env = os.getenv("ENVIRONMENT", "development").lower()
-
-is_prod = env == "production"
-
 app = FastAPI(
     title="JobPT",
     description="JobPT Backend Service",
     version="1.0.0",
-    docs_url=None if is_prod else "/api/docs",
-    redoc_url=None if is_prod else "/api/redoc",
-    openapi_url=None if is_prod else "/api/openapi.json",
-    servers=[{"url": "/api"}],  # Swagger에서 /api prefix 붙여 호출
 )
 
 # /api prefix를 모든 라우트에 추가
