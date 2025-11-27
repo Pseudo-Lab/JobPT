@@ -1,9 +1,9 @@
-from langchain_openai import ChatOpenAI
+from langchain_upstage import ChatUpstage
 from configs import *
 import numpy as np
 from collections import defaultdict
 
-llm = ChatOpenAI(model=RAG_MODEL)
+llm = ChatUpstage(model=RAG_MODEL, api_key=UPSTAGE_API_KEY)
 search_dict = defaultdict(list)
 
 def make_rank(results,k, full=False):

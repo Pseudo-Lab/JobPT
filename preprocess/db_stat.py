@@ -9,6 +9,7 @@ from pinecone import Pinecone, ServerlessSpec
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
+from langchain_upstage import UpstageEmbeddings
 from tqdm import tqdm
 import yaml
 
@@ -106,7 +107,9 @@ async def update_index(file: UploadFile, collection: str="korea-jd-dev"):
 
         index = pc.Index(index_name)
 
-        emb_model = OpenAIEmbeddings()
+        # emb_model = OpenAIEmbeddings()
+        emb_model = UpstageEmbeddings(model="solar-embedding-1-large")
+
         vector_store = PineconeVectorStore(index=index, embedding=emb_model)
 
         ### 데이터가 남아있을때 데이터 제거(소량일때만 사용), 추후 모듈화
@@ -119,6 +122,7 @@ async def update_index(file: UploadFile, collection: str="korea-jd-dev"):
         for start in tqdm(range(0, total, batch_size), desc="Upserting to Pinecone"):
             end = start + batch_size
             batch_docs = total_chunks[start:end]
+            print(batch_docs)
             vector_store.add_documents(documents=batch_docs)
         return JSONResponse(
             status_code=200, 

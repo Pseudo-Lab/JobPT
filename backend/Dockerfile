@@ -50,5 +50,5 @@ EXPOSE 8000
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# 서버 실행
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 서버 실행 (개발 모드에서는 --reload 옵션 사용)
+CMD ["sh", "-c", "if [ \"$ENVIRONMENT\" = \"development\" ] || [ -z \"$ENVIRONMENT\" ]; then uvicorn main:app --host 0.0.0.0 --port 8000 --reload; else uvicorn main:app --host 0.0.0.0 --port 8000; fi"]

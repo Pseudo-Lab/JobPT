@@ -11,10 +11,13 @@ services:
     env_file:
       - .env
     environment:
-      NODE_ENV: ${ENVIRONMENT:-development}
-      NEXT_PUBLIC_API_URL: "https://${APP_HOST}"
+      NODE_ENV: ${ENVIRONMENT:-production}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      APP_HOST: ${APP_HOST:-localhost}
     volumes:
       - jobpt_resumes:/app/public/uploads
+      - /app/node_modules
+      - /app/.next
     depends_on:
       - backend
     networks:
@@ -47,8 +50,7 @@ services:
     env_file:
       - .env
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
       PINECONE_API_KEY: ${PINECONE_API_KEY:-}

@@ -12,7 +12,7 @@ from io import BytesIO
 import base64
 from datetime import datetime
 from dotenv import load_dotenv
-from configs import OPENAI_API_KEY, GROQ_API_KEY
+from configs import UPSTAGE_API_KEY, GROQ_API_KEY
 
 class ATSAnalyzer:
     """
@@ -1152,20 +1152,23 @@ class ATSAnalyzer:
 
 
             if model == 1:
-                # Get OpenAI API key from environment variables
-                openai_api_key = OPENAI_API_KEY
-                if not openai_api_key or openai_api_key == "your_openai_api_key_here":
-                    print("Error: OpenAI API key not found or not set in environment variables.")
-                    # Fallback to model 2 if OpenAI API key is not available
+                # Get Upstage API key from environment variables
+                upstage_api_key = UPSTAGE_API_KEY
+                if not upstage_api_key or upstage_api_key == "your_upstage_api_key_here":
+                    print("Error: Upstage API key not found or not set in environment variables.")
+                    # Fallback to model 2 if Upstage API key is not available
                     if model == 1:
                         print("Attempting to use Groq API instead...")
                         return self.call_llm(prompt, model=2)
                     else:
                         return self._generate_dummy_response(prompt)
 
-                client = openai.OpenAI(api_key=openai_api_key)
+                client = openai.OpenAI(
+                    api_key=upstage_api_key,
+                    base_url="https://api.upstage.ai/v1"
+                )
                 response = client.chat.completions.create(
-                    model="gpt-4o-mini",  # Can be configured as a parameter
+                    model="solar-pro2",  # Can be configured as a parameter
                     messages=[
                         {"role": "system", "content": "You are an expert resume analyst and ATS specialist."},
                         {"role": "user", "content": prompt}
@@ -1183,14 +1186,14 @@ class ATSAnalyzer:
                     from groq import Groq
                 except ImportError:
                     print("Error: Groq package not installed. Please install it with 'pip install groq'")
-                    print("Falling back to OpenAI API...")
+                    print("Falling back to Upstage API...")
                     return self.call_llm(prompt, model=1)
 
                 # Get Groq API key from environment variables
                 groq_api_key = GROQ_API_KEY
                 if not groq_api_key or groq_api_key == "your_groq_api_key_here":
                     print("Error: Groq API key not found or not set in environment variables.")
-                    print("Falling back to OpenAI API...")
+                    print("Falling back to Upstage API...")
                     return self.call_llm(prompt, model=1)
 
                 client = Groq(api_key=groq_api_key)

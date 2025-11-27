@@ -162,7 +162,7 @@ const ResultView: React.FC<ResultViewProps> = memo(({
                 >
                   <div className="mb-3 text-left">
                     <div className="inline-block px-4 py-2 rounded-lg bg-gray-200 text-gray-800 max-w-[90%]">
-                      <div className="prose prose-sm" 
+                      <div className="markdown-content" 
                         dangerouslySetInnerHTML={{
                           __html: DOMPurify.sanitize(marked("안녕하세요! 이력서 개선을 도와드릴게요. 분석 결과를 바탕으로 어떤 부분을 도와드릴까요?") as string)
                         }}
