@@ -104,6 +104,13 @@ DB 실행(단독 docker container)
 sh db/run.sh
 ```
 
+
+DB 마이그레이션 (테이블 생성 및 수정)
+```bash
+cd backend
+alembic upgrade head
+```
+
 API 실행
 
 ```bash
