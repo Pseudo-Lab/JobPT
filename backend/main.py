@@ -29,6 +29,7 @@ from ATS_agent.ats_analyzer_improved import ATSAnalyzer
 
 from db.database import engine, Base
 from db import models
+from routers import auth
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -55,6 +56,17 @@ app = FastAPI(
     openapi_url=None if is_prod else "/openapi.json",
     servers=[{"url": "/api"}],  # Swagger에서 /api prefix 붙여 호출
 )
+
+# Middleware to strip /api prefix for local development
+@app.middleware("http")
+async def strip_api_prefix(request: Request, call_next):
+    if request.url.path.startswith("/api"):
+        request.scope["path"] = request.url.path[4:]
+    response = await call_next(request)
+    return response
+
+# Include routers
+app.include_router(auth.router)
 
 # 로거 설정
 logger = logging.getLogger("jobpt")
@@ -303,4 +315,4 @@ if __name__ == "__main__":
     ### 한국어 BM25 retrieval 추가시 활용
     # nltk.download("punkt")
     # nltk.download("punkt_tab")
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
