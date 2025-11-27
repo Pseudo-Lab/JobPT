@@ -315,4 +315,4 @@ if __name__ == "__main__":
     ### 한국어 BM25 retrieval 추가시 활용
     # nltk.download("punkt")
     # nltk.download("punkt_tab")
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)

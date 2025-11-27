@@ -82,8 +82,6 @@
 
     -   `FRONTEND_CORS_ORIGIN`: CORS 정책을 적용할 프론트엔드 주소를 입력합니다. (e.g., `http://localhost:3000`)
     -   `NODE_ENV`: 프론트엔드 `NODE_ENV` 환경을 설정합니다. (`development` 또는 `production`)
-    -   `SECRET_KEY`: JWT 토큰 생성에 사용되는 비밀 키를 입력합니다. 
-        -   `python -c "import secrets; print(secrets.token_hex(32))"`를 실행하여 생성할 수 있습니다.
 
 2.  (Optional) 로컬 환경에서 직접 실행할 경우, 각 서비스의 `requirements.txt` 또는 `package.json`을 참고하여 의존성을 설치합니다.
 
