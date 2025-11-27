@@ -27,6 +27,12 @@ from langfuse.langchain import CallbackHandler
 
 from ATS_agent.ats_analyzer_improved import ATSAnalyzer
 
+from db.database import engine, Base
+from db import models
+
+# Create database tables
+models.Base.metadata.create_all(bind=engine)
+
 
 # 캐시 저장소
 resume_cache = {}
