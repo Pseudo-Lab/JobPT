@@ -37,12 +37,15 @@ def make_chunks(sentences, table):
     """
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=100, separators=["<chunk_sep>","\r\n","\n\n", "\n", "\t", " ", ""])
     total_chunks = []
+    
+    ### 여기까지는 csv가 컬럼명을 그대로 가지고 온다 null 값만 chk해서 메타데이터 그대로 사용
     for i, desciption in enumerate(sentences):
         meta_data = [{"job_url": table.iloc[i]["url"],
         "company": table.iloc[i]["company_name"],
         "location": table.iloc[i]["location"],
         "experience_requirement": table.iloc[i]["experience_requirement"],
-        "summary": table.iloc[i]["summary"]
+        "summary": table.iloc[i]["summary"],
+        "deadline": table.iloc[i]["deadline"]
         }]
         chunks = text_splitter.create_documents([desciption], meta_data)
 
@@ -72,6 +75,18 @@ def preprocess(table):
     return total_chunks
 
 
+def get_all_ids(index):
+    all_ids = []
+    for batch in index.list():
+        for vid in batch:
+            all_ids.append(vid)
+    return all_ids
+
+def get_metadata_by_id(index, vid):
+    resp = index.fetch(ids=[vid])
+    vectors = resp.vectors[vid]
+    metadata = vectors.metadata
+    return metadata  # 없으면 None
 
 
 class Upstage:
@@ -81,7 +96,7 @@ class Upstage:
             base_url="https://api.upstage.ai/v1"
         )
 
-    def summary(self, messages: list[dict]):
+    async def summary(self, messages: list[dict]):
         response = self.client.chat.completions.create(
             model="solar-pro2",
             messages=messages,

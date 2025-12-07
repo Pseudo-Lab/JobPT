@@ -72,6 +72,60 @@ async def check_unique_column(file: UploadFile,):
 
 
 
+@app.post("/create_index")
+async def create_index(index_name: str = "index-name-for-create", dimension: int=4096):
+    """
+    Pinecone 인덱스를 생성하는 API
+    """
+    try:
+        # 인덱스 생성
+        pc.create_index(
+            index_name,
+            dimension=dimension,
+            metric="cosine",
+            spec=ServerlessSpec(
+                cloud="aws",
+                region="us-east-1"
+            )
+        )
+        # 생성된 인덱스 객체 로드
+        return {
+            "index_name": index_name,
+            "status": "success",
+            "detail": "Index created successfully."
+        }
+    except Exception as e:
+        # Pinecone 에러 메시지를 그대로 전달
+        return {
+            "index_name": index_name,
+            "status": "error",
+            "detail": str(e)
+        }
+
+@app.post("/drop_index")
+async def drop_index(collection: str="index-name-for-drop"):
+    """
+    인덱스를 삭제합니다.
+    """
+    try:
+        index_name = collection
+        pc.delete_index(name=index_name)
+        return {
+            "index_name": index_name,
+            "status": "success",
+            "detail": "Index deleted successfully."
+        }
+    except Exception as e:
+        return {
+            "index_name": index_name,
+            "status": "error",
+            "detail": str(e)
+        }
+
+
+
+
+
 @app.post("/update_index")
 async def update_index(file: UploadFile, collection: str="korea-jd-dev"):
     """
@@ -90,22 +144,36 @@ async def update_index(file: UploadFile, collection: str="korea-jd-dev"):
         ### 요약전 인덱스 부터 chk
         index_name = collection
         result = check_index(collection)
+        index = pc.Index(index_name)
+        ids = get_all_ids(index)
+        url_set = set()
+        for id in ids:
+            url_set.add(get_metadata_by_id(index, id)["job_url"])
+        print(url_set)
+        if result == False:
+            raise ValueError("Index check failed: result is False")
 
         uploaded_file = file.file
         df = pd.read_csv(uploaded_file)
+        # INSERT_YOUR_CODE
+        # df["url"] 컬럼에서 url_set에 존재하는 url이 있는 행 제거
+        before = len(df)
+        df = df[~df["url"].isin(url_set)].reset_index(drop=True)
+        removed = before - len(df)
+        print(f"Removed {removed} rows")
         ### request를 무조건 list(dict{role, content})로 전달해야함
-        summaries = []
-        for i in tqdm(range(len(df)), desc="JD 요약 중"):
-            request = [
-                {"role": "system", "content": prompts["prompts_ver1"]["system"]},
-                {"role": "user", "content": prompts["prompts_ver1"]["user"].format(jd=df.iloc[i]["description"])}
-            ]
-            summaries.append(model.summary(request))
-        print(summaries[:10])
-        df["summary"] = summaries
+        # summaries = []
+        # for i in tqdm(range(len(df)), desc="JD 요약 중"):
+        #     request = [
+        #         {"role": "system", "content": prompts["prompts_ver1"]["system"]},
+        #         {"role": "user", "content": prompts["prompts_ver1"]["user"].format(jd=df.iloc[i]["description"])}
+        #     ]
+        #     summaries.append(model.summary(request))
+        # print(summaries[:10])
+        # df["summary"] = summaries
         total_chunks = preprocess(df)
 
-        index = pc.Index(index_name)
+        # index = pc.Index(index_name)
 
         # emb_model = OpenAIEmbeddings()
         emb_model = UpstageEmbeddings(model="solar-embedding-1-large")
@@ -122,7 +190,7 @@ async def update_index(file: UploadFile, collection: str="korea-jd-dev"):
         for start in tqdm(range(0, total, batch_size), desc="Upserting to Pinecone"):
             end = start + batch_size
             batch_docs = total_chunks[start:end]
-            print(batch_docs)
+            # print(batch_docs)
             vector_store.add_documents(documents=batch_docs)
         return JSONResponse(
             status_code=200, 
