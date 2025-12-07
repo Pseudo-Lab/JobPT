@@ -27,28 +27,44 @@ from langfuse.langchain import CallbackHandler
 
 from ATS_agent.ats_analyzer_improved import ATSAnalyzer
 
+from db.database import engine, Base
+from db import models
+from routers import auth
+
+# Create database tables
+models.Base.metadata.create_all(bind=engine)
+
 
 # 캐시 저장소
 resume_cache = {}
 analysis_cache = {}
 
+# 전역 변수로 선언 (함수 내에서 global 키워드 사용)
 location_cache = ""
 remote_cache = ""
 job_type_cache = ""
-
-env = os.getenv("ENVIRONMENT", "development").lower()
-
-is_prod = env == "production"
 
 app = FastAPI(
     title="JobPT",
     description="JobPT Backend Service",
     version="1.0.0",
-    docs_url=None if is_prod else "/docs",
-    redoc_url=None if is_prod else "/redoc",
-    openapi_url=None if is_prod else "/openapi.json",
-    servers=[{"url": "/api"}],  # Swagger에서 /api prefix 붙여 호출
 )
+
+# # Middleware to strip /api prefix for local development
+# @app.middleware("http")
+# async def strip_api_prefix(request: Request, call_next):
+#     if request.url.path.startswith("/api"):
+#         request.scope["path"] = request.url.path[4:]
+#     response = await call_next(request)
+#     return response
+
+# /api prefix를 모든 라우트에 추가
+from fastapi import APIRouter
+api_router = APIRouter(prefix="/api")
+
+# API router를 앱에 등록
+app.include_router(api_router)
+app.include_router(auth.router)
 
 # 로거 설정
 logger = logging.getLogger("jobpt")
@@ -89,7 +105,7 @@ class MatchRequest(BaseModel):
     resume_path: str
 
 
-@app.post("/upload")
+@api_router.post("/upload")
 async def upload_resume(
     file: UploadFile = File(...), location: str = Form(""), remote: str = Form("any"), job_type: str = Form("any")
 ):
@@ -99,8 +115,8 @@ async def upload_resume(
     Args:
         file: 사용자가 업로드한 이력서 파일(PDF)
 
-        아래 3개의 인자는 검색시 메타데이터 필터링을 위해 사용됨(e.g. Location=USA)
-        location: 근무 희망 위치 ['USA', 'Germany', 'UK']
+        아래 3개의 인자는 검색시 메타데이터 필터링을 위해 사용됨(e.g. Location=Korea)
+        location: 근무 희망 위치 ['Korea']
         remote: 원격 근무 여부 ['True', 'False']
         job_type: 근무 유형 ['fulltime', 'parttime']
     Returns:
@@ -116,6 +132,7 @@ async def upload_resume(
 
         # 로그 또는 활용 예시
         print(f"[UPLOAD] location={location}, remote={remote}, job_type={job_type}")
+        global location_cache, remote_cache, job_type_cache
         location_cache = location
         remote_cache = remote
         job_type_cache = job_type
@@ -125,7 +142,7 @@ async def upload_resume(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/matching")
+@api_router.post("/matching")
 async def run(data: MatchRequest):
     """
     사용자의 이력서를 기반으로 벡터 DB에서 채용공고를 검색하고
@@ -165,7 +182,7 @@ async def run(data: MatchRequest):
 langfuse_handler = CallbackHandler()
 
 
-@app.post("/chat")
+@api_router.post("/chat")
 async def chat(request: Request):
     data = await request.json()
     session_id = data["session_id"]
@@ -199,8 +216,8 @@ async def chat(request: Request):
     return {"response": answer}
 
 
-@app.post("/mock_chat")
-async def chat(request_data: dict = Body(...)):
+@api_router.post("/mock_chat")
+async def mock_chat(request_data: dict = Body(...)):
     message = request_data.get("message", "")
     resume_path = request_data.get("resume_path", "")
     company_name = request_data.get("company_name", "")
@@ -239,7 +256,11 @@ async def chat(request_data: dict = Body(...)):
     """
 
     try:
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        from configs import UPSTAGE_API_KEY
+        client = OpenAI(
+            api_key=UPSTAGE_API_KEY,
+            base_url="https://api.upstage.ai/v1"
+        )
         # Build a detailed, professional system prompt in English, including user preferences
         preference_info = []
         if request_data.get("location"):
@@ -260,7 +281,7 @@ async def chat(request_data: dict = Body(...)):
         )
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="solar-pro2",
             messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
             max_tokens=800,
             temperature=0.7,
@@ -278,7 +299,7 @@ class EvaluateRequest(BaseModel):
     model: int = 1
 
 
-@app.post("/evaluate")
+@api_router.post("/evaluate")
 async def evaluate(request: EvaluateRequest):
     try:
         analyzer = ATSAnalyzer(request.resume_path, request.jd_text, model=request.model)
@@ -290,6 +311,7 @@ async def evaluate(request: EvaluateRequest):
     except Exception as e:
         print(f"ATS 분석 오류: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 # 개발용 실행 명령

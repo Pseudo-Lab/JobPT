@@ -11,10 +11,13 @@ services:
     env_file:
       - .env
     environment:
-      NODE_ENV: ${ENVIRONMENT:-development}
-      NEXT_PUBLIC_API_URL: "https://${APP_HOST}"
+      NODE_ENV: ${ENVIRONMENT:-production}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      APP_HOST: ${APP_HOST:-localhost}
     volumes:
       - jobpt_resumes:/app/public/uploads
+      - /app/node_modules
+      - /app/.next
     depends_on:
       - backend
     networks:
@@ -47,8 +50,7 @@ services:
     env_file:
       - .env
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
       PINECONE_API_KEY: ${PINECONE_API_KEY:-}
@@ -65,25 +67,14 @@ services:
       - traefik.enable=true
       - traefik.docker.network=traefik
 
-      # --- Traefik Router (Backend /api) ---
-      - traefik.http.routers.jobpt-${ENVIRONMENT}-api.rule=Host(`${APP_HOST}`) && PathPrefix(`/api`)
+      # 백엔드에 /api 프리픽스가 포함되어 있으므로 stripPrefix 미들웨어 없이 그대로 전달
+      - traefik.http.routers.jobpt-${ENVIRONMENT}-api.rule=Host(`${APP_HOST}`) && (PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/health`) || Path(`/openapi.json`))
       - traefik.http.routers.jobpt-${ENVIRONMENT}-api.entrypoints=websecure
       - traefik.http.routers.jobpt-${ENVIRONMENT}-api.tls=true
       - traefik.http.routers.jobpt-${ENVIRONMENT}-api.tls.certresolver=le
       - traefik.http.services.jobpt-${ENVIRONMENT}-api.loadbalancer.server.port=8000
 
-      # FastAPI Docs router
-      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-docs.rule=Host(`${APP_HOST}`) && (PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`))
-      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-docs.entrypoints=websecure
-      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-docs.tls=true
-      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-docs.tls.certresolver=le
-      - traefik.http.routers.jobpt-${ENVIRONMENT}-api-docs.service=jobpt-${ENVIRONMENT}-api
-
-      # /api prefix 제거 미들웨어 연결
-      - traefik.http.middlewares.jobpt-${ENVIRONMENT}-api-stripprefix.stripprefix.prefixes=/api
-      - traefik.http.routers.jobpt-${ENVIRONMENT}-api.middlewares=jobpt-${ENVIRONMENT}-api-stripprefix
-
-      # HTTP → HTTPS 리다이렉트 (Backend)
+      # HTTP → HTTPS 리다이렉트 (backend)
       - traefik.http.routers.jobpt-${ENVIRONMENT}-api-http.rule=Host(`${APP_HOST}`) && PathPrefix(`/api`)
       - traefik.http.routers.jobpt-${ENVIRONMENT}-api-http.entrypoints=web
       - traefik.http.routers.jobpt-${ENVIRONMENT}-api-http.middlewares=redirect-to-https@file

@@ -13,6 +13,7 @@ langchain-chroma==0.2.3
 langchain-experimental==0.3.4
 langchain-openai==0.3.16
 langchain-pinecone==0.2.6
+langchain-upstage>=0.1.0
 
 langgraph==0.5.4
 markdown2==2.5.3
@@ -39,3 +40,11 @@ python-dotenv>=1.0.1
 openai>=1.0.0
 requests>=2.28.0
 langfuse>=2.60.4
+
+# database
+sqlalchemy==2.0.44
+pymysql==1.1.2
+bcrypt==4.0.1
+passlib==1.7.4
+python-jose[cryptography]==3.5.0
+alembic==1.17.2
