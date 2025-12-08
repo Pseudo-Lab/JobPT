@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Head from "next/head";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
@@ -97,7 +97,7 @@ export default function Home() {
         return sessionId;
     };
 
-    const sendMessage = async () => {
+    const sendMessage = useCallback(async () => {
         const chatMessages = document.getElementById("chat-messages");
         const chatInput = document.getElementById("chat-input") as HTMLInputElement | null;
         if (!chatMessages || !chatInput) return;
@@ -140,6 +140,8 @@ export default function Home() {
                 user_resume: userResume,
             };
 
+            console.log("[DEBUG] sendMessage - userResume:", userResume); // 디버그용
+
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -181,7 +183,13 @@ export default function Home() {
             adjustChatHeight();
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-    };
+    }, [resumePath, company, JD, userResume]);
+
+    // sendMessage의 최신 참조를 유지하는 ref
+    const sendMessageRef = useRef(sendMessage);
+    useEffect(() => {
+        sendMessageRef.current = sendMessage;
+    }, [sendMessage]);
 
     useEffect(() => {
         if (viewMode !== "result") return;
@@ -191,24 +199,24 @@ export default function Home() {
 
         if (!sendButton || !chatInput) return;
 
-        sendButton.addEventListener("click", sendMessage);
-        chatInput.addEventListener("keypress", function handleKeyPress(e) {
+        // ref를 통해 항상 최신 sendMessage를 호출
+        const handleClick = () => sendMessageRef.current();
+        const handleKeyPress = (e: KeyboardEvent) => {
             if (e.key === "Enter") {
-                sendMessage();
+                sendMessageRef.current();
             }
-        });
+        };
+
+        sendButton.addEventListener("click", handleClick);
+        chatInput.addEventListener("keypress", handleKeyPress);
 
         adjustChatHeight();
 
         return () => {
-            sendButton.removeEventListener("click", sendMessage);
-            chatInput.removeEventListener("keypress", function handleKeyPress(e) {
-                if (e.key === "Enter") {
-                    sendMessage();
-                }
-            });
+            sendButton.removeEventListener("click", handleClick);
+            chatInput.removeEventListener("keypress", handleKeyPress);
         };
-    }, [viewMode, resumePath, company, JD, userResume]);
+    }, [viewMode]); // viewMode만 의존 - ref를 사용하므로 다른 의존성 불필요
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
