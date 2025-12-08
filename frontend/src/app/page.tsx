@@ -208,7 +208,7 @@ export default function Home() {
                 }
             });
         };
-    }, [viewMode, resumePath, company, JD]);
+    }, [viewMode, resumePath, company, JD, userResume]);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
