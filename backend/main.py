@@ -168,14 +168,19 @@ async def run(data: MatchRequest):
 
     jd_summaries, jd_urls, c_names = await matching(resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache)
 
-    analysis_cache[resume_path] = {
-        "output": jd_summaries,
-        "JD": jd_urls,
-        "name": c_names,
-    }
-    logger.info(f"[{trace_id}] matching success company={c_names} url={jd_urls}")
+    # 첫 번째 결과만 사용 (배열 -> 문자열)
+    jd_summary = jd_summaries[0] if isinstance(jd_summaries, list) and jd_summaries else jd_summaries
+    jd_url = jd_urls[0] if isinstance(jd_urls, list) and jd_urls else jd_urls
+    c_name = c_names[0] if isinstance(c_names, list) and c_names else c_names
 
-    return {"JD": jd_summaries, "JD_url": jd_urls, "name": c_names, "trace_id": trace_id}
+    analysis_cache[resume_path] = {
+        "output": jd_summary,
+        "JD": jd_summary,
+        "name": c_name,
+    }
+    logger.info(f"[{trace_id}] matching success company={c_name} url={jd_url}")
+
+    return {"JD": jd_summary, "output": jd_summary, "JD_url": jd_url, "name": c_name, "trace_id": trace_id}
 
 
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답
