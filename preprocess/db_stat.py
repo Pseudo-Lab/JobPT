@@ -38,6 +38,30 @@ def check_index(collection: str="korea-jd-test"):
 
 
 
+@app.get("/list_indexes")
+async def list_indexes():
+    """
+    현재 존재하는 모든 Pinecone 인덱스의 이름과 개수를 조회합니다.
+    
+    return: 
+        - total_count: 전체 인덱스 개수
+        - indexes: 인덱스 이름 리스트
+    """
+    try:
+        indexes = pc.list_indexes()
+        index_names = [index.name for index in indexes]
+        
+        return {
+            "total_count": len(index_names),
+            "indexes": index_names
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"message": f"인덱스 목록 조회 실패: {str(e)}"}
+        )
+
+
 @app.get("/stat")
 async def stat(collection: str="korea-jd-test"):
     """
@@ -72,7 +96,7 @@ async def check_unique_column(file: UploadFile,):
 
 
 
-@app.post("/create_index")
+@app.get("/create_index")
 async def create_index(index_name: str = "index-name-for-create", dimension: int=4096):
     """
     Pinecone 인덱스를 생성하는 API
@@ -102,7 +126,7 @@ async def create_index(index_name: str = "index-name-for-create", dimension: int
             "detail": str(e)
         }
 
-@app.post("/drop_index")
+@app.get("/drop_index")
 async def drop_index(collection: str="index-name-for-drop"):
     """
     인덱스를 삭제합니다.
@@ -123,10 +147,31 @@ async def drop_index(collection: str="index-name-for-drop"):
         }
 
 
+# @app.post("/upsert_data")
+# async def upsert_jd(file: UploadFile, collection: str="korea-jd-dev"):
+#     """
+#     CSV를 업로드하고 Pinecone에 저장합니다.
+#     """
+#     if not file.filename.endswith('.csv'):
+#         return JSONResponse(
+#             status_code=400, 
+#             content={"message": "CSV 파일만 업로드할 수 있습니다."}
+#         )
+
+#     try: 
+#         ### 요약전 인덱스 부터 chk
+#         index_name = collection
+#         result = check_index(collection)
+#         index = pc.Index(index_name)
+
+#         uploaded_file = file.file
+#         df = pd.read_csv(uploaded_file)
 
 
 
-@app.post("/update_index")
+
+
+@app.post("/upsert_jd")
 async def update_index(file: UploadFile, collection: str="korea-jd-dev"):
     """
     - korea-jd-dev: 개발용
@@ -202,6 +247,60 @@ async def update_index(file: UploadFile, collection: str="korea-jd-dev"):
             status_code=500, 
             content={"message": str(e)}
         )
+
+
+@app.post("/upsert_custom_csv")
+async def update_index(file: UploadFile, collection: str="test-custom-index"):
+    """
+    - korea-jd-dev, korea-jd-prod 사용불가
+
+    """
+    if not file.filename.endswith('.csv'):
+        
+        # CSV 파일이 아닌 경우 오류 처리
+        return JSONResponse(
+            status_code=400, 
+            content={"message": "CSV 파일만 업로드할 수 있습니다."}
+        )
+    try: 
+        ### 요약전 인덱스 부터 chk
+        index_name = collection
+        result = check_index(collection)
+        if result["message"] == False:
+            index = await create_index(index_name)
+        else:
+            index = pc.Index(index_name)
+        uploaded_file = file.file
+        df = pd.read_csv(uploaded_file)
+        total_chunks = make_documents_from_csv(df)
+        emb_model = UpstageEmbeddings(model="solar-embedding-1-large")
+
+        vector_store = PineconeVectorStore(index=index, embedding=emb_model)
+
+        ### 데이터가 남아있을때 데이터 제거(소량일때만 사용), 추후 모듈화
+        if len(index.describe_index_stats()["namespaces"]) > 0:
+            index.delete(delete_all=True, namespace="")
+
+        ### 파인콘 API로 한번에 대용량 update가 불가능하여 배치처리
+        total = len(total_chunks)
+        batch_size = 100
+        for start in tqdm(range(0, total, batch_size), desc="Upserting to Pinecone"):
+            end = start + batch_size
+
+            batch_docs = total_chunks[start:end]
+            # print(batch_docs)
+            vector_store.add_documents(documents=batch_docs)
+        return JSONResponse(
+            status_code=200, 
+            content={"message": "인덱스가 업데이트되었습니다"}
+        )
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=500, 
+            content={"message": str(e)}
+        )
+
 
 
 if __name__ == "__main__":

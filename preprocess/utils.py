@@ -59,6 +59,68 @@ def make_chunks(sentences, table):
     return total_chunks
 
 
+def make_documents_from_csv(df, text_column="text"):
+    """
+    CSV 데이터프레임을 Document 리스트로 변환합니다.
+    (청킹 없이 텍스트 그대로 사용 - 팀원이 직접 청킹한 데이터용)
+    
+    Args:
+        df: pandas DataFrame (CSV에서 읽어온 데이터)
+        text_column: 임베딩할 텍스트가 있는 컬럼명 (기본값: "text")
+    
+    Returns:
+        documents: List[Document] - Document 리스트
+    
+    Example:
+        >>> df = pd.read_csv("data.csv")
+        >>> docs = make_documents_from_csv(df, text_column="description")
+    """
+    from langchain_core.documents import Document
+    
+    if text_column not in df.columns:
+        raise ValueError(f"'{text_column}' 컬럼이 데이터프레임에 없습니다. 사용 가능한 컬럼: {list(df.columns)}")
+    
+    documents = []
+    metadata_columns = [col for col in df.columns if col != text_column]
+    
+    for idx, row in tqdm(df.iterrows(), total=len(df), desc="Document 생성중"):
+        text = row[text_column]
+        
+        # text가 비어있으면 스킵
+        if pd.isna(text) or not str(text).strip():
+            print(f"⚠️ Row {idx}: 텍스트가 비어있어 스킵합니다.")
+            continue
+        
+        # 메타데이터 생성 (text_column 제외한 나머지 컬럼들)
+        # Pinecone에서 허용하는 타입만 포함: str, int, float, bool, list[str/int/float]
+        meta_data = {}
+        for col in metadata_columns:
+            value = row[col]
+            
+            # NaN이나 None은 빈 문자열로 변환
+            if pd.isna(value) or value is None:
+                meta_data[col] = ""
+            # 숫자 타입은 그대로 유지
+            elif isinstance(value, (int, float, bool)):
+                meta_data[col] = value
+            # 나머지는 문자열로 변환
+            else:
+                meta_data[col] = str(value)
+        
+        doc = Document(page_content=str(text), metadata=meta_data)
+        documents.append(doc)
+    
+    print(f"✅ 원본 데이터 개수: {len(df)}")
+    print(f"✅ 생성된 Document 개수: {len(documents)}")
+    
+    return documents
+
+
+
+
+
+
+
 
 
 def preprocess(table):
