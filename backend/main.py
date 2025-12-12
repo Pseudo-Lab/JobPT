@@ -26,7 +26,7 @@ from configs import *
 from langfuse.langchain import CallbackHandler
 
 from ATS_agent.ats_analyzer_improved import ATSAnalyzer
-from util.jd_crawler import scrape_jd_from_url
+from util.jd_crawler import crawl_jd_from_url
 
 from db.database import engine, Base
 from db import models
@@ -62,10 +62,6 @@ app = FastAPI(
 # /api prefix를 모든 라우트에 추가
 from fastapi import APIRouter
 api_router = APIRouter(prefix="/api")
-
-# API router를 앱에 등록
-app.include_router(api_router)
-app.include_router(auth.router)
 
 # 로거 설정
 logger = logging.getLogger("jobpt")
@@ -344,7 +340,7 @@ async def scrape_jd(request: ScrapeJDRequest):
     logger.info(f"[{trace_id}] /scrape-jd start url={request.url}")
 
     try:
-        result = scrape_jd_from_url(request.url)
+        result = crawl_jd_from_url(request.url)
 
         if result["success"]:
             logger.info(f"[{trace_id}] scraping success site={result['site']} text_length={len(result['text'])}")
@@ -365,6 +361,9 @@ async def scrape_jd(request: ScrapeJDRequest):
             status_code=500
         )
 
+# API router를 앱에 등록
+app.include_router(api_router)
+app.include_router(auth.router)
 
 # 개발용 실행 명령
 if __name__ == "__main__":
