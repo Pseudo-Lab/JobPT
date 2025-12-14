@@ -68,7 +68,8 @@ if __name__ == "__main__":
 
     input_path = args.input_file
     base, ext = os.path.splitext(input_path)
-    output_path = f"{base}_preprocessed{ext}"
+    mmdd = datetime.now().strftime("%m%d")
+    output_path = f"{base}_preprocessed_{mmdd}{ext}"
 
     df = pd.read_csv(input_path)
     # df = df.iloc[:10]    ### 테스트용

@@ -11,7 +11,7 @@ from langchain_openai import OpenAIEmbeddings
 from tqdm import tqdm
 import argparse
 from openai import OpenAI # openai==1.52.2
-
+from datetime import datetime
 ### 전역변수 가져와서 넣기
 # table = pd.read_csv("/home/yhkim/code/JobPT/backend/get_similarity/data/korean_jd_105.csv")
 
@@ -116,8 +116,41 @@ def make_documents_from_csv(df, text_column="text"):
     return documents
 
 
+def check_deadline(deadline_str):
+    # 날짜 형식에 맞게 변환
+    try:
+        deadline = datetime.strptime(deadline_str, "%Y-%m-%d")
+    except ValueError:
+        return False  # 파싱 불가(상시채용 등) 시 False 반환
+    ### 현재시간보다 미래일시 True, 과거일시 False, 최종적으로 False는 모두 제거해야함
+    return deadline > datetime.now()
 
-
+def delete_vectors(index, ids):
+    """
+    Pinecone에서 벡터 삭제
+    
+    Args:
+        index: Pinecone index 객체
+        ids: 단일 ID(str) 또는 ID 리스트(list)
+    
+    Returns:
+        삭제된 ID 개수
+    """
+    # 단일 ID면 리스트로 변환
+    if isinstance(ids, str):
+        ids = [ids]
+    
+    # 배치 삭제 (한 번에 최대 1000개)
+    batch_size = 1000
+    deleted_count = 0
+    
+    for i in range(0, len(ids), batch_size):
+        batch = ids[i:i+batch_size]
+        index.delete(ids=batch)
+        deleted_count += len(batch)
+    
+    print(f"✅ {deleted_count}개의 벡터가 삭제되었습니다.")
+    return deleted_count
 
 
 
