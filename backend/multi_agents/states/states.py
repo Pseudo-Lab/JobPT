@@ -11,9 +11,9 @@ class State:
     messages: Annotated[Sequence[AnyMessage], add_messages] = field(default_factory=list)
     agent_name: str = field(default="")
     job_description: str = field(default="")
-    resume: str = field(default="")
+    resume: str = field(default="") # 유저 전체 resume
     company_summary: str = field(default="")
-    user_resume: str = field(default="")
+    user_resume: str = field(default="") # 유저가 선택한 resume 부분
     route_decision: str = field(default="")
     company_name: str = field(default="")
     github_url: str = field(default="")
@@ -38,6 +38,7 @@ def start_session(session_id: str, **kwargs):
         route_decision=kwargs.get("route_decision", ""),
         company_name=kwargs.get("company_name", ""),
         github_url=kwargs.get("github_url", ""),
+        blog_url=kwargs.get("blog_url", ""),
     )
     session_states[session_id] = state
 
