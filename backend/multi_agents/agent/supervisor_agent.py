@@ -1,7 +1,7 @@
 from typing import cast
 from openai import OpenAI
 from langgraph.prebuilt import create_react_agent
-from langchain_openai import ChatOpenAI
+from langchain_upstage import ChatUpstage
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_core.messages import AIMessage, SystemMessage
 from multi_agents.states.states import State
@@ -12,7 +12,10 @@ import json
 import re
 from configs import *  # 필요한 모든 설정 import
 
-client = OpenAI()
+client = OpenAI(
+    api_key=UPSTAGE_API_KEY,
+    base_url="https://api.upstage.ai/v1"
+)
 
 
 def parse_json_loose(text: str) -> dict:
@@ -38,7 +41,7 @@ async def router(state: State):
     Returns:
         dict: 라우팅 결정이 포함된 메시지 딕셔너리
     """
-    model = ChatOpenAI(model="gpt-4o", temperature=0)
+    model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
 
     # client = MultiServerMCPClient()
     # tools = await client.get_tools()
@@ -111,8 +114,8 @@ def refine_answer(state: State) -> dict:
     Returns:
         dict: 개선된 응답 메시지를 포함한 딕셔너리
     """
-    # ChatOpenAI 모델 초기화 (환경변수 자동 사용)
-    model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    # ChatUpstage 모델 초기화
+    model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
 
     # 응답 개선을 위한 시스템 메시지
     # 원본 의미와 구조를 유지하면서 명확성과 문법을 개선
@@ -131,6 +134,10 @@ def refine_answer(state: State) -> dict:
 명확성, 문법, 흐름 개선이 필요한 경우에만 손보세요.  
 
 중요한 정보를 삭제하거나 의도를 바꿀 수 있는 식으로 다시 표현하지 마세요.  
+
+**중요**: 마크다운 형식(줄바꿈, 리스트, 굵게 표시 등)을 반드시 유지하세요.  
+줄바꿈은 `\n`으로, 리스트는 `-` 또는 `*`로, 굵게 표시는 `**텍스트**`로 작성하세요.  
+마크다운 문법이 포함되어 있다면 그대로 유지하세요.
 
 어시스턴트의 답변이 이미 명확하고 적절하다면 그대로 반환하세요.
 """

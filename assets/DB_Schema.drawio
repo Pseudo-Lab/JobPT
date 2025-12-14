@@ -1,0 +1,58 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" version="29.1.1">
+  <diagram name="Page-1" id="ds7uoCSE5kZKHZCeQILd">
+    <mxGraphModel dx="1101" dy="596" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="SP06STEzAbsmYMUdUcmi-2" edge="1" parent="1" source="SP06STEzAbsmYMUdUcmi-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;endArrow=ERmany;endFill=0;" target="SP06STEzAbsmYMUdUcmi-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-3" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" value="users" vertex="1">
+          <mxGeometry height="140" width="160" x="200" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-4" parent="SP06STEzAbsmYMUdUcmi-3" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;whiteSpace=wrap;" value="&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+ id (PK)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;+ user_id&lt;/div&gt;&lt;div&gt;+ password&lt;/div&gt;&lt;div&gt;+ created_at&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="160" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-5" edge="1" parent="SP06STEzAbsmYMUdUcmi-3" source="SP06STEzAbsmYMUdUcmi-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="SP06STEzAbsmYMUdUcmi-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-6" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" value="resumes" vertex="1">
+          <mxGeometry height="140" width="160" x="490" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-7" parent="SP06STEzAbsmYMUdUcmi-6" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;whiteSpace=wrap;" value="&lt;div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+ id (PK)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&amp;nbsp;&lt;/span&gt;user_id (FK -&amp;gt; user.id)&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;pdf_url&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;div&gt;+ created_at&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="160" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-8" edge="1" parent="SP06STEzAbsmYMUdUcmi-6" source="SP06STEzAbsmYMUdUcmi-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="SP06STEzAbsmYMUdUcmi-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-9" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" value="VectorDB" vertex="1">
+          <mxGeometry height="210" width="160" x="200" y="375" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-10" parent="SP06STEzAbsmYMUdUcmi-9" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;whiteSpace=wrap;" value="&lt;div&gt;+ embedding vector(jd_chunk)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;+ metadata: {&lt;/div&gt;&lt;div&gt;&amp;nbsp; - id(FK -&amp;gt; jd.id)&lt;/div&gt;&lt;div&gt;&amp;nbsp; - description&lt;/div&gt;&lt;div&gt;&amp;nbsp; -&amp;nbsp;experience_requirement&lt;/div&gt;&lt;div&gt;&amp;nbsp; - job_url&lt;/div&gt;&lt;div&gt;&amp;nbsp; - location&lt;/div&gt;&lt;div&gt;}&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="160" width="160" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-11" edge="1" parent="SP06STEzAbsmYMUdUcmi-9" source="SP06STEzAbsmYMUdUcmi-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="SP06STEzAbsmYMUdUcmi-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-12" parent="1" style="whiteSpace=wrap;html=1;" value="VectorDB" vertex="1">
+          <mxGeometry height="30" width="120" x="220" y="335" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-13" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" value="JD" vertex="1">
+          <mxGeometry height="150" width="160" x="490" y="375" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-14" parent="SP06STEzAbsmYMUdUcmi-13" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;whiteSpace=wrap;" value="&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;+ id (PK)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;+ jd_url&lt;/div&gt;&lt;div&gt;+ summary&lt;/div&gt;&lt;div&gt;+ description&lt;/div&gt;&lt;div&gt;+ deadline date&lt;/div&gt;&lt;div&gt;+ created_at&lt;/div&gt;" vertex="1">
+          <mxGeometry height="100" width="160" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-15" edge="1" parent="SP06STEzAbsmYMUdUcmi-13" source="SP06STEzAbsmYMUdUcmi-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="SP06STEzAbsmYMUdUcmi-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SP06STEzAbsmYMUdUcmi-16" edge="1" parent="1" source="SP06STEzAbsmYMUdUcmi-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="SP06STEzAbsmYMUdUcmi-10" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="h0gC5ZdMWejn1akaWV5i-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="JobPT (mySQL)" vertex="1">
+          <mxGeometry height="30" width="120" x="210" y="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

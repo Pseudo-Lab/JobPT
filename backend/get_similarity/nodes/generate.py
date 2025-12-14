@@ -1,11 +1,11 @@
 from configs import *
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda
-from langchain_openai import ChatOpenAI
+from langchain_upstage import ChatUpstage
 from langchain_core.prompts import PromptTemplate
 import yaml
 
-llm = ChatOpenAI(model=RAG_MODEL)
+llm = ChatUpstage(model=RAG_MODEL, api_key=UPSTAGE_API_KEY)
 
 # def format_docs(docs):
 #     print("\n=== format_docs 함수 실행 ===")

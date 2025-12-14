@@ -58,6 +58,15 @@ def get_session_state(session_id: str, **kwargs):
     """세션의 State 반환 (없으면 새로 생성, 인풋 값으로 초기화)"""
     if session_id not in session_states:
         start_session(session_id, **kwargs)
+    else:
+        # 기존 세션이 있어도 매 요청마다 업데이트해야 하는 필드들
+        state = session_states[session_id]
+        if "user_resume" in kwargs:
+            state.user_resume = kwargs["user_resume"]
+        if "job_description" in kwargs:
+            state.job_description = kwargs["job_description"]
+        if "company_name" in kwargs:
+            state.company_name = kwargs["company_name"]
     return session_states[session_id]
 
 

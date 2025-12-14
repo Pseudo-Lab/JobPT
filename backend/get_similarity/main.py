@@ -1,7 +1,8 @@
 from get_similarity.nodes.retrieval import get_retriever
 from get_similarity.nodes.search import search_jd, search_jd_summary
 from get_similarity.nodes.generate import generation
-from langchain_openai import OpenAIEmbeddings
+# from langchain_openai import OpenAIEmbeddings
+from langchain_upstage import UpstageEmbeddings
 from get_similarity.nodes.db_load import get_db
 import pickle
 from langchain_community.retrievers import BM25Retriever  #로컬에서 그대로 받는거라 강조는 안되지만 필요
@@ -13,7 +14,7 @@ async def matching(resume, location, remote, jobtype):
 
     Args:
         resume: 사용자의 이력서 텍스트
-        location: 근무 희망 위치 ['USA', 'Germany', 'UK']
+        location: 근무 희망 위치 ['Korea']
         remote: 원격 근무 여부 ['True', 'False']
         jobtype: 근무 유형 ['fulltime', 'parttime']
     Returns:
@@ -23,14 +24,14 @@ async def matching(resume, location, remote, jobtype):
         c_name: 채용공고를 올린 회사 이름
     """
     search_filter = {}
-    if location:
-        search_filter["location"] = location
-    if remote :
-        search_filter["is_remote"] = remote
-    if jobtype:
-        search_filter["job_type"] = jobtype
+    # if location:
+    #     search_filter["location"] = location
+    # if remote :
+    #     search_filter["is_remote"] = remote
+    # if jobtype:
+    #     search_filter["job_type"] = jobtype
 
-    emb_model = OpenAIEmbeddings()
+    emb_model = UpstageEmbeddings(model="solar-embedding-1-large")
 
     print(">>>>"*30)
     print("Loading vector DB...")
