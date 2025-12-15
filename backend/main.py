@@ -26,6 +26,7 @@ from configs import *
 from langfuse.langchain import CallbackHandler
 
 from ATS_agent.ats_analyzer_improved import ATSAnalyzer
+from util.jd_crawler import crawl_jd_from_url
 
 from db.database import engine, Base
 from db import models
@@ -61,10 +62,6 @@ app = FastAPI(
 # /api prefix를 모든 라우트에 추가
 from fastapi import APIRouter
 api_router = APIRouter(prefix="/api")
-
-# API router를 앱에 등록
-app.include_router(api_router)
-app.include_router(auth.router)
 
 # 로거 설정
 logger = logging.getLogger("jobpt")
@@ -318,6 +315,55 @@ async def evaluate(request: EvaluateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# /scrape-jd - JD URL 크롤링
+class ScrapeJDRequest(BaseModel):
+    url: str
+
+
+@api_router.post("/scrape-jd")
+async def scrape_jd(request: ScrapeJDRequest):
+    """
+    채용 공고 URL에서 텍스트를 크롤링합니다.
+
+    Args:
+        url: 채용 공고 URL
+
+    Returns:
+        JSONResponse: {
+            "success": bool,
+            "text": str,  # 추출된 JD 텍스트
+            "site": str,  # 사이트명
+            "error": str  # 에러 메시지 (실패시)
+        }
+    """
+    trace_id = str(uuid.uuid4())
+    logger.info(f"[{trace_id}] /scrape-jd start url={request.url}")
+
+    try:
+        result = crawl_jd_from_url(request.url)
+
+        if result["success"]:
+            logger.info(f"[{trace_id}] scraping success site={result['site']} text_length={len(result['text'])}")
+        else:
+            logger.warning(f"[{trace_id}] scraping failed error={result['error']}")
+
+        return JSONResponse(content=result)
+
+    except Exception as e:
+        logger.error(f"[{trace_id}] unexpected error: {str(e)}")
+        return JSONResponse(
+            content={
+                "success": False,
+                "text": "",
+                "site": "",
+                "error": f"서버 오류가 발생했습니다: {str(e)}"
+            },
+            status_code=500
+        )
+
+# API router를 앱에 등록
+app.include_router(api_router)
+app.include_router(auth.router)
 
 # 개발용 실행 명령
 if __name__ == "__main__":
