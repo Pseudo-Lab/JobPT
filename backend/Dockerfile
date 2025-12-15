@@ -30,8 +30,8 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 보수적으로 requests 설치 보장
-RUN pip install --no-cache-dir requests==2.31.0
+# langchain 관련 패키지 최신 버전 설치 (langchain_mcp_adapters 호환성)
+RUN pip install --no-cache-dir --upgrade langchain langchain-core langchain-mcp-adapters
 
 # NLTK 데이터 다운로드
 RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"

@@ -18,8 +18,11 @@ const UploadView: React.FC<UploadViewProps> = memo(({
   jobType,
   setLocation,
   setRemote,
-  setJobType
+  setJobType,
+  handleManualJD
 }) => {
+  // handleManualJD is received but used in parent component
+  void handleManualJD;
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] space-y-8">
       <h1 className="text-4xl font-bold text-indigo-700">📄 JobPT</h1>

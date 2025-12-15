@@ -62,8 +62,7 @@ app = FastAPI(
 from fastapi import APIRouter
 api_router = APIRouter(prefix="/api")
 
-# API router를 앱에 등록
-app.include_router(api_router)
+# auth router는 먼저 등록 (prefix 없음)
 app.include_router(auth.router)
 
 # 로거 설정
@@ -318,6 +317,9 @@ async def evaluate(request: EvaluateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
+# API router를 앱에 등록 (모든 라우트 정의 후에 등록해야 함)
+app.include_router(api_router)
 
 # 개발용 실행 명령
 if __name__ == "__main__":
