@@ -17,6 +17,7 @@ class State:
     route_decision: str = field(default="")
     company_name: str = field(default="")
     github_url: str = field(default="")
+    blog_url: str = field(default="")
 
 
 # 세션별 State 인스턴스를 저장하는 딕셔너리
