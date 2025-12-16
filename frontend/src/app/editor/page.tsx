@@ -244,7 +244,7 @@ const EditorPage = () => {
             <ResumeSummaryView summary={defaultResumeSummary} />
 
             <div className="flex h-full flex-col gap-6">
-              <section className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+              <section className="flex h-full min-h-[70vh] flex-col rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
                 <header className="flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-semibold text-slate-900">AI Assistant</h2>
@@ -252,7 +252,7 @@ const EditorPage = () => {
                 </header>
                 <div
                   ref={listRef}
-                  className="mt-6 flex-1 min-h-[320px] overflow-y-auto pr-1"
+                  className="mt-6 mb-6 flex-1 min-h-[320px] max-h-[1100px] overflow-y-auto pr-1"
                 >
                   <div className="space-y-5">
                     {messages.map((message) => {
@@ -287,7 +287,7 @@ const EditorPage = () => {
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-3xl border border-slate-200 bg-white px-4 py-3 shadow-inner">
+                <div className="mt-auto rounded-3xl border border-slate-200 bg-white px-4 py-3 shadow-inner">
                   <div className="flex items-center gap-3">
                     <input
                       type="text"
