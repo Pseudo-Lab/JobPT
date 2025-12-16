@@ -11,7 +11,7 @@ from langfuse import Langfuse, get_client
 from langfuse.langchain import CallbackHandler
 from multi_agents.agent.github_tools import GITHUB_TOOLS
 from multi_agents.agent.blog_tools import BLOG_TOOLS
-from configs import AGENT_MODEL, UPSTAGE_API_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, OPENAI_API_KEY 
+from configs import AGENT_MODEL, UPSTAGE_API_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY 
 
 async def suggest_agent(state: State):
     """
@@ -77,8 +77,8 @@ async def suggest_agent(state: State):
     # Initialize the Langfuse handler
     langfuse_handler = CallbackHandler()
 
-    # model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
-    model = ChatOpenAI(model=AGENT_MODEL, temperature=0, api_key=OPENAI_API_KEY)
+    model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
+    # model = ChatOpenAI(model=AGENT_MODEL, temperature=0, api_key=OPENAI_API_KEY)
 
     # MCP 도구와 GitHub 도구 결합
     try:
