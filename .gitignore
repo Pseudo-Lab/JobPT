@@ -23,3 +23,4 @@ backend/test_api.py
 backend/test_ats.py
 backend/ats_report.html
 data/uploads/**
+dev_data
