@@ -1,10 +1,15 @@
 "use client";
+import dynamic from "next/dynamic";
 import DOMPurify from 'dompurify';
 import { marked } from "marked";
 import React, { memo } from 'react';
 import Image from 'next/image';
-import { PdfHighlighterView } from '@/components/common';
 import type { ResultViewProps } from '@/types/evaluate';
+
+const PdfHighlighterView = dynamic(
+  () => import("@/components/common/PdfHighlighterView"),
+  { ssr: false },
+);
 
 const ResultView: React.FC<ResultViewProps> = memo(({
   pdfError,
@@ -38,7 +43,7 @@ const ResultView: React.FC<ResultViewProps> = memo(({
               sessionStorage.setItem('resume_path', pdfUrl || '');
               sessionStorage.setItem('jd_text', JD || '');
             }
-            window.location.href = '/evaluate';
+            window.location.href = '/preferences';
           }}
         >
           📝 평가받기

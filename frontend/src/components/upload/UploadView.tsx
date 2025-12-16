@@ -1,191 +1,190 @@
 import React, { memo } from "react";
 import { UploadViewProps } from "@/types/upload";
 
-import Link from 'next/link';
-import Image from 'next/image';
+const UploadView: React.FC<UploadViewProps> = memo(
+  ({
+    file,
+    status,
+    isDragging,
+    fileInputRef,
+    handleFileChange,
+    handleAnalyze,
+    handleDrop,
+    setIsDragging,
+    jobPostingUrl,
+    onJobPostingUrlChange,
+  }) => {
+    const isProcessing = status === "Processing...";
 
-const UploadView: React.FC<UploadViewProps> = memo(({
-  file,
-  status,
-  isDragging,
-  fileInputRef,
-  handleFileChange,
-  handleAnalyze,
-  handleDrop,
-  setIsDragging,
-  location,
-  remote,
-  jobType,
-  setLocation,
-  setRemote,
-  setJobType
-}) => {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] space-y-8">
-      <h1 className="text-4xl font-bold text-indigo-700">📄 JobPT</h1>
-      <p className="text-xl text-gray-600">이력서를 업로드하여 적합한 채용 정보를 찾아보세요</p>
+    const uploadCardState = [
+      "mt-6 flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-10 text-center transition-colors duration-300 cursor-pointer",
+      isDragging ? "border-blue-400 bg-blue-50" : "border-slate-300 bg-slate-50",
+      file ? "border-blue-500 bg-blue-50" : "",
+    ].join(" ");
 
-      <div className="w-full max-w-lg space-y-4">
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          onDrop={handleDrop}
-          onDragOver={e => e.preventDefault()}
-          onDragEnter={() => setIsDragging(true)}
-          onDragLeave={() => setIsDragging(false)}
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors duration-300
-            ${isDragging ? "border-indigo-500 bg-indigo-50" : "border-gray-300 bg-gray-50"}
-            ${file ? "border-green-500" : ""}`}
-        >
-          {file ? (
-            <div className="space-y-2">
-              <div className="flex items-center justify-center">
-                <svg className="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <p className="text-lg font-medium text-green-600">파일이 준비되었습니다</p>
-              <p className="text-gray-700">{file.name}</p>
+    return (
+      <section className="flex flex-col gap-8">
+        <header className="space-y-2">
+          <h1 className="text-3xl font-semibold text-slate-900 md:text-4xl">
+            JobPT 시작하기
+          </h1>
+          <p className="text-sm text-slate-500 md:text-base">
+            이력서를 업로드하고, 맞춤 공고를 받아보세요 (멘트 수정)
+          </p>
+        </header>
+
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-lg font-semibold text-slate-800">
+                Upload Resume (Required)
+              </h2>
             </div>
-          ) : (
-            <>
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              <p className="text-indigo-600 font-semibold mt-2">이력서 파일을 여기에 끌어다 놓거나 클릭하여 선택</p>
-              <p className="text-sm text-gray-500 mt-1">지원 형식: PDF, PNG, JPG, JPEG, GIF</p>
-            </>
-          )}
-        </div>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf,.png,.jpg,.jpeg,.gif"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-
-        {/* 🔽 필터 입력 */}
-        <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">📍 선호 지역</label>
-          <div className="mt-1 flex gap-4">
-            <label className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition-colors ${location[0]==='Korea' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700'}`}>
-  <input
-    type="radio"
-    name="location-category"
-    value="Korea"
-    checked={location[0] === 'Korea'}
-    onChange={() => setLocation(['Korea'])}
-    className="accent-indigo-500"
-  />
-  대한민국
-</label>
-          </div>
-        </div>
-
-
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">💻 원격 근무</label>
-            <div className="flex gap-4 mt-1">
-              <label className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition-colors ${remote.includes(true) ? 'bg-green-100 text-green-700 font-semibold' : 'text-gray-700'}`}>
-  <input
-    type="checkbox"
-    checked={remote.includes(true)}
-    onChange={e => {
-      if (e.target.checked) setRemote(Array.from(new Set([...remote, true])));
-      else setRemote(remote.filter(r => r !== true));
-    }}
-    className="accent-green-500"
-  />
-  희망
-</label>
-<label className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition-colors ${remote.includes(false) ? 'bg-red-100 text-red-700 font-semibold' : 'text-gray-700'}`}>
-  <input
-    type="checkbox"
-    checked={remote.includes(false)}
-    onChange={e => {
-      if (e.target.checked) setRemote(Array.from(new Set([...remote, false])));
-      else setRemote(remote.filter(r => r !== false));
-    }}
-    className="accent-red-500"
-  />
-  비희망
-</label>
-            </div>
-            <span className="text-xs text-gray-400">복수선택 가능</span>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">🕒 고용 형태</label>
-            <div className="flex gap-4 mt-1">
-              <label className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition-colors ${jobType.includes('fulltime') ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700'}`}>
-  <input
-    type="checkbox"
-    checked={jobType.includes('fulltime')}
-    onChange={e => {
-      if (e.target.checked) setJobType(Array.from(new Set([...jobType, 'fulltime'])));
-      else setJobType(jobType.filter(j => j !== 'fulltime'));
-    }}
-    className="accent-blue-500"
-  />
-  풀타임
-</label>
-<label className={`flex items-center gap-2 px-2 py-1 rounded cursor-pointer transition-colors ${jobType.includes('parttime') ? 'bg-yellow-100 text-yellow-700 font-semibold' : 'text-gray-700'}`}>
-  <input
-    type="checkbox"
-    checked={jobType.includes('parttime')}
-    onChange={e => {
-      if (e.target.checked) setJobType(Array.from(new Set([...jobType, 'parttime'])));
-      else setJobType(jobType.filter(j => j !== 'parttime'));
-    }}
-    className="accent-yellow-500"
-  />
-  파트타임
-</label>
-            </div>
-            <span className="text-xs text-gray-400">복수선택 가능</span>
-          </div>
-        </div>
-      </div>
-
-      {file && (
-        <div className="flex flex-wrap justify-center gap-4">
-          <button
-            className="px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium text-lg shadow-md transition duration-300 transform hover:scale-105 flex items-center justify-center min-w-[120px]"
-            onClick={handleAnalyze}
-            disabled={status === "Processing..."}
-          >
-            <><span role="img" aria-label="분석">🔍</span> 분석하기</>
-          </button>
-          <Link href="/evaluate">
-            <button
-              className="px-6 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium text-lg shadow-md transition duration-300 transform hover:scale-105 flex items-center justify-center min-w-[120px]"
-              disabled={status === "Processing..."}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
+              onDrop={(event) => {
+                handleDrop(event);
+              }}
+              onDragOver={(event) => event.preventDefault()}
+              onDragEnter={() => setIsDragging(true)}
+              onDragLeave={() => setIsDragging(false)}
+              className={uploadCardState}
             >
-              <><span role="img" aria-label="평가">📝</span> 평가받기</>
+              {file ? (
+                <div className="space-y-3">
+                  <svg
+                    className="mx-auto h-14 w-14 text-blue-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.8}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <div className="space-y-1">
+                    <p className="text-base font-semibold text-slate-800">
+                      {file.name}
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      다른 파일로 교체하려면 다시 업로드하세요.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="h-8 w-8 text-blue-500"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M3 6.75C3 5.784 3 5.302 3.152 4.911a2.25 2.25 0 011.337-1.337C4.88 3.422 5.363 3.422 6.328 3.422h11.344c.965 0 1.447 0 1.838.152a2.25 2.25 0 011.337 1.337c.152.391.152.874.152 1.839v10.5c0 .965 0 1.447-.152 1.838a2.25 2.25 0 01-1.337 1.337c-.391.152-.873.152-1.838.152H6.328c-.965 0-1.447 0-1.838-.152a2.25 2.25 0 01-1.337-1.337C3 18.697 3 18.215 3 17.25V6.75z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M8.25 7.5h7.5M8.25 11.25h7.5M11.25 15h4.5"
+                      />
+                    </svg>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-base font-medium text-blue-600">
+                      Upload a file or drag and drop
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      PDF, DOCX, TXT, 이미지 (최대 10MB)
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <label
+              htmlFor="job-posting-url"
+              className="text-lg font-semibold text-slate-800"
+            >
+              Job Posting URL
+              <span className="ml-2 text-sm font-medium text-slate-400">
+                (Optional)
+              </span>
+            </label>
+            <input
+              id="job-posting-url"
+              type="url"
+              value={jobPostingUrl}
+              onChange={(event) => onJobPostingUrlChange(event.target.value)}
+              placeholder="https://www.linkedin.com/jobs/view/..."
+              className="mt-4 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-700 placeholder:underline shadow-inner transition focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+            />
+            <p className="mt-3 text-sm text-slate-400">
+              희망하는 공고가 있다면 해당 링크를 입력해주세요. 공고에 맞춰
+              이력서 수정을 도와드릴게요.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <button
+              type="button"
+              onClick={handleAnalyze}
+              disabled={!file || isProcessing}
+              className={`ml-auto inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-base font-semibold transition ${
+                !file || isProcessing
+                  ? "cursor-not-allowed bg-slate-300 text-slate-500"
+                  : "bg-[rgb(96,150,222)] text-white shadow-md hover:bg-[rgb(86,140,212)]"
+              }`}
+            >
+              다음 단계로
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="h-5 w-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13.5 4.5l6 7.5-6 7.5M4.5 12h15"
+                />
+              </svg>
             </button>
-          </Link>
+          </div>
         </div>
-      )}
+      </section>
+    );
+  },
+);
 
-      <div className={`mt-2 flex flex-col items-center justify-center gap-2 ${status === "Processing..." ? "text-amber-600 animate-pulse" : status === "Complete!" ? "text-green-600" : status.includes("Error") ? "text-red-600" : "text-gray-500"}`}>
-        {status === "Processing..." && (
-          <Image 
-            src="/logo/loading.gif" 
-            alt="loading" 
-            width={50} 
-            height={50} 
-            style={{ background: '#fff', borderRadius: 6 }} 
-          />
-        )}
-        <p className="text-lg">{status}</p>
-      </div>
-    </div>
-  );
-});
-
-UploadView.displayName = 'UploadView';
+UploadView.displayName = "UploadView";
 
 export default UploadView;

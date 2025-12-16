@@ -9,11 +9,18 @@ export type SectionBox = {
   text: string;
 };
 
+export type BoundingBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export type RawElement = {
   id: string;
   page: number;
-  coordinates: any;
-  content: { text: string; markdown: string };
+  coordinates: BoundingBox;
+  content: { text?: string | null; markdown?: string | null };
 };
 
 // PDF Highlighter 관련 타입
@@ -29,19 +36,19 @@ export interface IHighlight {
 export interface PdfLoaderProps {
   url: string;
   beforeLoad: React.ReactNode;
-  children: (pdfDocument: any) => React.ReactNode;
+  children: (pdfDocument: unknown) => React.ReactNode;
 }
 
 export interface PdfHighlighterProps {
-  pdfDocument: any;
+  pdfDocument: unknown;
   highlights: IHighlight[];
-  enableAreaSelection: (event: any) => boolean;
+  enableAreaSelection: (event: unknown) => boolean;
   onScrollChange: () => void;
   onSelectionFinished?: (
     highlight: IHighlight,
-    content: any,
+    content: unknown,
     hideTip: () => void,
-    transform: any
+    transform: unknown
   ) => void;
   scrollRef?: React.RefObject<HTMLElement>;
   highlightTransform: (highlight: IHighlight, index: number) => React.ReactNode;
