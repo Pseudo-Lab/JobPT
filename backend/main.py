@@ -146,8 +146,13 @@ async def run(data: MatchRequest):
     LLM을 이용해 CV, JD 리뷰를 수행하는 함수
     """
     trace_id = str(uuid.uuid4())
-    logger.info(f"[{trace_id}] /matching start resume_path={data.resume_path}")
     resume_path = data.resume_path
+    logger.info(f"[{trace_id}] /matching start resume_path={resume_path}")
+
+    if not resume_path:
+        raise HTTPException(status_code=400, detail="resume_path is required.")
+    if not os.path.exists(resume_path):
+        raise HTTPException(status_code=400, detail="resume_path file not found.")
 
     # PDF를 JPG로 변환 후 저장
     # PDF를 직접 파싱 (JPG 변환 없이)
@@ -163,21 +168,58 @@ async def run(data: MatchRequest):
     #     resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache
     # )
 
-    jd_summaries, jd_urls, c_names = await matching(resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache)
+    jd_summaries, jd_urls, c_names = await matching(
+        resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache
+    )
 
-    # 첫 번째 결과만 사용 (배열 -> 문자열)
-    jd_summary = jd_summaries[0] if isinstance(jd_summaries, list) and jd_summaries else jd_summaries
-    jd_url = jd_urls[0] if isinstance(jd_urls, list) and jd_urls else jd_urls
-    c_name = c_names[0] if isinstance(c_names, list) and c_names else c_names
+    def to_list(value):
+        if isinstance(value, list):
+            return value
+        if value is None:
+            return []
+        if isinstance(value, str) and not value.strip():
+            return []
+        return [value]
 
+    summaries_list = to_list(jd_summaries)
+    urls_list = to_list(jd_urls)
+    names_list = to_list(c_names)
+
+    recommendations = []
+    for summary, url, name in zip(summaries_list, urls_list, names_list):
+        recommendations.append(
+            {
+                "JD": summary,
+                "jd": summary,
+                "JD_url": url,
+                "job_url": url,
+                "company": name,
+                "name": name,
+            }
+        )
+
+    primary = recommendations[0] if recommendations else {}
     analysis_cache[resume_path] = {
-        "output": jd_summary,
-        "JD": jd_summary,
-        "name": c_name,
+        "output": primary.get("JD", ""),
+        "JD": primary.get("JD", ""),
+        "name": primary.get("name", ""),
+        "recommendations": recommendations,
     }
-    logger.info(f"[{trace_id}] matching success company={c_name} url={jd_url}")
 
-    return {"JD": jd_summary, "output": jd_summary, "JD_url": jd_url, "name": c_name, "trace_id": trace_id}
+    logger.info(
+        f"[{trace_id}] matching success results={len(recommendations)} "
+        f"primary_company={primary.get('name', '')} url={primary.get('JD_url', '')}"
+    )
+
+    return {
+        "JD": summaries_list,
+        "output": primary.get("JD", ""),
+        "JD_url": urls_list,
+        "name": names_list,
+        "recommendations": recommendations,
+        "primary": primary,
+        "trace_id": trace_id,
+    }
 
 
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답
