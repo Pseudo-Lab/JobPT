@@ -95,31 +95,20 @@
 docker compose up [-d] [--build]
 ```
 
-### 로컬 환경에서 직접 실행
+### Docker Compose로 실행 (Development)
 
-DB 실행(단독 docker container)
-```bash
-sh db/run.sh
-```
-
-
-DB 마이그레이션 (테이블 생성 및 수정)
-```bash
-cd backend
-alembic upgrade head
-```
-
-API 실행
+로컬 개발 환경에서는 `docker-compose.dev.yml`을 사용합니다.
+이 구성은 Frontend / Backend / MySQL을 포함하며 개발용 데이터는 `dev_data/`에 저장됩니다.
 
 ```bash
-python backend/main.py
+docker compose -f docker-compose.dev.yml up --build
 ```
 
-웹 화면 실행
+- MySQL 데이터: `dev_data/jobpt_mysql`
+- 업로드된 이력서: `dev_data/jobpt_resumes`
+- Backend 데이터: `dev_data/jobpt_data`
 
-```bash
-npm --prefix frontend run dev
-```
+> `dev_data/` 디렉토리는 Git에 포함되지 않으며(.gitignore), 로컬 개발 전용입니다.
 
 API 호출 예시 (api_test.py 참조)
 

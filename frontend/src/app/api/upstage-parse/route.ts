@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import os from "os";
 import { spawnSync } from "child_process";
 
 export const runtime = "nodejs"; // 파일 업로드 지원

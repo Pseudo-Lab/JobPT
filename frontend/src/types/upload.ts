@@ -13,4 +13,5 @@ export interface UploadViewProps {
   setLocation: (val: string[]) => void;
   setRemote: (val: boolean[]) => void;
   setJobType: (val: string[]) => void;
+  handleManualJD: () => void;
 } 

@@ -1,21 +1,12 @@
 from typing import cast
-from openai import OpenAI
 from langgraph.prebuilt import create_react_agent
 from langchain_upstage import ChatUpstage
-from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_core.messages import AIMessage, SystemMessage
 from multi_agents.states.states import State
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import PromptTemplate
 
 import json
 import re
-from configs import *  # 필요한 모든 설정 import
-
-client = OpenAI(
-    api_key=UPSTAGE_API_KEY,
-    base_url="https://api.upstage.ai/v1"
-)
+from configs import AGENT_MODEL, UPSTAGE_API_KEY
 
 
 def parse_json_loose(text: str) -> dict:
@@ -31,123 +22,141 @@ def parse_json_loose(text: str) -> dict:
     return json.loads(obj)
 
 
-async def router(state: State):
+async def supervisor(state: State):
     """
-    사용자 입력을 분석하여 적절한 에이전트 실행 순서를 결정하는 라우터 함수
-
-    Args:
-        state (State): 현재 상태 정보 (사용자 입력, 이력서 등 포함)
-
-    Returns:
-        dict: 라우팅 결정이 포함된 메시지 딕셔너리
+    Supervisor Loop 패턴의 핵심 함수
+    - 현재 상태를 분석하여 다음 agent를 선택하거나 FINISH
+    - FINISH 시 최종 답변 생성
     """
     model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
 
-    # client = MultiServerMCPClient()
-    # tools = await client.get_tools()
-    tools = []
-    agent = create_react_agent(model, tools)
+    # 이미 수집된 agent 결과 포맷팅
+    collected_info = ""
+    if state.agent_outputs:
+        if "summary" in state.agent_outputs:
+            collected_info += f"\n[회사 정보 요약]\n{state.agent_outputs['summary']}\n"
+        if "suggestion" in state.agent_outputs:
+            collected_info += f"\n[이력서 개선 제안]\n{state.agent_outputs['suggestion']}\n"
 
-    # 라우팅을 위한 시스템 메시지 구성
-    # 사용자 입력과 이력서 정보를 바탕으로 적절한 에이전트 실행 순서 결정
-    system_message = """
-user_input: {user_input}
-user_resume: {user_resume}
----
-이 시스템은 이력서를 개선하기 위해 Summary Agent와 Suggestion Agent를 사용합니다.
+    # 이미 호출된 agent 목록 확인
+    called_agents = list(state.agent_outputs.keys()) if state.agent_outputs else []
 
-Summary Agent: 사용자가 제공한 채용공고와 관련된 회사 정보를 찾아 요약합니다.  
-Suggestion Agent: 사용자가 지정한 이력서 부분과 요약된 회사 정보를 기반으로 구체적인 개선 제안을 생성합니다.  
+    system_message = """당신은 이력서 개선 시스템의 Supervisor입니다.
+사용자의 요청과 현재 상태를 분석하여 다음 행동을 결정합니다.
 
-아래의 실행 시퀀스 중 하나를 선택하여 한 줄로 출력하세요 (옵션 중 정확히 하나만 선택):  
+[현재 상태]
+- 사용자 입력: {user_input}
+- 선택된 이력서 부분: {user_resume}
+- 회사명: {company_name}
+- 채용공고: {job_description}
+- 이미 호출된 Agent: {called_agents}
+- 이미 수집된 정보: {collected_info}
 
-1. END: 입력이 단순 질문으로 Summary 또는 Suggestion Agent가 필요하지 않거나, user_resume이 비어 있을 때  
-2. summary: Summary Agent만 필요한 경우  
-3. summary_suggestion: 이력서를 개선하기 위해 Summary Agent와 Suggestion Agent 모두 필요한 경우  
-4. suggestion: 회사 요약 정보 없이 Suggestion Agent만 필요한 경우  
+[사용 가능한 Agent]
+1. summary - 회사 정보를 검색하고 요약합니다. 회사에 대한 정보가 필요할 때 사용합니다.
+2. suggestion - 이력서 개선 제안을 생성합니다. 이력서를 수정/개선해야 할 때 사용합니다.
 
-각 요청마다 JSON 형식으로 결과를 출력하세요.  
-출력 시 'sequence' 키만 포함하고, 그 외 키는 절대 포함하지 마세요.  
+[의사결정 규칙 - 반드시 준수]
+1. **이미 호출된 Agent는 절대 다시 호출하지 마세요!**
+   - "이미 호출된 Agent" 목록에 있는 agent는 선택할 수 없습니다.
+   - 결과가 불완전하더라도 같은 agent를 재호출하지 마세요.
+2. 단순한 인사나 일반 질문은 바로 FINISH를 선택하세요.
+3. 필요한 agent가 모두 호출되었거나, 호출할 agent가 없으면 FINISH를 선택하세요.
+4. FINISH 시 수집된 정보를 바탕으로 최종 답변을 생성하세요.
 
-출력 예시:  
+[출력 형식 - 반드시 JSON으로 출력]
 {{
-    sequence: "END"
-}}  
-{{
-    sequence: "summary"
-}}  
-{{
-    sequence: "summary_suggestion"
-}}  
-{{
-    sequence: "suggestion"
-}}  
+    "next_agent": "summary" | "suggestion" | "FINISH",
+    "reasoning": "이 선택을 한 이유",
+    "final_answer": "FINISH인 경우에만 최종 답변 작성. 다른 경우 빈 문자열"
+}}
+
+중요:
+- FINISH를 선택하면 final_answer에 사용자에게 전달할 최종 답변을 반드시 작성하세요.
+- 최종 답변은 수집된 정보를 바탕으로 친절하고 도움이 되게 작성하세요.
+- 마크다운 형식을 사용하세요.
 """
-    # 시스템 메시지에 현재 상태 정보 삽입
-    system_message = system_message.format(user_input=state.messages, user_resume=state.user_resume)
 
-    messages = [SystemMessage(content=system_message), *state.messages]
+    # 사용자 입력 추출 (첫 번째 HumanMessage)
+    user_input = ""
+    for msg in state.messages:
+        if hasattr(msg, 'content') and msg.__class__.__name__ == 'HumanMessage':
+            user_input = msg.content
+            break
 
+    formatted_message = system_message.format(
+        user_input=user_input,
+        user_resume=state.user_resume or "(없음)",
+        company_name=state.company_name or "(없음)",
+        job_description=state.job_description[:500] + "..." if len(state.job_description) > 500 else state.job_description or "(없음)",
+        called_agents=called_agents if called_agents else "(없음)",
+        collected_info=collected_info or "(없음)"
+    )
+
+    messages = [SystemMessage(content=formatted_message), *state.messages]
+
+    # ReAct agent 생성 (도구 없이 의사결정만)
+    agent = create_react_agent(model, [])
     response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
 
     result = response["messages"][-1].content
-    print("=============router=============")
+    print("=============supervisor=============")
     print(result)
+
+    # 기본값 초기화
+    next_agent = "FINISH"
+    reasoning = ""
+    final_answer = ""
+
     try:
         data = parse_json_loose(result)
-        seq = data.get("sequence", "END")
+        next_agent = data.get("next_agent", "FINISH")
+        reasoning = data.get("reasoning", "")
+        final_answer = data.get("final_answer", "")
     except Exception as e:
-        print("router json parse error:", e)
-        seq = "END"
-    state.route_decision = seq
-    response["messages"][-1].content = seq
-    return {"messages": [response["messages"][-1]]}
+        print("supervisor json parse error:", e)
+        # 파싱 실패 시 원본 응답을 최종 답변으로 사용
+        final_answer = result
+
+    # next_agent 유효성 검사
+    if next_agent not in {"summary", "suggestion", "FINISH"}:
+        next_agent = "FINISH"
+
+    print(f"next_agent: {next_agent}")
+    print(f"reasoning: {reasoning}")
+
+    # 상태 업데이트
+    # route_decision도 함께 업데이트 (하위 호환성)
+    update = {
+        "next_agent": next_agent,
+        "route_decision": next_agent,  # 하위 호환성
+    }
+
+    if next_agent == "FINISH":
+        update["final_answer"] = final_answer
+        update["messages"] = [AIMessage(content=final_answer)]
+        update["route_decision"] = "END"  # 기존 코드와의 호환성
+
+    return update
+
+
+# 하위 호환성을 위해 기존 함수명 유지 (deprecated)
+async def router(state: State):
+    """
+    [Deprecated] supervisor() 함수를 사용하세요.
+    하위 호환성을 위해 유지됩니다.
+    """
+    return await supervisor(state)
 
 
 def refine_answer(state: State) -> dict:
     """
-    최종 사용자 응답을 다듬고 개선하는 함수
-
-    Args:
-        state (State): 현재 상태 정보
-
-    Returns:
-        dict: 개선된 응답 메시지를 포함한 딕셔너리
+    [Deprecated] supervisor가 최종 답변을 직접 생성하므로 더 이상 사용하지 않습니다.
+    하위 호환성을 위해 유지됩니다.
     """
-    # ChatUpstage 모델 초기화
-    model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
+    # 이미 final_answer가 있으면 그대로 반환
+    if state.final_answer:
+        return {"messages": [AIMessage(content=state.final_answer)]}
 
-    # 응답 개선을 위한 시스템 메시지
-    # 원본 의미와 구조를 유지하면서 명확성과 문법을 개선
-    system_message = """
-당신은 사용자에게 제공될 최종 답변을 다듬는 어시스턴트입니다.
-
-아래는 원래 사용자 입력과 어시스턴트의 초안 답변입니다:
-- User Input: {user_input}
-- Assistant Draft Response: {assistant_response}
-
-만약 Assistant Draft Response가 'END'라면, 사용자 입력에 집중하여 즉흥적으로 답변을 생성하세요.
-절대 'END'라고 그대로 반환하지 마세요.
-
-당신의 임무는 초안을 **가볍게 다듬는 것**이며, 의미, 톤, 구조는 변경하지 마세요.  
-핵심 세부 사항은 모두 유지해야 합니다.  
-명확성, 문법, 흐름 개선이 필요한 경우에만 손보세요.  
-
-중요한 정보를 삭제하거나 의도를 바꿀 수 있는 식으로 다시 표현하지 마세요.  
-
-**중요**: 마크다운 형식(줄바꿈, 리스트, 굵게 표시 등)을 반드시 유지하세요.  
-줄바꿈은 `\n`으로, 리스트는 `-` 또는 `*`로, 굵게 표시는 `**텍스트**`로 작성하세요.  
-마크다운 문법이 포함되어 있다면 그대로 유지하세요.
-
-어시스턴트의 답변이 이미 명확하고 적절하다면 그대로 반환하세요.
-"""
-    prompt = PromptTemplate.from_template(system_message)
-    chain = prompt | model | StrOutputParser()
-
-    # 응답 개선 실행
-    answer = chain.invoke({"user_input": state.messages[0].content, "assistant_response": state.messages[-1].content})
-
-    print("=============refined_answer=============")
-    print(answer)
-
-    return {"messages": [AIMessage(content=answer)]}
+    # fallback: 마지막 메시지 반환
+    return {"messages": [state.messages[-1]]}
