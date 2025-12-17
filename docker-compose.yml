@@ -80,8 +80,6 @@ services:
       MYSQL_USER: ${MYSQL_USER:-jobpt}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-jobpt}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-jobpt}
-    ports:
-      - "8000:8000"
     volumes:
       - jobpt_data:/app/data
       - jobpt_resumes:/app/uploaded_resumes
