@@ -190,9 +190,7 @@ async def run(data: MatchRequest):
         recommendations.append(
             {
                 "JD": summary,
-                "jd": summary,
                 "JD_url": url,
-                "job_url": url,
                 "company": name,
                 "name": name,
             }
