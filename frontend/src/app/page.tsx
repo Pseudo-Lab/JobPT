@@ -38,6 +38,12 @@ export default function Home() {
     const [userResumeDraft, setUserResumeDraft] = useState<string>(userResume);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const chatHistoryRef = useRef<{ role: "user" | "assistant"; content: string }[]>([
+        {
+            role: "assistant",
+            content: "안녕하세요! 이력서 개선을 도와드릴게요. 분석 결과를 바탕으로 어떤 부분을 도와드릴까요?",
+        },
+    ]);
 
     const [location] = useState<string[]>(["Korea"]);
     const [remote] = useState<boolean[]>([]);
@@ -130,6 +136,9 @@ export default function Home() {
 
         try {
             const session_id = getOrCreateSessionId();
+            const userTurn = { role: "user", content: message };
+            chatHistoryRef.current.push(userTurn);
+            const conversation_history = chatHistoryRef.current.slice(-6);
             const requestData = {
                 message,
                 resume_path: resumePath,
@@ -137,6 +146,7 @@ export default function Home() {
                 jd: JD || "",
                 session_id,
                 user_resume: userResume,
+                conversation_history,
             };
 
             console.log("[DEBUG] sendMessage - userResume:", userResume); // 디버그용
@@ -154,6 +164,9 @@ export default function Home() {
 
             const data = await response.json();
             chatMessages.removeChild(botTypingDiv);
+            if (data.response) {
+                chatHistoryRef.current.push({ role: "assistant", content: data.response });
+            }
 
             const botMessageDiv = document.createElement("div");
             botMessageDiv.className = "mb-3 text-left";
@@ -168,6 +181,10 @@ export default function Home() {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         } catch (error) {
             console.error("챗봇 API 호출 오류:", error);
+            // 직전 사용자 턴을 되돌려 히스토리 일관성 유지
+            if (chatHistoryRef.current.length > 0) {
+                chatHistoryRef.current.pop();
+            }
             if (chatMessages.contains(botTypingDiv)) chatMessages.removeChild(botTypingDiv);
 
             const errorMessageDiv = document.createElement("div");

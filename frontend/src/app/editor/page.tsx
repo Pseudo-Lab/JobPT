@@ -268,6 +268,10 @@ const EditorPage = () => {
       content: "답변 생성중...",
       createdAt: Date.now() + 0.5,
     };
+    const historyForApi = [...messages, userMessage]
+      .filter((msg) => msg.role === "assistant" || msg.role === "user")
+      .slice(-10)
+      .map((msg) => ({ role: msg.role, content: msg.content }));
 
     setMessages((prev) => [...prev, userMessage, typingMessage]);
     setDraftMessage("");
@@ -299,6 +303,7 @@ const EditorPage = () => {
           user_resume: mergedUserResume,
           job_title: jobTitleForApi,
           job_url: jobUrlForApi,
+          conversation_history: historyForApi,
         }),
       });
 
