@@ -275,6 +275,8 @@ const EditorPage = () => {
 
     setMessages((prev) => [...prev, userMessage, typingMessage]);
     setDraftMessage("");
+    // 첨부 표시를 즉시 비워 UI 칩을 빠르게 숨기고, 이미 조합한 메시지에는 포함된 상태를 유지합니다.
+    setAttachments([]);
 
     const sessionId =
       typeof window !== "undefined"
@@ -340,9 +342,6 @@ const EditorPage = () => {
     } finally {
       setIsSending(false);
     }
-
-    // Clear attachments right after sending so chips disappear immediately.
-    setAttachments([]);
   };
 
   return (
