@@ -76,6 +76,7 @@ export default function Home() {
             "jd_text",
             "resume_summary",
             "pdf_url",
+            "selected_job_context",
         ].forEach((key) => session.removeItem(key));
     }, []);
 

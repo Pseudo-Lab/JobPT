@@ -172,6 +172,61 @@ export default function EvaluatePage() {
     return "채용 공고";
   };
 
+  const persistSelectedJobContext = (
+    job: Record<string, unknown> | null | undefined,
+    fallbackJd?: string | null,
+  ) => {
+    if (typeof window === "undefined") return;
+    if (!job) {
+      window.sessionStorage.removeItem("selected_job_context");
+      return;
+    }
+
+    const title = deriveJobTitle(job);
+    const company =
+      pickFirstString(job, ["company", "name", "organization"]) ??
+      pickFirstString(matchingData, ["company", "name", "organization"]) ??
+      "";
+    const jd =
+      pickFirstString(job, ["JD"]) ??
+      fallbackJd ??
+      jdText ??
+      "";
+    const jobUrl = extractJobUrl(job) ?? "";
+    const matchScore =
+      pickFirstNumber(job, ["match_score", "match_percentage", "score"]) ??
+      pickFirstNumber(matchingData, ["match_score", "score"]);
+    const matchLabelValue =
+      formatMatchLabel(matchScore) ??
+      pickFirstString(job, ["match", "score_label", "match_label"]) ??
+      pickFirstString(matchingData, ["match", "score_label", "match_label"]);
+    const locationValue =
+      pickFirstString(job, ["location", "job_location", "city", "country"]) ??
+      pickFirstString(matchingData, ["location", "job_location"]);
+    const employmentValue =
+      pickFirstString(job, ["employment_type", "job_type", "type"]) ??
+      pickFirstString(matchingData, ["employment_type", "job_type"]);
+    const remoteValue = resolveRemoteLabel(job) ?? resolveRemoteLabel(matchingData);
+
+    const payload = {
+      title,
+      company,
+      jd,
+      jobUrl,
+      matchLabel: matchLabelValue,
+      location: locationValue,
+      employment: employmentValue,
+      remote: remoteValue,
+      raw: job,
+    };
+
+    try {
+      window.sessionStorage.setItem("selected_job_context", JSON.stringify(payload));
+    } catch (error) {
+      console.warn("[Evaluate] Failed to persist selected job context", error);
+    }
+  };
+
   const transformMatchingResponse = (response: unknown) => {
     if (!isRecord(response)) {
       return { record: null, jdText: null, html: "" };
@@ -524,6 +579,12 @@ export default function EvaluatePage() {
     jdText ??
     undefined;
 
+  // Persist the currently selected job so the editor can reuse its context.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    persistSelectedJobContext(effectivePrimary, jobDescriptionText ?? null);
+  }, [effectivePrimary, jobDescriptionText, jdText, matchingData]);
+
   const analysisText =
     pickFirstString(effectivePrimary, ["analysis", "notes", "output"]) ??
     pickFirstString(matchingData, ["output"]);
@@ -655,7 +716,10 @@ export default function EvaluatePage() {
         <button
           key={`${title}-${company}-${index}`}
           type="button"
-          onClick={() => setSelectedJob(job)}
+          onClick={() => {
+            setSelectedJob(job);
+            persistSelectedJobContext(job);
+          }}
           className="flex min-w-[240px] max-w-[260px] flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md focus-visible:-translate-y-1 focus-visible:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(96,150,222,0.5)]"
         >
           {cardContent}
@@ -801,6 +865,9 @@ export default function EvaluatePage() {
                   </button>
                   <Link
                     href="/editor"
+                    onClick={() =>
+                      persistSelectedJobContext(effectivePrimary, jobDescriptionText ?? null)
+                    }
                     className="inline-flex items-center justify-center rounded-xl bg-[rgb(96,150,222)] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[rgb(86,140,212)]"
                   >
                     공고 맞춤 이력서 수정

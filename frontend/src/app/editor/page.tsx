@@ -4,6 +4,9 @@
 import { useEffect, useRef, useState } from "react";
 import ResumeSummaryView, { ResumeSummaryData } from "@/components/evaluate/ResumeSummaryView";
 import AppHeader from "@/components/common/AppHeader";
+import { isRecord, pickFirstString } from "@/lib/matching-utils";
+import DOMPurify from "dompurify";
+import { marked } from "marked";
 
 type ChatRole = "assistant" | "user";
 
@@ -15,6 +18,51 @@ interface ChatMessage {
   title?: string;
   variant?: "summary";
 }
+
+interface JobContext {
+  title?: string;
+  company?: string;
+  jd?: string;
+  jobUrl?: string;
+  matchLabel?: string | null;
+}
+
+const parseStoredJobContext = (raw: string | null): JobContext | null => {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!isRecord(parsed)) return null;
+
+    const rawJob = isRecord(parsed.raw) ? parsed.raw : undefined;
+    const fallbackJd = pickFirstString(rawJob, ["JD"]);
+
+    return {
+      title:
+        typeof parsed.title === "string"
+          ? parsed.title
+          : pickFirstString(rawJob, ["job_title", "title"]),
+      company:
+        typeof parsed.company === "string"
+          ? parsed.company
+          : pickFirstString(rawJob, ["company", "name", "organization"]),
+      jd:
+        typeof parsed.jd === "string" && parsed.jd.trim().length > 0
+          ? parsed.jd
+          : fallbackJd,
+      jobUrl:
+        typeof parsed.jobUrl === "string"
+          ? parsed.jobUrl
+          : pickFirstString(rawJob, ["job_url", "url", "link"]),
+      matchLabel:
+        typeof parsed.matchLabel === "string"
+          ? parsed.matchLabel
+          : pickFirstString(rawJob, ["match", "score_label", "match_label"]),
+    };
+  } catch (error) {
+    console.warn("[Editor] Failed to parse stored job context", error);
+    return null;
+  }
+};
 
 const formatTime = (timestamp: number) => {
   const date = new Date(timestamp);
@@ -90,6 +138,7 @@ const EditorPage = () => {
   const [attachments, setAttachments] = useState<
     { id: string; label: string; content: string }[]
   >([]);
+  const [jobContext, setJobContext] = useState<JobContext | null>(null);
   const [resumeSummary, setResumeSummary] = useState<ResumeSummaryData>(() => {
     if (typeof window !== "undefined") {
       const raw = window.sessionStorage.getItem("resume_summary");
@@ -125,6 +174,16 @@ const EditorPage = () => {
         }
       } catch (error) {
         console.warn("[Editor] Failed to parse stored resume summary", error);
+      }
+    }
+
+    const storedJobContext = parseStoredJobContext(session.getItem("selected_job_context"));
+    if (storedJobContext) {
+      setJobContext(storedJobContext);
+    } else {
+      const fallbackJd = session.getItem("jd_text");
+      if (fallbackJd) {
+        setJobContext({ jd: fallbackJd });
       }
     }
   }, []);
@@ -166,17 +225,36 @@ const EditorPage = () => {
     const mergedUserResume = [attachmentText, userResume]
       .filter(Boolean)
       .join("\n\n");
-    const messageWithContext =
-      attachmentText && attachmentText.length > 0
-        ? `${trimmed}\n\n[첨부 내용]\n${attachmentText}`.trim()
-        : trimmed;
+    const jobContextText =
+      jobContext &&
+      (jobContext.jd || jobContext.title || jobContext.company || jobContext.jobUrl)
+        ? [
+            "[선택한 공고 정보]",
+            jobContext.title ? `공고명: ${jobContext.title}` : null,
+            jobContext.company ? `회사: ${jobContext.company}` : null,
+            jobContext.jobUrl ? `URL: ${jobContext.jobUrl}` : null,
+            jobContext.matchLabel ? `매칭도: ${jobContext.matchLabel}` : null,
+            jobContext.jd ? `JD:\n${jobContext.jd}` : null,
+          ]
+            .filter(Boolean)
+            .join("\n")
+        : "";
+    const messageBlocks = [trimmed];
+    if (attachmentText) messageBlocks.push(`[첨부 내용]\n${attachmentText}`);
+    if (jobContextText) messageBlocks.push(jobContextText);
+    const messageWithContext = messageBlocks.filter(Boolean).join("\n\n").trim();
     const userVisibleMessage =
       trimmed.length > 0
         ? trimmed
         : attachmentText
           ? `[첨부]\n${attachmentText}`
           : "";
-    console.log('messageWithContext', messageWithContext);
+    console.log("[Chat] messageWithContext", messageWithContext);
+
+    const companyForApi = jobContext?.company ?? "";
+    const jdForApi = jobContext?.jd ?? "";
+    const jobTitleForApi = jobContext?.title ?? "";
+    const jobUrlForApi = jobContext?.jobUrl ?? "";
 
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -215,10 +293,12 @@ const EditorPage = () => {
         body: JSON.stringify({
           message: messageWithContext,
           resume_path: resumePath,
-          company: "",
-          jd: "",
+          company: companyForApi,
+          jd: jdForApi,
           session_id: sessionId,
           user_resume: mergedUserResume,
+          job_title: jobTitleForApi,
+          job_url: jobUrlForApi,
         }),
       });
 
@@ -301,6 +381,9 @@ const EditorPage = () => {
                   <div className="space-y-6 pb-1">
                     {messages.map((message) => {
                       const isUser = message.role === "user";
+                      const parsed = marked.parse(message.content ?? "");
+                      const assistantHtml =
+                        typeof parsed === "string" ? DOMPurify.sanitize(parsed) : "";
                       return (
                         <div key={message.id} className={`flex items-start gap-3 ${isUser ? "flex-row-reverse text-right" : ""}`}>
                           <ChatAvatar role={message.role} />
@@ -320,7 +403,14 @@ const EditorPage = () => {
                                 {message.title}
                               </p>
                             )}
-                            <p className="whitespace-pre-wrap">{message.content}</p>
+                            {isUser ? (
+                              <p className="whitespace-pre-wrap">{message.content}</p>
+                            ) : (
+                              <div
+                                className="prose prose-sm max-w-none text-slate-700"
+                                dangerouslySetInnerHTML={{ __html: assistantHtml }}
+                              />
+                            )}
                             <span className={`block text-[11px] ${isUser ? "text-blue-100" : "text-slate-400"}`}>
                               {formatTime(message.createdAt)}
                             </span>
