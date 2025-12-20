@@ -136,7 +136,7 @@ export default function Home() {
 
         try {
             const session_id = getOrCreateSessionId();
-            const userTurn = { role: "user", content: message };
+            const userTurn: { role: "user"; content: string } = { role: "user", content: message };
             chatHistoryRef.current.push(userTurn);
             const conversation_history = chatHistoryRef.current.slice(-6);
             const requestData = {
