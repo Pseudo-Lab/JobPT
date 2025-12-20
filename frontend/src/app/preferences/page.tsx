@@ -2,11 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  ensureMockSessionData,
-  isMockEnabled,
-  MOCK_RESUME_PATH,
-} from "@/lib/mockData";
 import AppHeader from "@/components/common/AppHeader";
 
 type RemotePreference = "yes" | "no";
@@ -32,10 +27,6 @@ export default function PreferencesPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (isMockEnabled) {
-      ensureMockSessionData();
-    }
-
     if (typeof window === "undefined") return;
 
     const storedPreferences = window.localStorage.getItem("jobpt_preferences");
@@ -68,21 +59,12 @@ export default function PreferencesPage() {
   }, []);
 
   const ensureEssentialData = () => {
-    if (isMockEnabled) {
-      ensureMockSessionData();
-    }
-
     if (typeof window === "undefined") {
       return false;
     }
 
     const session = window.sessionStorage;
     let sessionResume = session.getItem("resume_path");
-
-    if (!sessionResume && isMockEnabled) {
-      sessionResume = MOCK_RESUME_PATH;
-      session.setItem("resume_path", sessionResume);
-    }
 
     return Boolean(sessionResume);
   };

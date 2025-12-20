@@ -10,12 +10,6 @@ import { ResultView } from "@/components/evaluate";
 import ManualJDForm from "@/components/evaluate/ManualJDForm";
 import type { SectionBox, RawElement } from "@/types";
 import AppHeader from "@/components/common/AppHeader";
-import {
-    ensureMockSessionData,
-    isMockEnabled,
-    MOCK_RESUME_PATH,
-    MOCK_RESUME_PDF_URL,
-} from "@/lib/mockData";
 
 interface UpstageElement {
     id: string;
@@ -69,12 +63,21 @@ export default function Home() {
     const [remote] = useState<boolean[]>([]);
     const [jobType] = useState<string[]>([]);
 
+    // 홈 진입 시 이전 세션 캐시를 모두 비움
     useEffect(() => {
-        if (isMockEnabled) {
-            ensureMockSessionData();
-        }
+        if (typeof window === "undefined") return;
+        const session = window.sessionStorage;
+        [
+            "resume_path",
+            "resume_upload_id",
+            "matching_result",
+            "matching_resume_path",
+            "matching_resume_id",
+            "jd_text",
+            "resume_summary",
+            "pdf_url",
+        ].forEach((key) => session.removeItem(key));
     }, []);
-
 
     // 채팅창 높이 조정
     const adjustChatHeight = useCallback(() => {
@@ -267,24 +270,17 @@ export default function Home() {
 
         setStatus("Processing...");
 
-        if (isMockEnabled) {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            const resume_path = MOCK_RESUME_PATH;
-            setResumePath(resume_path);
-            setThumbnailUrl(null);
-            setIsPdf(true);
-            setPdfUrl(MOCK_RESUME_PDF_URL);
-            setSectionBoxes([]);
-            setRawElements([]);
-            setStatus("Uploaded");
-
-            if (typeof window !== "undefined") {
-                window.sessionStorage.setItem("resume_path", resume_path);
-                window.sessionStorage.setItem("pdf_url", MOCK_RESUME_PDF_URL);
-            }
-
-            router.push("/preferences");
-            return;
+        // 새 업로드마다 매칭 캐시/식별자를 초기화
+        const uploadId =
+            typeof crypto !== "undefined" && crypto.randomUUID
+                ? crypto.randomUUID()
+                : String(Date.now());
+        if (typeof window !== "undefined") {
+            const session = window.sessionStorage;
+            ["matching_result", "matching_resume_path", "matching_resume_id"].forEach((key) =>
+                session.removeItem(key),
+            );
+            session.setItem("resume_upload_id", uploadId);
         }
 
         const formData = new FormData();
@@ -316,46 +312,6 @@ export default function Home() {
 
             if (typeof window !== "undefined") {
                 window.sessionStorage.setItem("resume_path", resume_path);
-            }
-
-            // Upstage parsing (optional PDF preview)
-            try {
-                const upstageForm = new FormData();
-                upstageForm.append("file", file);
-                const upstageRes = await fetch("/api/upstage-parse", {
-                    method: "POST",
-                    body: upstageForm,
-                });
-                const upstageData = await upstageRes.json();
-
-                if (upstageData.pdfUrl) {
-                    setPdfUrl(upstageData.pdfUrl);
-                    if (typeof window !== "undefined") {
-                        window.sessionStorage.setItem("pdf_url", upstageData.pdfUrl);
-                    }
-                }
-
-                const boxes = (upstageData.elements || []).map((e: UpstageElement) => ({
-                    id: String(e.id),
-                    title: e.category,
-                    x: 0,
-                    y: 0,
-                    width: 0,
-                    height: 0,
-                    text: e.content.markdown || e.content.text || "",
-                }));
-                setSectionBoxes(boxes);
-                setRawElements(
-                    (upstageData.elements || []).map((e: UpstageElement) => ({
-                        id: e.id,
-                        page: e.page,
-                        coordinates: e.coordinates,
-                        content: { text: e.content.text, markdown: e.content.markdown },
-                    }))
-                );
-            } catch (e) {
-                console.error("[Upstage API Error]", e);
-                setSectionBoxes([]);
             }
 
             router.push("/preferences");
@@ -397,43 +353,6 @@ export default function Home() {
         setJDUrl(jdUrlInput);
         setJD(jdTextInput);
         setOutput(""); // 분석 결과는 없음
-        // 이력서 파싱만 수행
-        if (file) {
-            try {
-                const upstageForm = new FormData();
-                upstageForm.append("file", file);
-                const upstageRes = await fetch("/api/upstage-parse", {
-                    method: "POST",
-                    body: upstageForm,
-                });
-                const upstageData = await upstageRes.json();
-                if (upstageData.pdfUrl) {
-                    setPdfUrl(upstageData.pdfUrl);
-                }
-                const boxes = (upstageData.elements || []).map((e: UpstageElement) => ({
-                    id: String(e.id),
-                    title: e.category,
-                    x: 0,
-                    y: 0,
-                    width: 0,
-                    height: 0,
-                    text: e.content.markdown || e.content.text || "",
-                }));
-                setSectionBoxes(boxes);
-                setRawElements(
-                    (upstageData.elements || []).map((e: UpstageElement) => ({
-                        id: e.id,
-                        page: e.page,
-                        coordinates: e.coordinates,
-                        content: { text: e.content.text, markdown: e.content.markdown },
-                    }))
-                );
-            } catch (e) {
-                console.error("[Upstage API Error] (manual JD)", e);
-                setSectionBoxes([]);
-                setRawElements([]);
-            }
-        }
         setViewMode("result");
     };
 

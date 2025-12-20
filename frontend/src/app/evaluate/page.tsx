@@ -16,17 +16,22 @@ import {
   toStringValue,
 } from "@/lib/matching-utils";
 import ResumeSummaryView, { ResumeSummaryData } from "@/components/evaluate/ResumeSummaryView";
-import {
-  ensureMockSessionData,
-  isMockEnabled,
-  MOCK_EVALUATE_HTML,
-  MOCK_MATCHING_RESPONSE,
-  MOCK_RESUME_PATH,
-  parseMatchingData,
-} from "@/lib/mockData";
 import AppHeader from "@/components/common/AppHeader";
 
 type ViewState = "loading" | "result" | "error";
+
+const parseStoredMatchingData = (
+  raw: string | null,
+): Record<string, unknown> | null => {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return isRecord(parsed) ? parsed : null;
+  } catch (error) {
+    console.warn("[Evaluate] Failed to parse stored matching result", error);
+    return null;
+  }
+};
 
 export default function EvaluatePage() {
   const [mode, setMode] = useState<ViewState>("loading");
@@ -34,49 +39,101 @@ export default function EvaluatePage() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [resumePath, setResumePath] = useState<string | null>(null);
+  const [matchingResumePath, setMatchingResumePath] = useState<string | null>(null);
   const [jdText, setJdText] = useState<string | null>(null);
   const [matchingData, setMatchingData] = useState<Record<string, unknown> | null>(null);
   const [isSavedJob, setIsSavedJob] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Record<string, unknown> | null>(null);
+  const [resumeSummaryState, setResumeSummaryState] = useState<ResumeSummaryData>(() => {
+    if (typeof window !== "undefined") {
+      const raw = window.sessionStorage.getItem("resume_summary");
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (isRecord(parsed)) {
+            return {
+              name: toStringValue(parsed.name) ?? "",
+              phone: toStringValue(parsed.phone),
+              email: toStringValue(parsed.email),
+              summary: toStringValue(parsed.summary),
+              experiences: Array.isArray(parsed.experiences)
+                ? (parsed.experiences as ResumeSummaryData["experiences"])
+                : [],
+              skills: Array.isArray(parsed.skills)
+                ? (parsed.skills as string[])
+                : [],
+              certifications: Array.isArray(parsed.certifications)
+                ? (parsed.certifications as ResumeSummaryData["certifications"])
+                : [],
+              languages: Array.isArray(parsed.languages)
+                ? (parsed.languages as ResumeSummaryData["languages"])
+                : [],
+              links: Array.isArray(parsed.links)
+                ? (parsed.links as ResumeSummaryData["links"])
+                : [],
+            };
+          }
+        } catch (error) {
+          console.warn("[Evaluate] Failed to parse stored resume summary", error);
+        }
+      }
+    }
+    return {
+      name: "",
+      phone: "",
+      email: "",
+      summary: "",
+      experiences: [],
+      skills: [],
+      certifications: [],
+      languages: [],
+      links: [],
+    };
+  });
 
   const defaultResumeSummary: ResumeSummaryData = {
-    name: "김길동",
-    phone: "010-0000-0000",
-    email: "email@gmail.com",
-    summary:
-      "안녕하세요, 서비스 기획자 김길동입니다. 간단한 자기소개가 이곳에 들어갑니다. 간단한 자기소개가 이곳에 들어갑니다. 간단한 자기소개가 이곳에 들어갑니다.",
-    experiences: [
-      {
-        company: "회사명",
-        period: "0000.00 ~ 재직중 (0년 00개월)",
-        title: "담당한 역할 타이틀",
-        description:
-          "담당한 역할과 업무 등에 대한 내용이 이곳에 들어갑니다. 담당한 역할과 업무 등에 대한 내용이 이곳에 들어갑니다. 담당한 역할과 업무 등에 대한 내용이 이곳에 들어갑니다.",
-        logoUrl: "/logo/main_logo.png",
-      },
-      {
-        company: "회사명",
-        period: "0000.00 ~ 0000.00",
-        title: "담당한 역할 타이틀",
-        description:
-          "담당한 역할과 업무 등에 대한 내용이 이곳에 들어갑니다. 담당한 역할과 업무 등에 대한 내용이 이곳에 들어갑니다. 담당한 역할과 업무 등에 대한 내용이 이곳에 들어갑니다.",
-      },
-    ],
-    skills: ["Python", "Figma", "React", "TypeScript", "Next.js", "Git"],
-    certifications: [
-      { name: "자격증 이름", date: "0000.00", note: "취득" },
-      { name: "수상내역", date: "0000.00", note: "수상" },
-    ],
-    languages: [
-      {
-        name: "영어",
-        details: ["OPIc IM1 (Intermediate Mid)", "TOEIC 990"],
-      },
-      {
-        name: "중국어",
-        details: ["HSK 6급"],
-      },
-    ],
-    links: [{ label: "https://github.com/gildong", url: "https://github.com/gildong" }],
+    name: "",
+    phone: "",
+    email: "",
+    summary: "",
+    experiences: [],
+    skills: [],
+    certifications: [],
+    languages: [],
+    links: [],
+  };
+
+  const normalizeWhitespace = (value: string) => value.replace(/\s+/g, " ").trim();
+
+  const extractJobUrl = (job: Record<string, unknown>) =>
+    pickFirstString(job, ["job_url"]);
+
+  const extractJobDescription = (job: Record<string, unknown>) =>
+    pickFirstString(job, ["JD"]);
+
+  // Remove repeated recommendations that share the same link or JD text.
+  const deduplicateJobs = (jobs: Record<string, unknown>[]) => {
+    const seenUrls = new Set<string>();
+    const seenJds = new Set<string>();
+
+    return jobs.filter((job) => {
+      const normalizedUrl = extractJobUrl(job)?.trim().toLowerCase();
+      const jobDescription = extractJobDescription(job);
+      const normalizedJd = jobDescription
+        ? normalizeWhitespace(jobDescription).toLowerCase()
+        : undefined;
+
+      if (normalizedUrl && seenUrls.has(normalizedUrl)) {
+        return false;
+      }
+      if (normalizedJd && seenJds.has(normalizedJd)) {
+        return false;
+      }
+
+      if (normalizedUrl) seenUrls.add(normalizedUrl);
+      if (normalizedJd) seenJds.add(normalizedJd);
+      return true;
+    });
   };
 
   const extractHeadingFromMarkdown = (markdown?: string) => {
@@ -99,9 +156,7 @@ export default function EvaluatePage() {
     job: Record<string, unknown> | null | undefined,
     fallbackIndex?: number,
   ) => {
-    const heading = extractHeadingFromMarkdown(
-      pickFirstString(job, ["JD", "jd", "description"]),
-    );
+    const heading = extractHeadingFromMarkdown(pickFirstString(job, ["JD"]));
     const titleCandidate =
       pickFirstString(job, ["job_title", "title", "position", "role"]) ??
       heading;
@@ -123,78 +178,8 @@ export default function EvaluatePage() {
     }
 
     const raw = response as Record<string, unknown>;
-    const toList = (fields: string[]) => {
-      for (const field of fields) {
-        const value = raw[field];
-        if (Array.isArray(value)) return value;
-        if (value !== undefined && value !== null) return [value];
-      }
-      return [];
-    };
-
-    const jdList = toList(["JD", "jd", "job_description"]);
-    const scoreList = toList(["match_score", "match_percentage", "score"]);
-    const urlList = toList([
-      "JD_url",
-      "jd_url",
-      "job_url",
-      "job_urls",
-      "url",
-      "urls",
-      "link",
-    ]);
-    const nameList = toList(["name", "company", "company_name"]);
-    const jobTitleList = toList(["job_title", "title", "position", "role"]);
-
-    const parsedRecommendations = jdList
-      .map((jdEntry, index) => {
-        const jdTextCandidate = toStringValue(jdEntry);
-        const companyCandidate =
-          toStringValue(nameList[index]) ??
-          toStringValue(raw.company) ??
-          toStringValue(raw.name);
-        const jobUrlCandidate =
-          toStringValue(urlList[index]) ??
-          toStringValue(raw.job_url) ??
-          toStringValue(raw.url) ??
-          toStringValue(raw.JD_url);
-        const jobTitleCandidate =
-          toStringValue(jobTitleList[index]) ??
-          pickFirstString(raw, ["job_title", "title", "position", "role"]) ??
-          extractHeadingFromMarkdown(jdTextCandidate);
-        const scoreCandidate =
-          typeof scoreList[index] === "number"
-            ? (scoreList[index] as number)
-            : pickFirstNumber(scoreList[index], ["match_score", "score"]);
-
-        if (!jdTextCandidate && !companyCandidate && !jobUrlCandidate) {
-          return null;
-        }
-
-        const base: Record<string, unknown> = {
-          JD: jdTextCandidate,
-          jd: jdTextCandidate,
-          jd_url: jobUrlCandidate,
-          job_url: jobUrlCandidate,
-          company: companyCandidate,
-          name: companyCandidate,
-          match_score: scoreCandidate,
-        };
-
-        if (jobTitleCandidate) {
-          base.job_title = jobTitleCandidate;
-          base.title = jobTitleCandidate;
-        }
-
-        return base;
-      })
-      .filter((item): item is Record<string, unknown> => item !== null);
-
     const rawRecommendations = toRecordArray(raw.recommendations);
-    const recommendations =
-      rawRecommendations.length > 0 ? rawRecommendations : parsedRecommendations;
-
-    const sortedRecommendations = recommendations
+    const sortedRecommendations = rawRecommendations
       .map((item, index) => ({ item, index }))
       .sort((a, b) => {
         const aScore =
@@ -210,22 +195,24 @@ export default function EvaluatePage() {
       })
       .map((entry) => entry.item);
 
+    const uniqueRecommendations = deduplicateJobs(sortedRecommendations);
+
+    const primaryCandidate = isRecord(raw.primary)
+      ? raw.primary
+      : uniqueRecommendations[0] ?? null;
+
     const record: Record<string, unknown> = {
       ...raw,
-      recommendations: sortedRecommendations,
+      recommendations: uniqueRecommendations,
+      primary: primaryCandidate ?? undefined,
     };
 
-    if (isRecord(raw.primary)) {
-      record.primary = raw.primary;
-    } else if (sortedRecommendations[0]) {
-      record.primary = sortedRecommendations[0];
-    }
-
     const firstJdText =
-      jdList.map((item) => toStringValue(item)).find(Boolean) ??
-      sortedRecommendations
-        .map((item) => toStringValue(item.JD) ?? toStringValue(item.jd))
+      uniqueRecommendations
+        .map((item) => toStringValue(item.JD))
         .find(Boolean) ??
+      pickFirstString(primaryCandidate, ["JD"]) ??
+      toStringValue(raw.output) ??
       null;
     const html = toStringValue(raw.output) ?? "";
 
@@ -235,10 +222,6 @@ export default function EvaluatePage() {
   const ensureEssentialData = useCallback(() => {
     if (resumePath) return true;
 
-    if (isMockEnabled) {
-      ensureMockSessionData();
-    }
-
     if (typeof window === "undefined") {
       return Boolean(resumePath && jdText);
     }
@@ -247,15 +230,6 @@ export default function EvaluatePage() {
     let sessionResume = session.getItem("resume_path");
     let sessionJd = session.getItem("jd_text");
 
-    if (!sessionResume && isMockEnabled) {
-      sessionResume = MOCK_RESUME_PATH;
-      session.setItem("resume_path", sessionResume);
-    }
-    if (!sessionJd && isMockEnabled) {
-      sessionJd = MOCK_MATCHING_RESPONSE.JD;
-      session.setItem("jd_text", sessionJd);
-    }
-
     if (sessionResume) setResumePath(sessionResume);
     if (sessionJd) setJdText(sessionJd);
 
@@ -263,27 +237,75 @@ export default function EvaluatePage() {
   }, [jdText, resumePath]);
 
   useEffect(() => {
-    if (isMockEnabled) {
-      ensureMockSessionData();
-    }
-
     if (typeof window !== "undefined") {
       const session = window.sessionStorage;
       const sessionResume = session.getItem("resume_path");
       const sessionJd = session.getItem("jd_text");
-      const storedMatch = parseMatchingData(session.getItem("matching_result"));
+      const sessionMatchingResume = session.getItem("matching_resume_path");
+      const storedMatch = parseStoredMatchingData(session.getItem("matching_result"));
 
-      setResumePath(sessionResume ?? (isMockEnabled ? MOCK_RESUME_PATH : null));
-      setJdText(sessionJd ?? (isMockEnabled ? MOCK_MATCHING_RESPONSE.JD : null));
-      setMatchingData(
-        storedMatch ?? (isMockEnabled ? MOCK_MATCHING_RESPONSE : null),
-      );
+      setResumePath(sessionResume);
+      setJdText(sessionJd);
+      setMatchingResumePath(sessionMatchingResume);
 
+      if (storedMatch && sessionResume && sessionMatchingResume === sessionResume) {
+        const { record, jdText: storedJd, html: storedHtml } =
+          transformMatchingResponse(storedMatch);
+        setMatchingData(record);
+        if (storedJd) setJdText(storedJd);
+        if (storedHtml) setHtml(storedHtml);
+      } else if (
+        storedMatch &&
+        sessionMatchingResume &&
+        sessionResume &&
+        sessionMatchingResume !== sessionResume
+      ) {
+        session.removeItem("matching_result");
+        session.removeItem("matching_resume_path");
+      }
+
+      const storedResumeSummary = session.getItem("resume_summary");
+      if (storedResumeSummary) {
+        try {
+          const parsed = JSON.parse(storedResumeSummary);
+          if (isRecord(parsed)) {
+            setResumeSummaryState((prev) => ({
+              ...prev,
+              ...parsed,
+            }));
+          }
+        } catch (error) {
+          console.warn("[Evaluate] Failed to hydrate resume summary from session", error);
+        }
+      }
     }
   }, []);
 
   useEffect(() => {
     if (mode !== "loading") return;
+
+    const currentResume =
+      resumePath ??
+      (typeof window !== "undefined"
+        ? window.sessionStorage.getItem("resume_path")
+        : null);
+
+    // If we already have cached data for the same resume, reuse without re-fetch.
+    if (typeof window !== "undefined" && currentResume) {
+      const cachedResume = window.sessionStorage.getItem("matching_resume_path");
+      const cachedRaw = window.sessionStorage.getItem("matching_result");
+      const cachedMatch = parseStoredMatchingData(cachedRaw);
+      if (cachedMatch && cachedResume === currentResume) {
+        const { record, jdText: cachedJd, html: cachedHtml } =
+          transformMatchingResponse(cachedMatch);
+        setMatchingData(record);
+        setMatchingResumePath(cachedResume);
+        if (cachedJd) setJdText(cachedJd);
+        if (cachedHtml) setHtml(cachedHtml);
+        setMode("result");
+        return;
+      }
+    }
 
     if (!ensureEssentialData()) {
       setError(
@@ -307,17 +329,6 @@ export default function EvaluatePage() {
       }
     }, 1200);
 
-    const currentResume =
-      resumePath ??
-      (typeof window !== "undefined"
-        ? window.sessionStorage.getItem("resume_path")
-        : null);
-    const currentJd =
-      jdText ??
-      (typeof window !== "undefined"
-        ? window.sessionStorage.getItem("jd_text")
-        : null);
-
     if (!currentResume) {
       clearInterval(interval);
       setError(
@@ -335,9 +346,17 @@ export default function EvaluatePage() {
 
       if (record) {
         setMatchingData(record);
+        setMatchingResumePath(currentResume);
+        if (typeof window !== "undefined") {
+          window.sessionStorage.setItem("matching_result", JSON.stringify(record));
+          window.sessionStorage.setItem("matching_resume_path", currentResume);
+        }
       }
       if (incomingJd) {
         setJdText(incomingJd);
+        if (typeof window !== "undefined") {
+          window.sessionStorage.setItem("jd_text", incomingJd);
+        }
       }
       if (incomingHtml) {
         setHtml(incomingHtml);
@@ -347,35 +366,34 @@ export default function EvaluatePage() {
       setMode("result");
     };
 
-    if (isMockEnabled) {
-      const timer = window.setTimeout(() => {
-        handleSuccess({
-          ...(MOCK_MATCHING_RESPONSE as unknown as Record<string, unknown>),
-          output: MOCK_EVALUATE_HTML,
-        });
-      }, 1200);
-
-      return () => {
-        clearInterval(interval);
-        window.clearTimeout(timer);
-      };
-    }
-
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/matching`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         resume_path: currentResume,
-        jd_text: currentJd,
       }),
       signal: controller.signal,
     })
       .then(async (res) => {
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.detail || data.error || "서버 오류");
+        const text = await res.text();
+        let parsed: Record<string, unknown> | null = null;
+        try {
+          parsed = text ? (JSON.parse(text) as Record<string, unknown>) : null;
+        } catch (parseErr) {
+          console.warn("[Evaluate] Failed to parse matching response", parseErr);
         }
-        return res.json();
+        if (!res.ok) {
+          const detail =
+            (parsed && (parsed.detail as string)) ||
+            (parsed && (parsed.error as string)) ||
+            text ||
+            "서버 오류";
+          throw new Error(detail);
+        }
+        if (!parsed) {
+          throw new Error("서버 응답을 이해할 수 없습니다.");
+        }
+        return parsed;
       })
       .then((data) => {
         handleSuccess(data);
@@ -402,31 +420,21 @@ export default function EvaluatePage() {
   const primaryRecommendation = useMemo(() => {
     if (!matchingData) return null;
     const record = matchingData;
-    const candidateSources: unknown[] = [
-      record["recommendations"],
-      record["primary"],
-      record["recommended"],
-      record["recommended_job"],
-      record["job"],
-    ];
-    for (const source of candidateSources) {
-      const list = toRecordArray(source);
-      if (list.length > 0) return list[0];
-    }
-    return record;
+    const recommendations = toRecordArray(record["recommendations"]);
+    if (recommendations.length > 0) return recommendations[0];
+    return null;
   }, [matchingData]);
+
+  useEffect(() => {
+    if (primaryRecommendation) {
+      setSelectedJob(primaryRecommendation);
+    }
+  }, [primaryRecommendation]);
 
   const similarJobs = useMemo(() => {
     if (!matchingData) return [];
     const record = matchingData;
-    const getJobUrl = (job: Record<string, unknown>) =>
-      pickFirstString(job, ["url", "link", "job_url", "jd_url", "JD_url"]);
-    const aggregated = [
-      ...toRecordArray(record["similar_jobs"]),
-      ...toRecordArray(record["alternatives"]),
-      ...toRecordArray(record["related"]),
-      ...toRecordArray(record["recommendations"]),
-    ];
+    const aggregated = toRecordArray(record["recommendations"]);
     const sorted = aggregated
       .map((item, index) => ({ item, index }))
       .sort((a, b) => {
@@ -443,29 +451,32 @@ export default function EvaluatePage() {
       })
       .map((entry) => entry.item);
 
-    const primaryUrl = primaryRecommendation
-      ? getJobUrl(primaryRecommendation)
-      : undefined;
+    const effectivePrimary = selectedJob ?? primaryRecommendation;
+    const primaryUrl = effectivePrimary ? extractJobUrl(effectivePrimary) : undefined;
 
-    return sorted.filter((item) => {
-      if (item === primaryRecommendation) return false;
+    const unique = deduplicateJobs(sorted);
+
+    return unique.filter((item) => {
+      if (item === effectivePrimary) return false;
       if (primaryUrl) {
-        const url = getJobUrl(item);
+        const url = extractJobUrl(item);
         if (url && url === primaryUrl) return false;
       }
       return true;
     });
-  }, [matchingData, primaryRecommendation]);
+  }, [matchingData, primaryRecommendation, selectedJob]);
 
-  const jobTitle = deriveJobTitle(primaryRecommendation ?? matchingData);
+  const effectivePrimary = selectedJob ?? primaryRecommendation ?? matchingData;
+
+  const jobTitle = deriveJobTitle(effectivePrimary);
 
   const companyName =
-    pickFirstString(primaryRecommendation, ["company", "name", "organization"]) ??
-    pickFirstString(matchingData, ["company", "name"]) ??
+    pickFirstString(effectivePrimary, ["company"]) ??
+    pickFirstString(matchingData, ["company"]) ??
     "회사명";
 
   const locationLabel =
-    pickFirstString(primaryRecommendation, [
+    pickFirstString(effectivePrimary, [
       "location",
       "job_location",
       "city",
@@ -473,18 +484,18 @@ export default function EvaluatePage() {
     ]) ?? pickFirstString(matchingData, ["location", "job_location"]);
 
   const employmentLabel =
-    pickFirstString(primaryRecommendation, [
+    pickFirstString(effectivePrimary, [
       "employment_type",
       "job_type",
       "type",
     ]) ?? pickFirstString(matchingData, ["employment_type", "job_type"]);
 
   const remoteLabel =
-    resolveRemoteLabel(primaryRecommendation) ??
+    resolveRemoteLabel(effectivePrimary) ??
     resolveRemoteLabel(matchingData);
 
   const matchNumber =
-    pickFirstNumber(primaryRecommendation, [
+    pickFirstNumber(effectivePrimary, [
       "match_score",
       "match_percentage",
       "score",
@@ -492,15 +503,15 @@ export default function EvaluatePage() {
 
   const matchLabel =
     formatMatchLabel(matchNumber) ??
-    pickFirstString(primaryRecommendation, ["match", "score_label", "match_label"]) ??
+    pickFirstString(effectivePrimary, ["match", "score_label", "match_label"]) ??
     pickFirstString(matchingData, ["match", "score_label", "match_label"]);
 
-  const jobUrl =
-    pickFirstString(primaryRecommendation, ["url", "link", "job_url", "jd_url"]) ??
-    pickFirstString(matchingData, ["JD_url", "job_url", "url"]);
+  const jobUrl = primaryRecommendation
+    ? extractJobUrl(effectivePrimary ?? {})
+    : extractJobUrl(matchingData ?? {});
 
   const logoUrl =
-    pickFirstString(primaryRecommendation, [
+    pickFirstString(effectivePrimary, [
       "logo",
       "company_logo",
       "image",
@@ -508,20 +519,13 @@ export default function EvaluatePage() {
     ]) ?? pickFirstString(matchingData, ["logo", "company_logo"]);
 
   const jobDescriptionText =
-    pickFirstString(primaryRecommendation, [
-      "description",
-      "summary",
-      "JD",
-      "jd",
-      "details",
-      "responsibilities",
-    ]) ??
-    pickFirstString(matchingData, ["JD", "jd", "description"]) ??
+    pickFirstString(effectivePrimary, ["JD"]) ??
+    pickFirstString(matchingData, ["JD"]) ??
     jdText ??
     undefined;
 
   const analysisText =
-    pickFirstString(primaryRecommendation, ["analysis", "notes", "output"]) ??
+    pickFirstString(effectivePrimary, ["analysis", "notes", "output"]) ??
     pickFirstString(matchingData, ["output"]);
 
   const jobDescriptionHtml = useMemo(() => {
@@ -606,15 +610,12 @@ export default function EvaluatePage() {
 
   const renderResult = () => {
     const displayedSimilarJobs = similarJobs.slice(0, 3);
-    const resumeSummary = defaultResumeSummary;
+    const resumeSummary = resumeSummaryState;
     const similarCards = displayedSimilarJobs.map((job, index) => {
       const title = deriveJobTitle(job, index);
-      const company =
-        pickFirstString(job, ["company", "name", "organization"]) ??
-        companyName;
+      const company = pickFirstString(job, ["company"]) ?? companyName;
       const location =
-        pickFirstString(job, ["location", "job_location", "city", "country"]) ??
-        locationLabel;
+        pickFirstString(job, ["location"]) ?? locationLabel;
       const matchScore =
         pickFirstNumber(job, ["match_score", "match_percentage", "score"]) ??
         pickFirstNumber(matchingData, ["match_score", "score"]);
@@ -622,7 +623,7 @@ export default function EvaluatePage() {
         formatMatchLabel(matchScore) ??
         pickFirstString(job, ["match", "score_label", "match_label"]);
       const url =
-        pickFirstString(job, ["url", "link", "job_url", "jd_url"]) ??
+        extractJobUrl(job) ??
         jobUrl ??
         undefined;
 
@@ -643,52 +644,22 @@ export default function EvaluatePage() {
             ) : (
               <span className="text-xs text-slate-300">Match 정보 없음</span>
             )}
-            {url ? (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[rgb(96,150,222)]">
-                상세보기
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="h-4 w-4"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4.5 12h15m0 0-6-6m6 6-6 6"
-                  />
-                </svg>
-              </span>
-            ) : (
-              <span className="text-xs text-slate-300">링크 없음</span>
-            )}
+            <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[rgb(96,150,222)]">
+              View
+            </span>
           </div>
         </>
       );
 
-      if (url) {
-        return (
-          <a
-            key={`${title}-${company}-${index}`}
-            href={url}
-            target="_blank"
-            rel="noreferrer"
-            className="flex min-w-[240px] max-w-[260px] flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md focus-visible:-translate-y-1 focus-visible:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(96,150,222,0.5)]"
-          >
-            {cardContent}
-          </a>
-        );
-      }
-
       return (
-        <div
+        <button
           key={`${title}-${company}-${index}`}
-          className="flex min-w-[240px] max-w-[260px] flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+          type="button"
+          onClick={() => setSelectedJob(job)}
+          className="flex min-w-[240px] max-w-[260px] flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md focus-visible:-translate-y-1 focus-visible:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(96,150,222,0.5)]"
         >
           {cardContent}
-        </div>
+        </button>
       );
     });
 
@@ -697,7 +668,16 @@ export default function EvaluatePage() {
     return (
       <section className="space-y-10">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,3fr)]">
-          <ResumeSummaryView summary={resumeSummary} />
+          <ResumeSummaryView
+            summary={resumeSummary}
+            editable
+            onChange={(next) => {
+            setResumeSummaryState(next);
+            if (typeof window !== "undefined") {
+              window.sessionStorage.setItem("resume_summary", JSON.stringify(next));
+            }
+          }}
+        />
 
           <div className="space-y-6">
             <div className="space-y-4">

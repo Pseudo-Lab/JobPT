@@ -2,10 +2,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  ensureMockSessionData,
-  isMockEnabled,
-} from "@/lib/mockData";
 import ResumeSummaryView, { ResumeSummaryData } from "@/components/evaluate/ResumeSummaryView";
 import AppHeader from "@/components/common/AppHeader";
 
@@ -69,71 +65,68 @@ const ChatAvatar = ({
   );
 };
 
+const defaultResumeSummary: ResumeSummaryData = {
+  name: "",
+  phone: "",
+  email: "",
+  summary: "",
+  experiences: [],
+  skills: [],
+  certifications: [],
+  languages: [],
+  links: [],
+};
+
 const EditorPage = () => {
   const [resumePath, setResumePath] = useState<string | null>(null);
-  const [userResume, setUserResume] = useState<string>("");
+  const [userResume, setUserResume] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return window.sessionStorage.getItem("user_resume") ?? "";
+  });
   const [draftMessage, setDraftMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
+  const [attachments, setAttachments] = useState<
+    { id: string; label: string; content: string }[]
+  >([]);
+  const [resumeSummary, setResumeSummary] = useState<ResumeSummaryData>(() => {
+    if (typeof window !== "undefined") {
+      const raw = window.sessionStorage.getItem("resume_summary");
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            return { ...defaultResumeSummary, ...(parsed as ResumeSummaryData) };
+          }
+        } catch (error) {
+          console.warn("[Editor] Failed to parse stored resume summary on init", error);
+        }
+      }
+    }
+    return defaultResumeSummary;
+  });
   const listRef = useRef<HTMLDivElement>(null);
 
-  const defaultResumeSummary: ResumeSummaryData = {
-    name: "김길동",
-    phone: "010-0000-0000",
-    email: "email@gmail.com",
-    summary:
-      "안녕하세요, 서비스 기획자 김길동입니다. 간단한 자기소개가 이곳에 들어갑니다. 간단한 자기소개가 이곳에 들어갑니다. 간단한 자기소개가 이곳에 들어갑니다.",
-    experiences: [
-      {
-        company: "회사명",
-        period: "0000.00 ~ 재직중 (0년 00개월)",
-        title: "담당한 역할 타이틀",
-        description:
-          "담당한 역할과 업무 등에 대한 내용이 이곳에 들어갑니다. 담당한 역할과 업무 등에 대한 내용이 이곳에 들어갑니다. 담당한 역할과 업무 등에 대한 내용이 이곳에 들어갑니다.",
-        logoUrl: "/logo/main_logo.png",
-      },
-      {
-        company: "회사명",
-        period: "0000.00 ~ 0000.00",
-        title: "담당한 역할 타이틀",
-        description:
-          "담당한 역할과 업무 등에 대한 내용이 이곳에 들어갑니다. 담당한 역할과 업무 등에 대한 내용이 이곳에 들어갑니다. 담당한 역할과 업무 등에 대한 내용이 이곳에 들어갑니다.",
-      },
-    ],
-    skills: ["Python", "Figma", "React", "TypeScript", "Next.js", "Git"],
-    certifications: [
-      { name: "자격증 이름", date: "0000.00", note: "취득" },
-      { name: "수상내역", date: "0000.00", note: "수상" },
-    ],
-    languages: [
-      {
-        name: "영어",
-        details: ["OPIc IM1 (Intermediate Mid)", "TOEIC 990"],
-      },
-      {
-        name: "중국어",
-        details: ["HSK 6급"],
-      },
-    ],
-    links: [{ label: "https://github.com/gildong", url: "https://github.com/gildong" }],
-  };
-
   useEffect(() => {
-    if (isMockEnabled) {
-      ensureMockSessionData();
-    }
     if (typeof window === "undefined") return;
 
     const session = window.sessionStorage;
     const sessionResume = session.getItem("resume_path");
     setResumePath(sessionResume);
 
-    const storedResume =
-      window.localStorage.getItem("user_resume") ??
-      sessionStorage.getItem("user_resume") ??
-      "";
-    setUserResume(storedResume);
+    // Ensure latest resume summary is in session for immediate use
+    const rawSummary = session.getItem("resume_summary");
+    if (rawSummary) {
+      try {
+        const parsed = JSON.parse(rawSummary);
+        if (parsed && typeof parsed === "object") {
+          setResumeSummary({ ...defaultResumeSummary, ...(parsed as ResumeSummaryData) });
+        }
+      } catch (error) {
+        console.warn("[Editor] Failed to parse stored resume summary", error);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -161,19 +154,44 @@ const EditorPage = () => {
     if (isComposing) return;
     const rawMessage = presetMessage ?? draftMessage;
     const trimmed = rawMessage.trim();
-    if (!trimmed) return;
+    if (!trimmed && attachments.length === 0) return;
     if (!resumePath) {
       alert("이력서가 없습니다. 업로드 단계를 먼저 완료해주세요.");
       return;
     }
 
+    const attachmentText = attachments
+      .map((item) => `[${item.label}] ${item.content}`)
+      .join("\n\n");
+    const mergedUserResume = [attachmentText, userResume]
+      .filter(Boolean)
+      .join("\n\n");
+    const messageWithContext =
+      attachmentText && attachmentText.length > 0
+        ? `${trimmed}\n\n[첨부 내용]\n${attachmentText}`.trim()
+        : trimmed;
+    const userVisibleMessage =
+      trimmed.length > 0
+        ? trimmed
+        : attachmentText
+          ? `[첨부]\n${attachmentText}`
+          : "";
+    console.log('messageWithContext', messageWithContext);
+
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       role: "user",
-      content: trimmed,
+      content: userVisibleMessage,
       createdAt: Date.now(),
     };
-    setMessages((prev) => [...prev, userMessage]);
+    const typingMessage: ChatMessage = {
+      id: "assistant-typing",
+      role: "assistant",
+      content: "답변 생성중...",
+      createdAt: Date.now() + 0.5,
+    };
+
+    setMessages((prev) => [...prev, userMessage, typingMessage]);
     setDraftMessage("");
 
     const sessionId =
@@ -195,12 +213,12 @@ const EditorPage = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: trimmed,
+          message: messageWithContext,
           resume_path: resumePath,
           company: "",
           jd: "",
           session_id: sessionId,
-          user_resume: userResume,
+          user_resume: mergedUserResume,
         }),
       });
 
@@ -217,21 +235,29 @@ const EditorPage = () => {
         createdAt: Date.now() + 1,
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) =>
+        [...prev].filter((m) => m.id !== "assistant-typing").concat(assistantMessage),
+      );
     } catch (error) {
       console.error("[Chat] Failed to send message", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-error-${Date.now()}`,
-          role: "assistant",
-          content: "죄송합니다. 지금은 답변을 생성할 수 없습니다. 잠시 후 다시 시도해주세요.",
-          createdAt: Date.now(),
-        },
-      ]);
+      setMessages((prev) => {
+        const withoutTyping = [...prev].filter((m) => m.id !== "assistant-typing");
+        return [
+          ...withoutTyping,
+          {
+            id: `assistant-error-${Date.now()}`,
+            role: "assistant",
+            content: "죄송합니다. 지금은 답변을 생성할 수 없습니다. 잠시 후 다시 시도해주세요.",
+            createdAt: Date.now(),
+          },
+        ];
+      });
     } finally {
       setIsSending(false);
     }
+
+    // Clear attachments right after sending so chips disappear immediately.
+    setAttachments([]);
   };
 
   return (
@@ -241,7 +267,25 @@ const EditorPage = () => {
       <main className="min-h-[calc(100vh-4rem)] bg-[#f6f7fb]">
         <div className="mx-auto max-w-[90rem] px-4 py-12 sm:px-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,3fr)]">
-            <ResumeSummaryView summary={defaultResumeSummary} />
+            <ResumeSummaryView
+              summary={resumeSummary}
+              editable
+              onAttach={(item) => {
+                setAttachments((prev) => {
+                  const exists = prev.find((p) => p.id === item.id);
+                  if (exists) {
+                    return prev.map((p) => (p.id === item.id ? item : p));
+                  }
+                  return [...prev, item];
+                });
+              }}
+              onChange={(next) => {
+                setResumeSummary(next);
+                if (typeof window !== "undefined") {
+                  window.sessionStorage.setItem("resume_summary", JSON.stringify(next));
+                }
+              }}
+            />
 
             <div className="flex h-full flex-col gap-6">
               <section className="flex h-full min-h-[70vh] flex-col rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -254,7 +298,7 @@ const EditorPage = () => {
                   ref={listRef}
                   className="mt-6 mb-6 flex-1 min-h-[320px] max-h-[1100px] overflow-y-auto pr-1"
                 >
-                  <div className="space-y-5">
+                  <div className="space-y-6 pb-1">
                     {messages.map((message) => {
                       const isUser = message.role === "user";
                       return (
@@ -286,6 +330,39 @@ const EditorPage = () => {
                     })}
                   </div>
                 </div>
+
+                {attachments.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {attachments.map((item) => {
+                      const snippet =
+                        item.content.length > 40
+                          ? `${item.content.slice(0, 40)}…`
+                          : item.content;
+                      return (
+                        <span
+                          key={item.id}
+                          className="relative inline-flex items-center gap-2 rounded-full bg-[#2f2f2f] px-4 py-1 text-xs font-semibold text-white shadow-sm"
+                        >
+                          <span className="pl-4 pr-1 max-w-[200px] truncate">
+                            {item.label} · {snippet}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setAttachments((prev) =>
+                                prev.filter((attachment) => attachment.id !== item.id),
+                              )
+                            }
+                            className="text-white/70 transition hover:text-white"
+                            aria-label={`${item.label} 첨부 제거`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
 
                 <div className="mt-auto rounded-3xl border border-slate-200 bg-white px-4 py-3 shadow-inner">
                   <div className="flex items-center gap-3">

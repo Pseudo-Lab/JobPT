@@ -181,6 +181,31 @@ async def run(data: MatchRequest):
             return []
         return [value]
 
+    def normalize_text(value: str) -> str:
+        return " ".join(value.split()).strip().lower()
+
+    def deduplicate(recs):
+        seen_urls = set()
+        seen_jds = set()
+        unique = []
+        for rec in recs:
+            url = rec.get("job_url")
+            normalized_url = url.strip().lower() if isinstance(url, str) else None
+            jd_text = rec.get("JD")
+            normalized_jd = normalize_text(jd_text) if isinstance(jd_text, str) else None
+
+            if normalized_url and normalized_url in seen_urls:
+                continue
+            if normalized_jd and normalized_jd in seen_jds:
+                continue
+
+            if normalized_url:
+                seen_urls.add(normalized_url)
+            if normalized_jd:
+                seen_jds.add(normalized_jd)
+            unique.append(rec)
+        return unique
+
     summaries_list = to_list(jd_summaries)
     urls_list = to_list(jd_urls)
     names_list = to_list(c_names)
@@ -190,31 +215,28 @@ async def run(data: MatchRequest):
         recommendations.append(
             {
                 "JD": summary,
-                "JD_url": url,
+                "job_url": url,
                 "company": name,
-                "name": name,
             }
         )
 
-    primary = recommendations[0] if recommendations else {}
+    deduped_recommendations = deduplicate(recommendations)
+    primary = deduped_recommendations[0] if deduped_recommendations else {}
+
     analysis_cache[resume_path] = {
         "output": primary.get("JD", ""),
         "JD": primary.get("JD", ""),
-        "name": primary.get("name", ""),
-        "recommendations": recommendations,
+        "name": primary.get("company", ""),
+        "recommendations": deduped_recommendations,
     }
 
     logger.info(
-        f"[{trace_id}] matching success results={len(recommendations)} "
-        f"primary_company={primary.get('name', '')} url={primary.get('JD_url', '')}"
+        f"[{trace_id}] matching success results={len(deduped_recommendations)} "
+        f"primary_company={primary.get('company', '')} url={primary.get('job_url', '')}"
     )
 
     return {
-        "JD": summaries_list,
-        "output": primary.get("JD", ""),
-        "JD_url": urls_list,
-        "name": names_list,
-        "recommendations": recommendations,
+        "recommendations": deduped_recommendations,
         "primary": primary,
         "trace_id": trace_id,
     }
