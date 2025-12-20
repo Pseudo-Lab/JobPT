@@ -8,24 +8,7 @@ import { useRouter } from "next/navigation";
 import { UploadView } from "@/components/upload";
 import { ResultView } from "@/components/evaluate";
 import ManualJDForm from "@/components/evaluate/ManualJDForm";
-import type { SectionBox, RawElement } from "@/types";
 import AppHeader from "@/components/common/AppHeader";
-
-interface UpstageElement {
-    id: string;
-    category: string;
-    content: {
-        markdown?: string;
-        text?: string;
-    };
-    page: number;
-    coordinates: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    };
-}
 
 export default function Home() {
     // 기본 상태 관리
@@ -38,10 +21,7 @@ export default function Home() {
     const [company, setCompany] = useState("");
     const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
     const [isPdf, setIsPdf] = useState(false);
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [pdfError] = useState<string | null>(null);
-    const [, setSectionBoxes] = useState<SectionBox[]>([]);
-    const [, setRawElements] = useState<RawElement[]>([]);
     const [viewMode, setViewMode] = useState<"upload" | "result" | "manualJD">("upload");
     // JD/CV 수동입력용 상태
     const [, setManualCompany] = useState("");
@@ -393,7 +373,6 @@ export default function Home() {
                                 JD_url={JD_url}
                                 output={output}
                                 handleBackToUpload={handleBackToUpload}
-                                pdfUrl={pdfUrl}
                                 userResumeDraft={userResumeDraft}
                                 setUserResumeDraft={setUserResumeDraft}
                                 userResume={userResume}

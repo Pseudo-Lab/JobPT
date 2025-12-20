@@ -1,26 +1,18 @@
 "use client";
-import dynamic from "next/dynamic";
-import DOMPurify from 'dompurify';
+import DOMPurify from "dompurify";
 import { marked } from "marked";
-import React, { memo } from 'react';
-import Image from 'next/image';
-import type { ResultViewProps } from '@/types/evaluate';
-
-const PdfHighlighterView = dynamic(
-  () => import("@/components/common/PdfHighlighterView"),
-  { ssr: false },
-);
+import React, { memo } from "react";
+import Image from "next/image";
+import type { ResultViewProps } from "@/types/evaluate";
 
 const ResultView: React.FC<ResultViewProps> = memo(({
   pdfError,
-  isPdf,
   thumbnailUrl,
   company,
   JD,
   JD_url,
   output,
   handleBackToUpload,
-  pdfUrl,
   userResumeDraft,
   setUserResumeDraft,
   userResume,
@@ -40,7 +32,6 @@ const ResultView: React.FC<ResultViewProps> = memo(({
           className="px-6 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium text-lg shadow-md transition duration-300 transform hover:scale-105"
           onClick={() => {
             if (typeof window !== 'undefined') {
-              sessionStorage.setItem('resume_path', pdfUrl || '');
               sessionStorage.setItem('jd_text', JD || '');
             }
             window.location.href = '/preferences';
@@ -55,8 +46,6 @@ const ResultView: React.FC<ResultViewProps> = memo(({
           <h2 className="text-lg font-semibold border-b pb-2 mb-4">📄 이력서</h2>
           {pdfError ? (
             <div className="border rounded p-4 bg-red-50 text-red-500">{pdfError}</div>
-          ) : isPdf && pdfUrl ? (
-            <PdfHighlighterView key={pdfUrl} pdfUrl={pdfUrl} />
           ) : thumbnailUrl ? (
             <Image
               src={thumbnailUrl}

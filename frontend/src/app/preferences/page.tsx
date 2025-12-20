@@ -64,7 +64,7 @@ export default function PreferencesPage() {
     }
 
     const session = window.sessionStorage;
-    let sessionResume = session.getItem("resume_path");
+    const sessionResume = session.getItem("resume_path");
 
     return Boolean(sessionResume);
   };

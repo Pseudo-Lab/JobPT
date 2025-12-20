@@ -20,11 +20,11 @@ interface ChatMessage {
 }
 
 interface JobContext {
-  title?: string;
-  company?: string;
-  jd?: string;
-  jobUrl?: string;
-  matchLabel?: string | null;
+  title?: string | undefined;
+  company?: string | undefined;
+  jd?: string | undefined;
+  jobUrl?: string | undefined;
+  matchLabel?: string | null | undefined;
 }
 
 const parseStoredJobContext = (raw: string | null): JobContext | null => {
@@ -127,7 +127,7 @@ const defaultResumeSummary: ResumeSummaryData = {
 
 const EditorPage = () => {
   const [resumePath, setResumePath] = useState<string | null>(null);
-  const [userResume, setUserResume] = useState<string>(() => {
+  const [userResume] = useState<string>(() => {
     if (typeof window === "undefined") return "";
     return window.sessionStorage.getItem("user_resume") ?? "";
   });

@@ -107,9 +107,14 @@ const ResumeSummaryView = ({
       const parts = line.split("-").map((p) => p.trim()).filter(Boolean);
       const [name, ...rest] = parts;
       const details = rest.join(" - ").trim();
+      if (details) {
+        return {
+          name: name || line,
+          details: [details],
+        };
+      }
       return {
         name: name || line,
-        details: details ? [details] : undefined,
       };
     });
 
@@ -199,20 +204,20 @@ const ResumeSummaryView = ({
     setSkillsValues((prev) => prev.filter((item) => item !== value));
   };
 
-  const addExperience = () => {
-    setExperienceValues((prev) => [
-      ...prev,
-      {
-        company: "",
-        period: "",
-        startDate: "",
-        endDate: "",
-        title: "",
-        description: "",
-        logoUrl: "",
-      },
-    ]);
-  };
+  // const addExperience = () => {
+  //   setExperienceValues((prev) => [
+  //     ...prev,
+  //     {
+  //       company: "",
+  //       period: "",
+  //       startDate: "",
+  //       endDate: "",
+  //       title: "",
+  //       description: "",
+  //       logoUrl: "",
+  //     },
+  //   ]);
+  // };
 
   useEffect(() => {
     if (!onChange) return;

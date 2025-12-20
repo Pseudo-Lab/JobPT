@@ -39,7 +39,6 @@ export default function EvaluatePage() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
   const [resumePath, setResumePath] = useState<string | null>(null);
-  const [matchingResumePath, setMatchingResumePath] = useState<string | null>(null);
   const [jdText, setJdText] = useState<string | null>(null);
   const [matchingData, setMatchingData] = useState<Record<string, unknown> | null>(null);
   const [isSavedJob, setIsSavedJob] = useState(false);
@@ -91,52 +90,50 @@ export default function EvaluatePage() {
     };
   });
 
-  const defaultResumeSummary: ResumeSummaryData = {
-    name: "",
-    phone: "",
-    email: "",
-    summary: "",
-    experiences: [],
-    skills: [],
-    certifications: [],
-    languages: [],
-    links: [],
-  };
+  const normalizeWhitespace = useCallback(
+    (value: string) => value.replace(/\s+/g, " ").trim(),
+    [],
+  );
 
-  const normalizeWhitespace = (value: string) => value.replace(/\s+/g, " ").trim();
+  const extractJobUrl = useCallback(
+    (job: Record<string, unknown>) => pickFirstString(job, ["job_url"]),
+    [],
+  );
 
-  const extractJobUrl = (job: Record<string, unknown>) =>
-    pickFirstString(job, ["job_url"]);
-
-  const extractJobDescription = (job: Record<string, unknown>) =>
-    pickFirstString(job, ["JD"]);
+  const extractJobDescription = useCallback(
+    (job: Record<string, unknown>) => pickFirstString(job, ["JD"]),
+    [],
+  );
 
   // Remove repeated recommendations that share the same link or JD text.
-  const deduplicateJobs = (jobs: Record<string, unknown>[]) => {
-    const seenUrls = new Set<string>();
-    const seenJds = new Set<string>();
+  const deduplicateJobs = useCallback(
+    (jobs: Record<string, unknown>[]) => {
+      const seenUrls = new Set<string>();
+      const seenJds = new Set<string>();
 
-    return jobs.filter((job) => {
-      const normalizedUrl = extractJobUrl(job)?.trim().toLowerCase();
-      const jobDescription = extractJobDescription(job);
-      const normalizedJd = jobDescription
-        ? normalizeWhitespace(jobDescription).toLowerCase()
-        : undefined;
+      return jobs.filter((job) => {
+        const normalizedUrl = extractJobUrl(job)?.trim().toLowerCase();
+        const jobDescription = extractJobDescription(job);
+        const normalizedJd = jobDescription
+          ? normalizeWhitespace(jobDescription).toLowerCase()
+          : undefined;
 
-      if (normalizedUrl && seenUrls.has(normalizedUrl)) {
-        return false;
-      }
-      if (normalizedJd && seenJds.has(normalizedJd)) {
-        return false;
-      }
+        if (normalizedUrl && seenUrls.has(normalizedUrl)) {
+          return false;
+        }
+        if (normalizedJd && seenJds.has(normalizedJd)) {
+          return false;
+        }
 
-      if (normalizedUrl) seenUrls.add(normalizedUrl);
-      if (normalizedJd) seenJds.add(normalizedJd);
-      return true;
-    });
-  };
+        if (normalizedUrl) seenUrls.add(normalizedUrl);
+        if (normalizedJd) seenJds.add(normalizedJd);
+        return true;
+      });
+    },
+    [extractJobDescription, extractJobUrl, normalizeWhitespace],
+  );
 
-  const extractHeadingFromMarkdown = (markdown?: string) => {
+  const extractHeadingFromMarkdown = useCallback((markdown?: string) => {
     if (!markdown) return undefined;
     const lines = markdown.split(/\r?\n/);
     for (const line of lines) {
@@ -150,129 +147,138 @@ export default function EvaluatePage() {
       return trimmed;
     }
     return undefined;
-  };
+  }, []);
 
-  const deriveJobTitle = (
-    job: Record<string, unknown> | null | undefined,
-    fallbackIndex?: number,
-  ) => {
-    const heading = extractHeadingFromMarkdown(pickFirstString(job, ["JD"]));
-    const titleCandidate =
-      pickFirstString(job, ["job_title", "title", "position", "role"]) ??
-      heading;
-    if (titleCandidate) return titleCandidate;
+  const deriveJobTitle = useCallback(
+    (
+      job: Record<string, unknown> | null | undefined,
+      fallbackIndex?: number,
+    ) => {
+      const heading = extractHeadingFromMarkdown(pickFirstString(job, ["JD"]));
+      const titleCandidate =
+        pickFirstString(job, ["job_title", "title", "position", "role"]) ??
+        heading;
+      if (titleCandidate) return titleCandidate;
 
-    const companyCandidate = pickFirstString(job, [
-      "company",
-      "name",
-      "organization",
-    ]);
-    if (companyCandidate) return `${companyCandidate} 채용`;
-    if (fallbackIndex !== undefined) return "채용 공고";
-    return "채용 공고";
-  };
+      const companyCandidate = pickFirstString(job, [
+        "company",
+        "name",
+        "organization",
+      ]);
+      if (companyCandidate) return `${companyCandidate} 채용`;
+      if (fallbackIndex !== undefined) return "채용 공고";
+      return "채용 공고";
+    },
+    [extractHeadingFromMarkdown],
+  );
 
-  const persistSelectedJobContext = (
-    job: Record<string, unknown> | null | undefined,
-    fallbackJd?: string | null,
-  ) => {
-    if (typeof window === "undefined") return;
-    if (!job) {
-      window.sessionStorage.removeItem("selected_job_context");
-      return;
-    }
+  const persistSelectedJobContext = useCallback(
+    (
+      job: Record<string, unknown> | null | undefined,
+      fallbackJd?: string | null,
+    ) => {
+      if (typeof window === "undefined") return;
+      if (!job) {
+        window.sessionStorage.removeItem("selected_job_context");
+        return;
+      }
 
-    const title = deriveJobTitle(job);
-    const company =
-      pickFirstString(job, ["company", "name", "organization"]) ??
-      pickFirstString(matchingData, ["company", "name", "organization"]) ??
-      "";
-    const jd =
-      pickFirstString(job, ["JD"]) ??
-      fallbackJd ??
-      jdText ??
-      "";
-    const jobUrl = extractJobUrl(job) ?? "";
-    const matchScore =
-      pickFirstNumber(job, ["match_score", "match_percentage", "score"]) ??
-      pickFirstNumber(matchingData, ["match_score", "score"]);
-    const matchLabelValue =
-      formatMatchLabel(matchScore) ??
-      pickFirstString(job, ["match", "score_label", "match_label"]) ??
-      pickFirstString(matchingData, ["match", "score_label", "match_label"]);
-    const locationValue =
-      pickFirstString(job, ["location", "job_location", "city", "country"]) ??
-      pickFirstString(matchingData, ["location", "job_location"]);
-    const employmentValue =
-      pickFirstString(job, ["employment_type", "job_type", "type"]) ??
-      pickFirstString(matchingData, ["employment_type", "job_type"]);
-    const remoteValue = resolveRemoteLabel(job) ?? resolveRemoteLabel(matchingData);
+      const title = deriveJobTitle(job);
+      const company =
+        pickFirstString(job, ["company", "name", "organization"]) ??
+        pickFirstString(matchingData, ["company", "name", "organization"]) ??
+        "";
+      const jd =
+        pickFirstString(job, ["JD"]) ??
+        fallbackJd ??
+        jdText ??
+        "";
+      const jobUrl = extractJobUrl(job) ?? "";
+      const matchScore =
+        pickFirstNumber(job, ["match_score", "match_percentage", "score"]) ??
+        pickFirstNumber(matchingData, ["match_score", "score"]);
+      const matchLabelValue =
+        formatMatchLabel(matchScore) ??
+        pickFirstString(job, ["match", "score_label", "match_label"]) ??
+        pickFirstString(matchingData, ["match", "score_label", "match_label"]);
+      const locationValue =
+        pickFirstString(job, ["location", "job_location", "city", "country"]) ??
+        pickFirstString(matchingData, ["location", "job_location"]);
+      const employmentValue =
+        pickFirstString(job, ["employment_type", "job_type", "type"]) ??
+        pickFirstString(matchingData, ["employment_type", "job_type"]);
+      const remoteValue = resolveRemoteLabel(job) ?? resolveRemoteLabel(matchingData);
 
-    const payload = {
-      title,
-      company,
-      jd,
-      jobUrl,
-      matchLabel: matchLabelValue,
-      location: locationValue,
-      employment: employmentValue,
-      remote: remoteValue,
-      raw: job,
-    };
+      const payload = {
+        title,
+        company,
+        jd,
+        jobUrl,
+        matchLabel: matchLabelValue,
+        location: locationValue,
+        employment: employmentValue,
+        remote: remoteValue,
+        raw: job,
+      };
 
-    try {
-      window.sessionStorage.setItem("selected_job_context", JSON.stringify(payload));
-    } catch (error) {
-      console.warn("[Evaluate] Failed to persist selected job context", error);
-    }
-  };
+      try {
+        window.sessionStorage.setItem("selected_job_context", JSON.stringify(payload));
+      } catch (error) {
+        console.warn("[Evaluate] Failed to persist selected job context", error);
+      }
+    },
+    [deriveJobTitle, extractJobUrl, jdText, matchingData],
+  );
 
-  const transformMatchingResponse = (response: unknown) => {
-    if (!isRecord(response)) {
-      return { record: null, jdText: null, html: "" };
-    }
+  const transformMatchingResponse = useCallback(
+    (response: unknown) => {
+      if (!isRecord(response)) {
+        return { record: null, jdText: null, html: "" };
+      }
 
-    const raw = response as Record<string, unknown>;
-    const rawRecommendations = toRecordArray(raw.recommendations);
-    const sortedRecommendations = rawRecommendations
-      .map((item, index) => ({ item, index }))
-      .sort((a, b) => {
-        const aScore =
-          pickFirstNumber(a.item, ["match_score", "match_percentage", "score"]) ??
-          0;
-        const bScore =
-          pickFirstNumber(b.item, ["match_score", "match_percentage", "score"]) ??
-          0;
-        if (bScore === aScore) {
-          return a.index - b.index;
-        }
-        return bScore - aScore;
-      })
-      .map((entry) => entry.item);
+      const raw = response as Record<string, unknown>;
+      const rawRecommendations = toRecordArray(raw.recommendations);
+      const sortedRecommendations = rawRecommendations
+        .map((item, index) => ({ item, index }))
+        .sort((a, b) => {
+          const aScore =
+            pickFirstNumber(a.item, ["match_score", "match_percentage", "score"]) ??
+            0;
+          const bScore =
+            pickFirstNumber(b.item, ["match_score", "match_percentage", "score"]) ??
+            0;
+          if (bScore === aScore) {
+            return a.index - b.index;
+          }
+          return bScore - aScore;
+        })
+        .map((entry) => entry.item);
 
-    const uniqueRecommendations = deduplicateJobs(sortedRecommendations);
+      const uniqueRecommendations = deduplicateJobs(sortedRecommendations);
 
-    const primaryCandidate = isRecord(raw.primary)
-      ? raw.primary
-      : uniqueRecommendations[0] ?? null;
+      const primaryCandidate = isRecord(raw.primary)
+        ? raw.primary
+        : uniqueRecommendations[0] ?? null;
 
-    const record: Record<string, unknown> = {
-      ...raw,
-      recommendations: uniqueRecommendations,
-      primary: primaryCandidate ?? undefined,
-    };
+      const record: Record<string, unknown> = {
+        ...raw,
+        recommendations: uniqueRecommendations,
+        primary: primaryCandidate ?? undefined,
+      };
 
-    const firstJdText =
-      uniqueRecommendations
-        .map((item) => toStringValue(item.JD))
-        .find(Boolean) ??
-      pickFirstString(primaryCandidate, ["JD"]) ??
-      toStringValue(raw.output) ??
-      null;
-    const html = toStringValue(raw.output) ?? "";
+      const firstJdText =
+        uniqueRecommendations
+          .map((item) => toStringValue(item.JD))
+          .find(Boolean) ??
+        pickFirstString(primaryCandidate, ["JD"]) ??
+        toStringValue(raw.output) ??
+        null;
+      const html = toStringValue(raw.output) ?? "";
 
-    return { record, jdText: firstJdText, html };
-  };
+      return { record, jdText: firstJdText, html };
+    },
+    [deduplicateJobs],
+  );
 
   const ensureEssentialData = useCallback(() => {
     if (resumePath) return true;
@@ -282,8 +288,8 @@ export default function EvaluatePage() {
     }
 
     const session = window.sessionStorage;
-    let sessionResume = session.getItem("resume_path");
-    let sessionJd = session.getItem("jd_text");
+    const sessionResume = session.getItem("resume_path");
+    const sessionJd = session.getItem("jd_text");
 
     if (sessionResume) setResumePath(sessionResume);
     if (sessionJd) setJdText(sessionJd);
@@ -301,7 +307,6 @@ export default function EvaluatePage() {
 
       setResumePath(sessionResume);
       setJdText(sessionJd);
-      setMatchingResumePath(sessionMatchingResume);
 
       if (storedMatch && sessionResume && sessionMatchingResume === sessionResume) {
         const { record, jdText: storedJd, html: storedHtml } =
@@ -334,7 +339,7 @@ export default function EvaluatePage() {
         }
       }
     }
-  }, []);
+  }, [transformMatchingResponse]);
 
   useEffect(() => {
     if (mode !== "loading") return;
@@ -354,7 +359,6 @@ export default function EvaluatePage() {
         const { record, jdText: cachedJd, html: cachedHtml } =
           transformMatchingResponse(cachedMatch);
         setMatchingData(record);
-        setMatchingResumePath(cachedResume);
         if (cachedJd) setJdText(cachedJd);
         if (cachedHtml) setHtml(cachedHtml);
         setMode("result");
@@ -401,7 +405,6 @@ export default function EvaluatePage() {
 
       if (record) {
         setMatchingData(record);
-        setMatchingResumePath(currentResume);
         if (typeof window !== "undefined") {
           window.sessionStorage.setItem("matching_result", JSON.stringify(record));
           window.sessionStorage.setItem("matching_resume_path", currentResume);
@@ -470,7 +473,7 @@ export default function EvaluatePage() {
       clearInterval(interval);
       controller.abort();
     };
-  }, [ensureEssentialData, jdText, mode, resumePath]);
+  }, [ensureEssentialData, jdText, mode, resumePath, transformMatchingResponse]);
 
   const primaryRecommendation = useMemo(() => {
     if (!matchingData) return null;
@@ -519,7 +522,7 @@ export default function EvaluatePage() {
       }
       return true;
     });
-  }, [matchingData, primaryRecommendation, selectedJob]);
+  }, [deduplicateJobs, extractJobUrl, matchingData, primaryRecommendation, selectedJob]);
 
   const effectivePrimary = selectedJob ?? primaryRecommendation ?? matchingData;
 
@@ -580,10 +583,9 @@ export default function EvaluatePage() {
     undefined;
 
   // Persist the currently selected job so the editor can reuse its context.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     persistSelectedJobContext(effectivePrimary, jobDescriptionText ?? null);
-  }, [effectivePrimary, jobDescriptionText, jdText, matchingData]);
+  }, [effectivePrimary, jobDescriptionText, persistSelectedJobContext]);
 
   const analysisText =
     pickFirstString(effectivePrimary, ["analysis", "notes", "output"]) ??
@@ -683,10 +685,6 @@ export default function EvaluatePage() {
       const matchBadge =
         formatMatchLabel(matchScore) ??
         pickFirstString(job, ["match", "score_label", "match_label"]);
-      const url =
-        extractJobUrl(job) ??
-        jobUrl ??
-        undefined;
 
       const cardContent = (
         <>
