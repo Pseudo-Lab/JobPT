@@ -21,6 +21,7 @@ class State:
     agent_outputs: dict = field(default_factory=dict)  # {"summary": "...", "suggestion": "..."}
     final_answer: str = field(default="")
     github_url: str = field(default="")
+    blog_url: str = field(default="")
 
 
 # 세션별 State 인스턴스를 저장하는 딕셔너리
