@@ -77,8 +77,8 @@ async def suggest_agent(state: State):
     # Initialize the Langfuse handler
     langfuse_handler = CallbackHandler()
 
-    # model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
-    model = ChatOpenAI(model=AGENT_MODEL, temperature=0, api_key=OPENAI_API_KEY)
+    model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
+    # model = ChatOpenAI(model=AGENT_MODEL, temperature=0, api_key=OPENAI_API_KEY)
 
     # MCP 도구와 GitHub 도구 결합
     try:
