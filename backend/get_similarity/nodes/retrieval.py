@@ -1,5 +1,4 @@
-from langchain_openai import OpenAIEmbeddings
-
+# from langchain_community.embeddings import OpenAIEmbeddings
 
 def check_db_status(db, db_type="chroma", index=None):
     """
