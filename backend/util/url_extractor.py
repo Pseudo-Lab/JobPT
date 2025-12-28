@@ -3,11 +3,15 @@
 PDF에서 URL을 추출하는 유틸리티 모듈
 PyMuPDF를 사용하여 PDF의 하이퍼링크를 추출하고, 정규표현식으로 텍스트에서 URL 패턴을 찾습니다.
 
-.com이 포함되는 url만 추출
+기본적으로 블로그(Medium, Tistory, Naver, Velog) 및 GitHub 관련 URL을 추출
 ```python 
+# 기본 사용 (블로그 및 GitHub URL 추출)
+result = get_urls_from_pdf(pdf_path)
+
+# 커스텀 도메인 지정
 result = get_urls_from_pdf(
     pdf_path,
-    include_domains=['.com']
+    include_domains=['.edu', '.gov']
 )
 ```
 """
@@ -106,7 +110,7 @@ def filter_valid_urls(urls, include_domains=None, exclude_patterns=None):
     Args:
         urls: URL 리스트 (dict 또는 string)
         include_domains: 포함할 도메인 확장자 리스트 (예: ['.com', '.net', '.org'])
-                        None이면 .com만 포함
+                        None이면 블로그(Medium, Tistory, Naver, Velog) 및 GitHub 관련 도메인 포함
         exclude_patterns: 제외할 패턴 리스트 (예: ['mailto:', 'tel:'])
                          None이면 ['mailto:']만 제외
         
@@ -114,7 +118,15 @@ def filter_valid_urls(urls, include_domains=None, exclude_patterns=None):
         list: 필터링된 URL 리스트 (원본 형태 유지)
     """
     if include_domains is None:
-        include_domains = ['.com']
+        # 블로그 및 GitHub 관련 도메인들을 기본값으로 설정
+        include_domains = [
+            'github.com', 'github.io',  # GitHub
+            'medium.com',  # Medium
+            'tistory.com',  # Tistory
+            'naver.com',  # Naver Blog
+            'velog.io',  # Velog
+            '.com'  # 커스텀 블로그 사이트들
+        ]
     
     if exclude_patterns is None:
         exclude_patterns = ['mailto:']
@@ -158,7 +170,8 @@ def get_urls_from_pdf(pdf_path: str, text_content: str = None,
     Args:
         pdf_path: PDF 파일 경로
         text_content: 추출된 텍스트 내용 (선택사항, 제공되면 텍스트에서도 URL 추출)
-        include_domains: 포함할 도메인 확장자 리스트 (기본값: ['.com'])
+        include_domains: 포함할 도메인 확장자 리스트 
+                        (기본값: 블로그 및 GitHub 관련 도메인 - github.com, medium.com, tistory.com, velog.io 등)
         exclude_patterns: 제외할 패턴 리스트 (기본값: ['mailto:'])
         
     Returns:
@@ -167,10 +180,10 @@ def get_urls_from_pdf(pdf_path: str, text_content: str = None,
     Examples:
         >>> urls = get_urls_from_pdf("resume.pdf")
         >>> print(urls)
-        ['https://github.com/username', 'https://linkedin.com/in/username']
+        ['https://github.com/username', 'https://medium.com/@username']
         
-        >>> # 여러 도메인 포함
-        >>> urls = get_urls_from_pdf("resume.pdf", include_domains=['.com', '.org', '.io'])
+        >>> # 특정 도메인만 포함
+        >>> urls = get_urls_from_pdf("resume.pdf", include_domains=['.edu', '.gov'])
         
         >>> # 텍스트 내용도 함께 검색
         >>> urls = get_urls_from_pdf("resume.pdf", text_content=extracted_text)
