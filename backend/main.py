@@ -6,11 +6,10 @@ import shutil
 import uuid
 import os
 
-from parser import run_parser
+from util.parser import run_parser
 from get_similarity.main import matching
 from openai import OpenAI
 import uvicorn
-import nltk
 import logging
 
 from multi_agents.states.states import (
