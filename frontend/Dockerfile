@@ -18,11 +18,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
  && rm -rf /var/lib/apt/lists/*
 
-# package.json만 복사
-COPY package.json ./
-
-# npm install (lock이 없으면 자동 생성)
-RUN npm install
+# 의존성 파일 복사 (캐시 최적화)
+COPY package*.json ./
+RUN npm ci
 
 # 소스 복사
 COPY . .
