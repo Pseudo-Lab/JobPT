@@ -194,12 +194,24 @@ async def update_index(file: UploadFile, collection: str="korea-jd-dev"):
         ids = get_all_ids(index)
         url_set = set()
         date_dicts = {}
-        for id in tqdm(ids, desc="Getting URLs from Pinecone"):
-            row = get_metadata_by_id(index, id)
-            url_set.add(row["job_url"])
-            date_dicts[id] = row["deadline"]
-            # url_set.add(get_metadata_by_id(index, id)["job_url"])
-        print(url_set)
+        
+        # Pinecone fetch API - URI 길이 제한 고려하여 100개씩 처리
+        batch_size = 100
+        print(f"총 {len(ids)}개 ID를 {batch_size}개씩 배치 처리...")
+        
+        for start_idx in tqdm(range(0, len(ids), batch_size), desc="Getting metadata from Pinecone"):
+            end_idx = min(start_idx + batch_size, len(ids))
+            batch_ids = ids[start_idx:end_idx]
+            
+            # 한 번에 여러 ID 가져오기
+            resp = index.fetch(ids=batch_ids)
+            
+            for vid, vector_data in resp.vectors.items():
+                metadata = vector_data.metadata
+                url_set.add(metadata["job_url"])
+                date_dicts[vid] = metadata["deadline"]
+        
+        print(f"📊 Pinecone에서 가져온 URL: {len(url_set)}개")
         if result == False:
             raise ValueError("Index check failed: result is False")
 
@@ -234,10 +246,6 @@ async def update_index(file: UploadFile, collection: str="korea-jd-dev"):
         emb_model = UpstageEmbeddings(model="solar-embedding-1-large")
 
         vector_store = PineconeVectorStore(index=index, embedding=emb_model)
-
-        ### 데이터가 남아있을때 데이터 제거(소량일때만 사용), 추후 모듈화
-        # if len(index.describe_index_stats()["namespaces"]) > 0:
-        #     index.delete(delete_all=True, namespace="")
 
         ### 파인콘 API로 한번에 대용량 update가 불가능하여 배치처리
         total = len(total_chunks)
@@ -287,10 +295,6 @@ async def update_index(file: UploadFile, collection: str="test-custom-index"):
 
         vector_store = PineconeVectorStore(index=index, embedding=emb_model)
 
-        ### 데이터가 남아있을때 데이터 제거(소량일때만 사용), 추후 모듈화
-        if len(index.describe_index_stats()["namespaces"]) > 0:
-            index.delete(delete_all=True, namespace="")
-
         ### 파인콘 API로 한번에 대용량 update가 불가능하여 배치처리
         total = len(total_chunks)
         batch_size = 100
@@ -311,6 +315,20 @@ async def update_index(file: UploadFile, collection: str="test-custom-index"):
             content={"message": str(e)}
         )
 
+
+@app.delete("/clear_index")
+async def clear_index(collection: str):
+    """
+    특정 컬렉션의 모든 데이터를 삭제합니다.
+    """
+    try:
+        index = pc.Index(collection)
+        if len(index.describe_index_stats()["namespaces"]) > 0:
+            index.delete(delete_all=True, namespace="")
+            return JSONResponse(status_code=200, content={"message": f"{collection} 인덱스가 초기화되었습니다"})
+        return JSONResponse(status_code=200, content={"message": "삭제할 데이터가 없습니다"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": str(e)})
 
 
 if __name__ == "__main__":
