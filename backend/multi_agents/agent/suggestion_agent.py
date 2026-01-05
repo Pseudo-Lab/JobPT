@@ -60,7 +60,7 @@ async def suggest_agent(state: State):
 {state.job_description}  
 
 [Company Summary]  
-{state.agent_outputs['summary']}
+{state.agent_outputs.summary}
 
 [Full Resume]  
 {state.resume}  
