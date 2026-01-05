@@ -394,9 +394,9 @@ const ResumeSummaryView = ({
                 </span>
               </div>
             </div>
-            {editable && onAttach && (
+            {/* {editable && onAttach && (
               <AttachButton onClick={attachSummary} label="자기소개 첨부" />
-            )}
+            )} */}
           </div>
         </div>
 
@@ -440,7 +440,7 @@ const ResumeSummaryView = ({
                     <path d="M12 6v12M6 12h12" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button> */}
-                {onAttach && <AttachButton onClick={attachExperience} label="경력 첨부" />}
+                {/* {onAttach && <AttachButton onClick={attachExperience} label="경력 첨부" />} */}
               </div>
             )}
           </div>
