@@ -12,14 +12,9 @@ from openai import OpenAI
 import uvicorn
 import logging
 
-from multi_agents.states.states import (
-    State,
-    get_session_state,
-    end_session,
-    add_user_input_to_state,
-    add_assistant_response_to_state,
-)
+from multi_agents.states.states import State
 from multi_agents.graph import create_graph
+from langchain_core.messages import HumanMessage
 from configs import *
 
 from langfuse.langchain import CallbackHandler
@@ -247,37 +242,62 @@ async def run(data: MatchRequest):
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답
 langfuse_handler = CallbackHandler()
 
-
 @api_router.post("/chat")
 async def chat(request: Request):
+    """
+    채팅 엔드포인트 - LangGraph의 MemorySaver를 사용한 자동 상태 관리
+    
+    - thread_id (session_id)로 세션 구분
+    - 상태는 자동으로 저장/복원됨
+    - messages는 add_messages reducer로 자동 누적
+    """
     data = await request.json()
     session_id = data["session_id"]
     user_input = data["message"]
     company_name = data.get("company", "")
     resume_path = data.get("resume_path", "")
 
-    if resume_cache[resume_path] is None:
-        # PDF를 직접 파싱 (JPG 변환 없이)
+    # 이력서 캐시 확인
+    if resume_path not in resume_cache or resume_cache[resume_path] is None:
         resume = run_parser(resume_path)
-        resume_content_text = resume[0]  # 첫 번째 반환값이 텍스트
+        resume_content_text = resume[0]
+        resume_cache[resume_path] = resume_content_text
     else:
         resume_content_text = resume_cache[resume_path]
 
-    print(resume_content_text)
-    state = get_session_state(
-        session_id,
-        job_description=data.get("jd", ""),
-        resume=resume_content_text,
-        company_name=company_name,
-        user_resume=data.get("user_resume", ""),
-    )
+    print(f"[DEBUG] Resume content length: {len(resume_content_text)}")
 
-    add_user_input_to_state(state, user_input)
-    graph, state = await create_graph(state)
+    # Graph 생성 (한 번만 생성, checkpointer 포함)
+    graph = create_graph()
 
-    result = await graph.ainvoke(state, config={"callbacks": [langfuse_handler]})
+    # 초기 상태 구성 (사용자 메시지 추가)
+    input_state: State = {
+        "messages": [HumanMessage(content=user_input)],
+        "job_description": data.get("jd", ""),
+        "resume": resume_content_text,
+        "company_summary": "",
+        "user_resume": data.get("user_resume", ""),
+        "route_decision": data.get("route_decision", ""),
+        "company_name": company_name,
+        "next_agent": "",
+        "agent_outputs": {},
+        "final_answer": "",
+        "github_url": "",
+        "blog_url": "",
+    }
+
+    # thread_id를 config에 전달하여 세션별 상태 관리
+    config = {
+        "configurable": {"thread_id": session_id},
+        "callbacks": [langfuse_handler]
+    }
+
+    # Graph 실행 (상태는 자동으로 저장/복원됨)
+    result = await graph.ainvoke(input_state, config=config)
+    
+    # 마지막 AI 메시지 추출
     answer = result["messages"][-1].content
-    add_assistant_response_to_state(state, answer)
+    
     return {"response": answer}
 
 
