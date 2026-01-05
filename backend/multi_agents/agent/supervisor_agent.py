@@ -126,16 +126,13 @@ async def supervisor(state: State):
     print(f"reasoning: {reasoning}")
 
     # 상태 업데이트
-    # route_decision도 함께 업데이트 (하위 호환성)
     update = {
         "next_agent": next_agent,
-        "route_decision": next_agent,  # 하위 호환성
     }
 
     if next_agent == "FINISH":
         update["final_answer"] = final_answer
         update["messages"] = [AIMessage(content=final_answer)]
-        update["route_decision"] = "END"  # 기존 코드와의 호환성
 
     return update
 

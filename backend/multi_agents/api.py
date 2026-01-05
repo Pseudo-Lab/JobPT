@@ -26,9 +26,7 @@ async def chat(request: Request):
         agent_name=data.get("agent_name", ""),
         job_description=data.get("job_description", ""),
         resume=data.get("resume", ""),
-        company_summary=data.get("company_summary", ""),
         user_resume=data.get("user_resume", ""),
-        route_decision=data.get("route_decision", ""),
     )
     add_user_input_to_state(state, user_input)
     graph = await create_graph()
