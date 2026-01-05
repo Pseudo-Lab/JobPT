@@ -270,7 +270,6 @@ async def chat(request: Request):
         resume=resume_content_text,
         company_name=company_name,
         user_resume=data.get("user_resume", ""),
-        route_decision=data.get("route_decision", ""),
     )
 
     add_user_input_to_state(state, user_input)

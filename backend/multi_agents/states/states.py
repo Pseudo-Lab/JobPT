@@ -11,10 +11,8 @@ class State:
     messages: Annotated[Sequence[AnyMessage], add_messages] = field(default_factory=list)
     agent_name: str = field(default="")
     job_description: str = field(default="")
-    resume: str = field(default="") # 유저 전체 resume
-    company_summary: str = field(default="")
-    user_resume: str = field(default="") # 유저가 선택한 resume 부분
-    route_decision: str = field(default="")
+    resume: str = field(default="")  # 유저 전체 resume
+    user_resume: str = field(default="")  # 유저가 선택한 resume 부분
     company_name: str = field(default="")
     # 새로운 Supervisor Loop 패턴용 필드
     next_agent: str = field(default="")  # "summary" | "suggestion" | "FINISH"
@@ -38,9 +36,7 @@ def start_session(session_id: str, **kwargs):
         agent_name=kwargs.get("agent_name", ""),
         job_description=kwargs.get("job_description", ""),
         resume=kwargs.get("resume", ""),
-        company_summary=kwargs.get("company_summary", ""),
         user_resume=kwargs.get("user_resume", ""),
-        route_decision=kwargs.get("route_decision", ""),
         company_name=kwargs.get("company_name", ""),
         next_agent=kwargs.get("next_agent", ""),
         agent_outputs=kwargs.get("agent_outputs", {}),

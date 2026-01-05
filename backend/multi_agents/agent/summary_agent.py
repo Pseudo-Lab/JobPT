@@ -79,6 +79,5 @@ async def summary_agent(state: State) -> Dict[str, List[AIMessage]]:
     return {
         "messages": [response["messages"][-1]],
         "agent_name": "summary_agent",
-        "company_summary": result_content,
         "agent_outputs": updated_outputs,
     }

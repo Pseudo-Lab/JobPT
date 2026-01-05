@@ -11,7 +11,8 @@ from langfuse import Langfuse, get_client
 from langfuse.langchain import CallbackHandler
 from multi_agents.agent.github_tools import GITHUB_TOOLS
 from multi_agents.agent.blog_tools import BLOG_TOOLS
-from configs import AGENT_MODEL, UPSTAGE_API_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY 
+from configs import AGENT_MODEL, UPSTAGE_API_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY
+
 
 async def suggest_agent(state: State):
     """
@@ -59,19 +60,17 @@ async def suggest_agent(state: State):
 {state.job_description}  
 
 [Company Summary]  
-{state.company_summary}  
+{state.agent_outputs['summary']}
 
 [Full Resume]  
 {state.resume}  
 
-[Selected Resume Section to Improve]  
-{state.user_resume}  
 """
 
     langfuse_handler = Langfuse(
         public_key=LANGFUSE_PUBLIC_KEY,
         secret_key=LANGFUSE_SECRET_KEY,
-        host="https://cloud.langfuse.com"  # Optional: defaults to https://cloud.langfuse.com
+        host="https://cloud.langfuse.com",  # Optional: defaults to https://cloud.langfuse.com
     )
 
     # Initialize the Langfuse handler
@@ -88,7 +87,7 @@ async def suggest_agent(state: State):
     except Exception as e:
         print(f"⚠️ MCP Tools 로드 실패: {e}")
         mcp_tools = []
-   
+
     # GitHub API 도구들 추가
     all_tools = mcp_tools + GITHUB_TOOLS + BLOG_TOOLS
     print(f"✓ 총 도구 수: {len(all_tools)}개 (MCP: {len(mcp_tools)}, GitHub: {len(GITHUB_TOOLS)})")
@@ -114,4 +113,3 @@ async def suggest_agent(state: State):
         "agent_name": "suggestion_agent",
         "agent_outputs": updated_outputs,
     }
-
