@@ -12,7 +12,6 @@ export interface ResultViewProps {
   JD_url: string;
   output: string;
   handleBackToUpload: () => void;
-  pdfUrl: string | null;
   userResumeDraft: string;
   setUserResumeDraft: (val: string) => void;
   userResume: string;

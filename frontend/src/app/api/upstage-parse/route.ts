@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
+import os from "os";
 import path from "path";
 import { spawnSync } from "child_process";
 
@@ -15,30 +16,23 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // 통합된 data 디렉토리에 파일 저장
+    // 임시 파일 이름 및 경로
     const tmpFilename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${file.name}`;
-    const dataDir = path.join(process.cwd(), "..", "data", "uploads", "resumes");
-    
-    // 디렉토리가 없으면 생성
-    if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-    }
-    
-    const filePath = path.join(dataDir, tmpFilename);
-    fs.writeFileSync(filePath, buffer);
+    const tmpFilePath = path.join(os.tmpdir(), tmpFilename);
+    fs.writeFileSync(tmpFilePath, buffer);
 
-    // 웹에서 접근 가능하도록 public/uploads에도 복사 (임시)
+    // 웹에서 접근 가능하도록 public/uploads에만 복사 (중복 저장 방지)
     const publicDir = path.join(process.cwd(), "public", "uploads");
     if (!fs.existsSync(publicDir)) {
         fs.mkdirSync(publicDir, { recursive: true });
     }
     const publicFilePath = path.join(publicDir, tmpFilename);
-    fs.copyFileSync(filePath, publicFilePath);
+    fs.copyFileSync(tmpFilePath, publicFilePath);
     const pdfUrl = `/uploads/${tmpFilename}`;
 
     // 2. 업로드된 파일을 upstage_parser.py로 파싱 (python에서 결과 저장)
     const pyPath = path.join(process.cwd(), "upstage_parser.py");
-    const py = spawnSync("python3", [pyPath, filePath], { encoding: "utf-8" });
+    const py = spawnSync("python3", [pyPath, tmpFilePath], { encoding: "utf-8" });
 
     // 3. 결과 확인 및 반환 (성공/실패만 반환)
     if (py.error) {

@@ -9,11 +9,18 @@ export type SectionBox = {
   text: string;
 };
 
+export type BoundingBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export type RawElement = {
   id: string;
   page: number;
-  coordinates: unknown;
-  content: { text: string; markdown: string };
+  coordinates: BoundingBox;
+  content: { text?: string | null; markdown?: string | null };
 };
 
 // PDF Highlighter 관련 타입

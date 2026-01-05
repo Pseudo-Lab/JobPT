@@ -148,8 +148,13 @@ async def run(data: MatchRequest):
     LLM을 이용해 CV, JD 리뷰를 수행하는 함수
     """
     trace_id = str(uuid.uuid4())
-    logger.info(f"[{trace_id}] /matching start resume_path={data.resume_path}")
     resume_path = data.resume_path
+    logger.info(f"[{trace_id}] /matching start resume_path={resume_path}")
+
+    if not resume_path:
+        raise HTTPException(status_code=400, detail="resume_path is required.")
+    if not os.path.exists(resume_path):
+        raise HTTPException(status_code=400, detail="resume_path file not found.")
 
     # PDF를 JPG로 변환 후 저장
     # PDF를 직접 파싱 (JPG 변환 없이)
@@ -165,21 +170,78 @@ async def run(data: MatchRequest):
     #     resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache
     # )
 
-    jd_summaries, jd_urls, c_names = await matching(resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache)
+    jd_summaries, jd_urls, c_names = await matching(
+        resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache
+    )
 
-    # 첫 번째 결과만 사용 (배열 -> 문자열)
-    jd_summary = jd_summaries[0] if isinstance(jd_summaries, list) and jd_summaries else jd_summaries
-    jd_url = jd_urls[0] if isinstance(jd_urls, list) and jd_urls else jd_urls
-    c_name = c_names[0] if isinstance(c_names, list) and c_names else c_names
+    def to_list(value):
+        if isinstance(value, list):
+            return value
+        if value is None:
+            return []
+        if isinstance(value, str) and not value.strip():
+            return []
+        return [value]
+
+    def normalize_text(value: str) -> str:
+        return " ".join(value.split()).strip().lower()
+
+    def deduplicate(recs):
+        seen_urls = set()
+        seen_jds = set()
+        unique = []
+        for rec in recs:
+            url = rec.get("job_url")
+            normalized_url = url.strip().lower() if isinstance(url, str) else None
+            jd_text = rec.get("JD")
+            normalized_jd = normalize_text(jd_text) if isinstance(jd_text, str) else None
+
+            if normalized_url and normalized_url in seen_urls:
+                continue
+            if normalized_jd and normalized_jd in seen_jds:
+                continue
+
+            if normalized_url:
+                seen_urls.add(normalized_url)
+            if normalized_jd:
+                seen_jds.add(normalized_jd)
+            unique.append(rec)
+        return unique
+
+    summaries_list = to_list(jd_summaries)
+    urls_list = to_list(jd_urls)
+    names_list = to_list(c_names)
+
+    recommendations = []
+    for summary, url, name in zip(summaries_list, urls_list, names_list):
+        recommendations.append(
+            {
+                "JD": summary,
+                "job_url": url,
+                "company": name,
+            }
+        )
+
+    deduped_recommendations = deduplicate(recommendations)
+    primary = deduped_recommendations[0] if deduped_recommendations else {}
 
     analysis_cache[resume_path] = {
-        "output": jd_summary,
-        "JD": jd_summary,
-        "name": c_name,
+        "output": primary.get("JD", ""),
+        "JD": primary.get("JD", ""),
+        "name": primary.get("company", ""),
+        "recommendations": deduped_recommendations,
     }
-    logger.info(f"[{trace_id}] matching success company={c_name} url={jd_url}")
 
-    return {"JD": jd_summary, "output": jd_summary, "JD_url": jd_url, "name": c_name, "trace_id": trace_id}
+    logger.info(
+        f"[{trace_id}] matching success results={len(deduped_recommendations)} "
+        f"primary_company={primary.get('company', '')} url={primary.get('job_url', '')}"
+    )
+
+    return {
+        "recommendations": deduped_recommendations,
+        "primary": primary,
+        "trace_id": trace_id,
+    }
 
 
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답

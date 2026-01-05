@@ -4,29 +4,15 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Head from "next/head";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
+import { useRouter } from "next/navigation";
 import { UploadView } from "@/components/upload";
 import { ResultView } from "@/components/evaluate";
 import ManualJDForm from "@/components/evaluate/ManualJDForm";
-import type { SectionBox, RawElement } from "@/types";
-
-interface UpstageElement {
-    id: string;
-    category: string;
-    content: {
-        markdown?: string;
-        text?: string;
-    };
-    page: number;
-    coordinates: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    };
-}
+import AppHeader from "@/components/common/AppHeader";
 
 export default function Home() {
     // 기본 상태 관리
+    const router = useRouter();
     const [file, setFile] = useState<File | null>(null);
     const [status, setStatus] = useState("Ready");
     const [JD, setJD] = useState("");
@@ -35,10 +21,7 @@ export default function Home() {
     const [company, setCompany] = useState("");
     const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
     const [isPdf, setIsPdf] = useState(false);
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [pdfError] = useState<string | null>(null);
-    const [, setSectionBoxes] = useState<SectionBox[]>([]);
-    const [, setRawElements] = useState<RawElement[]>([]);
     const [viewMode, setViewMode] = useState<"upload" | "result" | "manualJD">("upload");
     // JD/CV 수동입력용 상태
     const [, setManualCompany] = useState("");
@@ -55,14 +38,36 @@ export default function Home() {
     const [userResumeDraft, setUserResumeDraft] = useState<string>(userResume);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const chatHistoryRef = useRef<{ role: "user" | "assistant"; content: string }[]>([
+        {
+            role: "assistant",
+            content: "안녕하세요! 이력서 개선을 도와드릴게요. 분석 결과를 바탕으로 어떤 부분을 도와드릴까요?",
+        },
+    ]);
 
-    const [location, setLocation] = useState<string[]>(['Korea']); // 기본값: ['Korea']
-    const [remote, setRemote] = useState<boolean[]>([]); // 예: [true, false]
-    const [jobType, setJobType] = useState<string[]>([]); // 예: ['fulltime', 'parttime']
+    const [location] = useState<string[]>(["Korea"]);
+    const [remote] = useState<boolean[]>([]);
+    const [jobType] = useState<string[]>([]);
 
+    // 홈 진입 시 이전 세션 캐시를 모두 비움
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const session = window.sessionStorage;
+        [
+            "resume_path",
+            "resume_upload_id",
+            "matching_result",
+            "matching_resume_path",
+            "matching_resume_id",
+            "jd_text",
+            "resume_summary",
+            "pdf_url",
+            "selected_job_context",
+        ].forEach((key) => session.removeItem(key));
+    }, []);
 
     // 채팅창 높이 조정
-    const adjustChatHeight = () => {
+    const adjustChatHeight = useCallback(() => {
         const chatMessages = document.getElementById("chat-messages");
         if (!chatMessages) return;
 
@@ -84,10 +89,10 @@ export default function Home() {
             const heightDifference = chatMessages.scrollHeight - oldScrollHeight;
             chatMessages.scrollTop += heightDifference;
         }
-    };
+    }, []);
 
     // 채팅 전송 함수
-    const getOrCreateSessionId = () => {
+    const getOrCreateSessionId = useCallback(() => {
         if (typeof window === "undefined") return "";
         let sessionId = window.localStorage.getItem("session_id");
         if (!sessionId) {
@@ -95,7 +100,7 @@ export default function Home() {
             window.localStorage.setItem("session_id", sessionId);
         }
         return sessionId;
-    };
+    }, []);
 
     const sendMessage = useCallback(async () => {
         const chatMessages = document.getElementById("chat-messages");
@@ -131,6 +136,9 @@ export default function Home() {
 
         try {
             const session_id = getOrCreateSessionId();
+            const userTurn: { role: "user"; content: string } = { role: "user", content: message };
+            chatHistoryRef.current.push(userTurn);
+            const conversation_history = chatHistoryRef.current.slice(-6);
             const requestData = {
                 message,
                 resume_path: resumePath,
@@ -138,6 +146,7 @@ export default function Home() {
                 jd: JD || "",
                 session_id,
                 user_resume: userResume,
+                conversation_history,
             };
 
             console.log("[DEBUG] sendMessage - userResume:", userResume); // 디버그용
@@ -155,6 +164,9 @@ export default function Home() {
 
             const data = await response.json();
             chatMessages.removeChild(botTypingDiv);
+            if (data.response) {
+                chatHistoryRef.current.push({ role: "assistant", content: data.response });
+            }
 
             const botMessageDiv = document.createElement("div");
             botMessageDiv.className = "mb-3 text-left";
@@ -169,6 +181,10 @@ export default function Home() {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         } catch (error) {
             console.error("챗봇 API 호출 오류:", error);
+            // 직전 사용자 턴을 되돌려 히스토리 일관성 유지
+            if (chatHistoryRef.current.length > 0) {
+                chatHistoryRef.current.pop();
+            }
             if (chatMessages.contains(botTypingDiv)) chatMessages.removeChild(botTypingDiv);
 
             const errorMessageDiv = document.createElement("div");
@@ -183,13 +199,7 @@ export default function Home() {
             adjustChatHeight();
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
-    }, [resumePath, company, JD, userResume]);
-
-    // sendMessage의 최신 참조를 유지하는 ref
-    const sendMessageRef = useRef(sendMessage);
-    useEffect(() => {
-        sendMessageRef.current = sendMessage;
-    }, [sendMessage]);
+    }, [JD, company, resumePath, userResume, adjustChatHeight, getOrCreateSessionId]);
 
     useEffect(() => {
         if (viewMode !== "result") return;
@@ -199,24 +209,27 @@ export default function Home() {
 
         if (!sendButton || !chatInput) return;
 
-        // ref를 통해 항상 최신 sendMessage를 호출
-        const handleClick = () => sendMessageRef.current();
+        const handleSendButtonClick = () => {
+            sendMessage();
+        };
+
         const handleKeyPress = (e: KeyboardEvent) => {
             if (e.key === "Enter") {
-                sendMessageRef.current();
+                e.preventDefault();
+                sendMessage();
             }
         };
 
-        sendButton.addEventListener("click", handleClick);
+        sendButton.addEventListener("click", handleSendButtonClick);
         chatInput.addEventListener("keypress", handleKeyPress);
 
         adjustChatHeight();
 
         return () => {
-            sendButton.removeEventListener("click", handleClick);
+            sendButton.removeEventListener("click", handleSendButtonClick);
             chatInput.removeEventListener("keypress", handleKeyPress);
         };
-    }, [viewMode]); // viewMode만 의존 - ref를 사용하므로 다른 의존성 불필요
+    }, [viewMode, adjustChatHeight, sendMessage]);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
@@ -255,11 +268,36 @@ export default function Home() {
 
         setStatus("Processing...");
 
+        // 새 업로드마다 매칭 캐시/식별자를 초기화
+        const uploadId =
+            typeof crypto !== "undefined" && crypto.randomUUID
+                ? crypto.randomUUID()
+                : String(Date.now());
+        if (typeof window !== "undefined") {
+            const session = window.sessionStorage;
+            ["matching_result", "matching_resume_path", "matching_resume_id"].forEach((key) =>
+                session.removeItem(key),
+            );
+            session.setItem("resume_upload_id", uploadId);
+        }
+
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("location", JSON.stringify(location));
-        formData.append("remote", JSON.stringify(remote));
-        formData.append("job_type", JSON.stringify(jobType));
+        formData.append("location", location.join(",") || "");
+        formData.append(
+            "remote",
+            remote.length === 0
+                ? "any"
+                : remote.includes(true) && remote.includes(false)
+                    ? "any"
+                    : remote.includes(true)
+                        ? "True"
+                        : "False",
+        );
+        formData.append(
+            "job_type",
+            jobType.length === 0 ? "any" : jobType.join(","),
+        );
 
         try {
             const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
@@ -268,58 +306,13 @@ export default function Home() {
             });
             const { resume_path } = await uploadRes.json();
             setResumePath(resume_path);
+            setStatus("Uploaded");
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/matching`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ resume_path }),
-            });
-            const data = await res.json();
-            setJD(data.JD);
-            setOutput(data.output);
-            setJDUrl(data.JD_url);
-            setCompany(data.name);
-            setStatus("Complete!");
-
-            // Upstage parsing
-            try {
-                const upstageForm = new FormData();
-                upstageForm.append("file", file);
-                const upstageRes = await fetch("/api/upstage-parse", {
-                    method: "POST",
-                    body: upstageForm,
-                });
-                const upstageData = await upstageRes.json();
-                console.log("[Upstage API Response]", upstageData);
-
-                if (upstageData.pdfUrl) {
-                    setPdfUrl(upstageData.pdfUrl);
-                }
-
-                const boxes = (upstageData.elements || []).map((e: UpstageElement) => ({
-                    id: String(e.id),
-                    title: e.category,
-                    x: 0,
-                    y: 0,
-                    width: 0,
-                    height: 0,
-                    text: e.content.markdown || e.content.text || "",
-                }));
-                setSectionBoxes(boxes);
-                setRawElements(
-                    (upstageData.elements || []).map((e: UpstageElement) => ({
-                        id: e.id,
-                        page: e.page,
-                        coordinates: e.coordinates,
-                        content: { text: e.content.text, markdown: e.content.markdown },
-                    }))
-                );
-            } catch (e) {
-                console.error("[Upstage API Error]", e);
-                setSectionBoxes([]);
+            if (typeof window !== "undefined") {
+                window.sessionStorage.setItem("resume_path", resume_path);
             }
 
-            setViewMode("result");
+            router.push("/preferences");
         } catch (error) {
             console.error("분석 중 오류 발생:", error);
             setStatus("Error: 서버 연결 실패");
@@ -347,12 +340,8 @@ export default function Home() {
             handleAnalyze={handleAnalyze}
             handleDrop={handleDrop}
             setIsDragging={setIsDragging}
-            location={location}
-            remote={remote}
-            jobType={jobType}
-            setLocation={setLocation}
-            setRemote={setRemote}
-            setJobType={setJobType}
+            jobPostingUrl={JD_url}
+            onJobPostingUrlChange={(value: string) => setJDUrl(value)}
             handleManualJD={handleManualJDClick}
         />
     );
@@ -362,43 +351,6 @@ export default function Home() {
         setJDUrl(jdUrlInput);
         setJD(jdTextInput);
         setOutput(""); // 분석 결과는 없음
-        // 이력서 파싱만 수행
-        if (file) {
-            try {
-                const upstageForm = new FormData();
-                upstageForm.append("file", file);
-                const upstageRes = await fetch("/api/upstage-parse", {
-                    method: "POST",
-                    body: upstageForm,
-                });
-                const upstageData = await upstageRes.json();
-                if (upstageData.pdfUrl) {
-                    setPdfUrl(upstageData.pdfUrl);
-                }
-                const boxes = (upstageData.elements || []).map((e: UpstageElement) => ({
-                    id: String(e.id),
-                    title: e.category,
-                    x: 0,
-                    y: 0,
-                    width: 0,
-                    height: 0,
-                    text: e.content.markdown || e.content.text || "",
-                }));
-                setSectionBoxes(boxes);
-                setRawElements(
-                    (upstageData.elements || []).map((e: UpstageElement) => ({
-                        id: e.id,
-                        page: e.page,
-                        coordinates: e.coordinates,
-                        content: { text: e.content.text, markdown: e.content.markdown },
-                    }))
-                );
-            } catch (e) {
-                console.error("[Upstage API Error] (manual JD)", e);
-                setSectionBoxes([]);
-                setRawElements([]);
-            }
-        }
         setViewMode("result");
     };
 
@@ -410,38 +362,43 @@ export default function Home() {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
 
-            {/* 메인 로고 + 타이틀 */}
-            <div className="flex items-center gap-3 py-8 px-6 bg-white">
-                <img src="/logo/main_logo.png" alt="JobPT Logo" style={{ height: 48, width: 'auto', background: '#fff', borderRadius: 8 }} />
-                <span className="text-3xl font-extrabold text-gray-800 tracking-tight">JobPT</span>
-            </div>
+    <div className="min-h-screen bg-[#1f1f1f]">
+                <AppHeader />
 
-            <main className="bg-gray-50 min-h-screen">
-                {viewMode === "upload" && renderUploadView()}
-                {viewMode === "manualJD" && (
-                    <ManualJDForm
-                        onSubmit={handleManualJDSubmit}
-                        onBack={() => setViewMode("upload")}
-                    />
-                )}
-                {viewMode === "result" && (
-                    <ResultView
-                        pdfError={pdfError}
-                        isPdf={isPdf}
-                        thumbnailUrl={thumbnailUrl}
-                        company={company}
-                        JD={JD}
-                        JD_url={JD_url}
-                        output={output}
-                        handleBackToUpload={handleBackToUpload}
-                        pdfUrl={pdfUrl}
-                        userResumeDraft={userResumeDraft}
-                        setUserResumeDraft={setUserResumeDraft}
-                        userResume={userResume}
-                        setUserResume={setUserResume}
-                    />
-                )}
-            </main>
+                <main className="min-h-[calc(100vh-4rem)] bg-[#f6f7fb]">
+                    {viewMode === "upload" && (
+                        <div className="mx-auto max-w-5xl px-4 sm:px-8 py-12">
+                            {renderUploadView()}
+                        </div>
+                    )}
+                    {viewMode === "manualJD" && (
+                        <div className="mx-auto max-w-4xl px-4 sm:px-8 py-12">
+                            <ManualJDForm
+                                onSubmit={handleManualJDSubmit}
+                                onBack={() => setViewMode("upload")}
+                            />
+                        </div>
+                    )}
+                    {viewMode === "result" && (
+                        <div className="px-4 py-8 sm:px-6">
+                            <ResultView
+                                pdfError={pdfError}
+                                isPdf={isPdf}
+                                thumbnailUrl={thumbnailUrl}
+                                company={company}
+                                JD={JD}
+                                JD_url={JD_url}
+                                output={output}
+                                handleBackToUpload={handleBackToUpload}
+                                userResumeDraft={userResumeDraft}
+                                setUserResumeDraft={setUserResumeDraft}
+                                userResume={userResume}
+                                setUserResume={setUserResume}
+                            />
+                        </div>
+                    )}
+                </main>
+            </div>
         </>
     );
 }

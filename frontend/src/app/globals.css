@@ -250,4 +250,15 @@ body {
     font-weight: bold;
     background-color: rgba(0, 0, 0, 0.05);
   }
+
+  /* Enable text selection inside react-pdf layers */
+  .react-pdf__Page__textContent {
+    pointer-events: auto !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+
+  .react-pdf__Page__textContent span {
+    cursor: text !important;
+  }
 }

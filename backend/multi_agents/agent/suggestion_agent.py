@@ -11,7 +11,7 @@ from langfuse import Langfuse, get_client
 from langfuse.langchain import CallbackHandler
 from multi_agents.agent.github_tools import GITHUB_TOOLS
 from multi_agents.agent.blog_tools import BLOG_TOOLS
-from configs import AGENT_MODEL, UPSTAGE_API_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, OPENAI_API_KEY 
+from configs import AGENT_MODEL, UPSTAGE_API_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY 
 
 async def suggest_agent(state: State):
     """
