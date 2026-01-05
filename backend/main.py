@@ -6,7 +6,7 @@ import shutil
 import uuid
 import os
 
-from parser import run_parser
+from parser import run_parser, run_parser_structured
 from get_similarity.main import matching
 from openai import OpenAI
 import uvicorn
@@ -142,6 +142,36 @@ async def upload_resume(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@api_router.post("/matching/structured")
+async def run_structured(data: MatchRequest):
+    """
+    사용자의 이력서를 구조화된 형태로 파싱하여 반환합니다.
+    
+    Returns:
+        Dict: {
+            "raw_text": "전체 문자열",
+            "structured": {
+                "required": {category: content, ...},
+                "optional": {category: content, ...},
+                "unmapped": "..."
+            },
+            "elements": [...],
+            "coordinates": [...]
+        }
+    """
+    trace_id = str(uuid.uuid4())
+    logger.info(f"[{trace_id}] /matching/structured start resume_path={data.resume_path}")
+    resume_path = data.resume_path
+
+    try:
+        structured_resume = run_parser_structured(resume_path, return_structured=True)
+        logger.info(f"[{trace_id}] structured parsing success")
+        return structured_resume
+    except Exception as e:
+        logger.error(f"[{trace_id}] structured parsing failed: {e}")
+        raise HTTPException(status_code=500, detail=f"구조화된 파싱 실패: {str(e)}")
+
+
 @api_router.post("/matching")
 async def run(data: MatchRequest):
     """
@@ -152,12 +182,21 @@ async def run(data: MatchRequest):
     logger.info(f"[{trace_id}] /matching start resume_path={data.resume_path}")
     resume_path = data.resume_path
 
-    # PDF를 JPG로 변환 후 저장
     # PDF를 직접 파싱 (JPG 변환 없이)
-    resume = run_parser(resume_path)
-    resume_content_text = resume[0]  # 첫 번째 반환값이 텍스트
-
-    # 캐시 저장
+    # 구조화된 형태로 파싱 (하위 호환성 유지)
+    try:
+        structured_resume = run_parser_structured(resume_path, return_structured=True)
+        resume_content_text = structured_resume['raw_text']  # 기존 호환성을 위해 raw_text 사용
+        
+        # 구조화된 데이터도 캐시에 저장 (선택적)
+        # resume_cache[resume_path] = structured_resume  # 전체 구조화된 데이터 저장 가능
+    except Exception as e:
+        # 하위 호환성: 기존 방식으로 fallback
+        logger.warning(f"[{trace_id}] 구조화된 파싱 실패, 기존 방식 사용: {e}")
+        resume = run_parser(resume_path)
+        resume_content_text = resume[0]  # 첫 번째 반환값이 텍스트
+    
+    # 캐시 저장 (기존 형식 유지)
     resume_cache[resume_path] = resume_content_text
     logger.info(f"[{trace_id}] parsed_pages={len(resume_content_text)} total_chars={len(resume_content_text)}")
 
@@ -195,10 +234,15 @@ async def chat(request: Request):
     company_name = data.get("company", "")
     resume_path = data.get("resume_path", "")
 
-    if resume_cache[resume_path] is None:
+    if resume_path not in resume_cache or resume_cache[resume_path] is None:
         # PDF를 직접 파싱 (JPG 변환 없이)
-        resume = run_parser(resume_path)
-        resume_content_text = resume[0]  # 첫 번째 반환값이 텍스트
+        try:
+            structured_resume = run_parser_structured(resume_path, return_structured=True)
+            resume_content_text = structured_resume['raw_text']
+        except Exception as e:
+            # 하위 호환성: 기존 방식으로 fallback
+            resume = run_parser(resume_path)
+            resume_content_text = resume[0]  # 첫 번째 반환값이 텍스트
     else:
         resume_content_text = resume_cache[resume_path]
 

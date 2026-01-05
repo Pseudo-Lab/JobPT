@@ -2,9 +2,10 @@ from configs import UPSTAGE_API_KEY
 import requests
 import os
 
-from typing import Optional
+from typing import Optional, Dict, List
 import io
 import base64
+from util.cv_format import create_structured_cv
 
 
 
@@ -114,14 +115,68 @@ def run_parser(pdf_path):
 
     coordinates = []
     contents = []
+    elements = []
 
     for i in response_data['elements']:
-        coordinates.append(i['coordinates'])
+        coordinates.append(i.get('coordinates'))
+        elements.append(i)  # 전체 element 정보 저장
         contents.append(i['content'].get('markdown', ''))
 
     full_contents = response_data.get('content', {}).get('text', '')
     contents = "\n".join(contents)
 
     print(f"{pdf_path}에서 텍스트 추출 완료")
-    return contents, coordinates, full_contents
+    return contents, coordinates, full_contents, elements
+
+
+def run_parser_structured(pdf_path: str, return_structured: bool = True, use_llm: bool = True) -> Dict:
+    """
+    Upstage API를 사용하여 PDF에서 텍스트를 추출하고 구조화된 형태로 반환합니다.
+    
+    Args:
+        pdf_path: PDF 파일 경로
+        return_structured: True면 구조화된 형태로 반환, False면 기존 형식 반환
+        use_llm: True면 LLM을 사용하여 구조화, False면 기본 파싱만 수행
+    
+    Returns:
+        Dict (return_structured=True): {
+            "raw_text": "전체 문자열",
+            "structured": {
+                "required": {
+                    "basic_info": {...},
+                    "summary": "...",
+                    "experience": [...],
+                    "education": [...],
+                    "skills": [...],
+                    "awards_certifications": [...],
+                    "languages": [...],
+                    "other_links": [...]
+                },
+                "optional": {
+                    "unmapped_content": "...",
+                    "additional_sections": {...}
+                }
+            },
+            "elements": [...],
+            "coordinates": [...]
+        }
+        또는
+        Tuple (return_structured=False): (contents, coordinates, full_contents, elements)
+    """
+    # 기존 파서 실행
+    contents, coordinates, full_contents, elements = run_parser(pdf_path)
+    
+    # 구조화된 형태로 변환
+    if return_structured:
+        structured_result = create_structured_cv(
+            raw_text=contents,
+            elements=elements,
+            coordinates=coordinates,
+            language=None,  # 자동 감지
+            use_llm=use_llm
+        )
+        return structured_result
+    else:
+        # 기존 형식 유지 (하위 호환성)
+        return contents, coordinates, full_contents, elements
 

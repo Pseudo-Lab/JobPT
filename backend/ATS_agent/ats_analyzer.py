@@ -201,7 +201,16 @@ class ATSAnalyzer:
                 result = run_parser(self.cv_path)
 
                 if isinstance(result, tuple):
-                    if len(result) >= 3:
+                    if len(result) >= 4:
+                        # 새로운 형식: (contents, coordinates, full_contents, elements)
+                        contents, coordinates, full_contents, elements = result
+                        if full_contents is None:
+                            print("Warning: upstage_parser returned None (API error)")
+                            text = ""
+                        else:
+                            text = full_contents if full_contents else ""
+                    elif len(result) >= 3:
+                        # 기존 형식 (하위 호환성)
                         contents, coordinates, full_contents = result
                         if full_contents is None:
                             print("Warning: upstage_parser returned None (API error)")

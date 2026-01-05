@@ -14,10 +14,10 @@ services:
       NODE_ENV: ${ENVIRONMENT:-production}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
       APP_HOST: ${APP_HOST:-localhost}
+    ports:
+      - "3000:3000"
     volumes:
       - jobpt_resumes:/app/public/uploads
-      - /app/node_modules
-      - /app/.next
     depends_on:
       - backend
     networks:
@@ -41,7 +41,7 @@ services:
       - traefik.http.routers.jobpt-${ENVIRONMENT}-web-http.service=jobpt-${ENVIRONMENT}-web
 
   mysql:
-    image: mysql:8.0
+    image: mariadb:10.11
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
@@ -80,6 +80,8 @@ services:
       MYSQL_USER: ${MYSQL_USER:-jobpt}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-jobpt}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-jobpt}
+    ports:
+      - "8000:8000"
     volumes:
       - jobpt_data:/app/data
       - jobpt_resumes:/app/uploaded_resumes
