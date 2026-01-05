@@ -7,7 +7,6 @@ def get_suggestion_prompt(
     job_description: str,
     company_summary: str,
     resume: str,
-    user_resume: str,
 ) -> str:
     """
     Suggestion Agent의 시스템 프롬프트를 생성합니다.
@@ -16,7 +15,6 @@ def get_suggestion_prompt(
         job_description: 채용 공고 내용
         company_summary: 회사 정보 요약
         resume: 전체 이력서 내용
-        user_resume: 사용자가 선택한 개선할 이력서 부분
 
     Returns:
         str: 포맷팅된 시스템 프롬프트
@@ -92,7 +90,6 @@ def get_suggestion_prompt(
 # {resume}
 
 # [Selected Resume Section to Improve (Target)]
-# {user_resume}
 # """
 
     return f"""당신은 이력서 개선 전문가입니다.
@@ -133,8 +130,5 @@ def get_suggestion_prompt(
 
 [Full Resume]  
 {resume}  
-
-[Selected Resume Section to Improve]  
-{user_resume}  
 """
 

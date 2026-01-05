@@ -12,9 +12,6 @@ class State(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
     job_description: str
     resume: str  # 유저 전체 resume
-    # company_summary: str
-    # user_resume: str  # 유저가 선택한 resume 부분
-    # route_decision: str
     company_name: str
     # Supervisor Loop 패턴용 필드
     next_agent: str  # "summary" | "suggestion" | "FINISH"
