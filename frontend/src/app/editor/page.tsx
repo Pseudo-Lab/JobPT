@@ -212,44 +212,14 @@ const EditorPage = () => {
     if (isSending) return;
     if (isComposing) return;
     const rawMessage = presetMessage ?? draftMessage;
-    const trimmed = rawMessage.trim();
-    if (!trimmed && attachments.length === 0) return;
+    const trimmedMessage = rawMessage.trim();
+    if (!trimmedMessage && attachments.length === 0) return;
     if (!resumePath) {
       alert("이력서가 없습니다. 업로드 단계를 먼저 완료해주세요.");
       return;
     }
 
-    const attachmentText = attachments
-      .map((item) => `[${item.label}] ${item.content}`)
-      .join("\n\n");
-    const mergedUserResume = [attachmentText, userResume]
-      .filter(Boolean)
-      .join("\n\n");
-    const jobContextText =
-      jobContext &&
-      (jobContext.jd || jobContext.title || jobContext.company || jobContext.jobUrl)
-        ? [
-            "[선택한 공고 정보]",
-            jobContext.title ? `공고명: ${jobContext.title}` : null,
-            jobContext.company ? `회사: ${jobContext.company}` : null,
-            jobContext.jobUrl ? `URL: ${jobContext.jobUrl}` : null,
-            jobContext.matchLabel ? `매칭도: ${jobContext.matchLabel}` : null,
-            jobContext.jd ? `JD:\n${jobContext.jd}` : null,
-          ]
-            .filter(Boolean)
-            .join("\n")
-        : "";
-    const messageBlocks = [trimmed];
-    if (attachmentText) messageBlocks.push(`[첨부 내용]\n${attachmentText}`);
-    if (jobContextText) messageBlocks.push(jobContextText);
-    const messageWithContext = messageBlocks.filter(Boolean).join("\n\n").trim();
-    const userVisibleMessage =
-      trimmed.length > 0
-        ? trimmed
-        : attachmentText
-          ? `[첨부]\n${attachmentText}`
-          : "";
-    console.log("[Chat] messageWithContext", messageWithContext);
+    console.log("[Chat] user message", trimmedMessage);
 
     const companyForApi = jobContext?.company ?? "";
     const jdForApi = jobContext?.jd ?? "";
@@ -259,7 +229,7 @@ const EditorPage = () => {
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       role: "user",
-      content: userVisibleMessage,
+      content: trimmedMessage,
       createdAt: Date.now(),
     };
     const typingMessage: ChatMessage = {
@@ -297,12 +267,11 @@ const EditorPage = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: messageWithContext,
+          message: trimmedMessage,
           resume_path: resumePath,
           company: companyForApi,
           jd: jdForApi,
           session_id: sessionId,
-          user_resume: mergedUserResume,
           job_title: jobTitleForApi,
           job_url: jobUrlForApi,
           conversation_history: historyForApi,
