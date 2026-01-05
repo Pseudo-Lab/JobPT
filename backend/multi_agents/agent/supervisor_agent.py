@@ -48,13 +48,13 @@ async def supervisor(state: State):
     # 사용자 입력 추출 (첫 번째 HumanMessage)
     user_input = ""
     messages_list = state.get("messages", [])
-    print("messages_list: ", messages_list)
+    
     for msg in messages_list:
         if hasattr(msg, 'content') and msg.__class__.__name__ == 'HumanMessage':
             print("msg: ", msg.content)
             user_input = msg.content
             break
-    print("user_input: ", user_input)
+    
     # 프롬프트 생성 (외부 파일에서 가져오기)
     formatted_message = get_supervisor_prompt(
         user_input=user_input,

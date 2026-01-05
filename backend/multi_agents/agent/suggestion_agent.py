@@ -24,11 +24,12 @@ async def suggest_agent(state: State):
         dict: 응답 메시지와 에이전트 이름을 포함한 딕셔너리
     """
     # 프롬프트 생성 (외부 파일에서 가져오기)
+    agent_outputs = state.get("agent_outputs", {})
+    
     system_message = get_suggestion_prompt(
         job_description=state.get("job_description", ""),
-        company_summary=state.get("company_summary", ""),
-        resume=state.get("resume", ""),
-        user_resume=state.get("user_resume", ""),
+        company_summary=agent_outputs.get("summary", ""),
+        resume=state.get("resume", "")
     )
 
     langfuse_handler = Langfuse(
