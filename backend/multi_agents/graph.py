@@ -1,15 +1,18 @@
-from multi_agents.states.states import State, get_session_state, end_session
+from multi_agents.states.states import State
 from multi_agents.agent.summary_agent import summary_agent
 from multi_agents.agent.suggestion_agent import suggest_agent
 from multi_agents.agent.supervisor_agent import supervisor
 from langgraph.graph import StateGraph
-from langchain_core.messages import HumanMessage
-import asyncio
+from langgraph.checkpoint.memory import MemorySaver
 
 
-async def create_graph(state: State):
+# 전역 메모리 저장소 (세션별 상태 자동 관리)
+memory = MemorySaver()
+
+
+def create_graph():
     """
-    Supervisor Loop 패턴의 Graph 생성
+    Supervisor Loop 패턴의 Graph 생성 (MemorySaver 사용)
 
     Flow:
     START → Supervisor ─┬─ "summary" ──────→ summary_agent ──┐
@@ -17,6 +20,8 @@ async def create_graph(state: State):
                         └─ "FINISH" ───────→ END              │
                              ↑                                │
                              └────────────────────────────────┘
+    
+    MemorySaver를 사용하여 thread_id(session_id)별로 상태를 자동 저장/복원합니다.
     """
     builder = StateGraph(State)
 
@@ -31,7 +36,7 @@ async def create_graph(state: State):
     # Supervisor → 조건부 라우팅
     def route_from_supervisor(state: State) -> str:
         """Supervisor의 결정에 따라 다음 노드 선택"""
-        next_agent = state.next_agent
+        next_agent = state.get("next_agent", "")
         print(f"=============route_from_supervisor: {next_agent}=============")
 
         if next_agent == "FINISH":
@@ -53,4 +58,5 @@ async def create_graph(state: State):
     builder.add_edge("summary_agent", "supervisor")
     builder.add_edge("suggestion_agent", "supervisor")
 
-    return builder.compile(), state
+    # MemorySaver를 checkpointer로 사용하여 컴파일
+    return builder.compile(checkpointer=memory)

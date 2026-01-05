@@ -2,8 +2,6 @@
 GitHub API 기반 LangChain Tools
 GitHub 사용자 및 레포지토리 정보를 조회하는 도구 모음
 """
-
-import json
 import base64
 import requests
 from typing import Dict, List, Optional, Any
