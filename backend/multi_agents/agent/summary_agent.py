@@ -68,8 +68,17 @@ async def summary_agent(state: State) -> Dict[str, List[AIMessage]]:
 
     messages = [SystemMessage(content=system_message), *state.messages]
     response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
+
+    result_content = response["messages"][-1].content
+    print("=============summary_agent=============")
+    print(result_content[:500] + "..." if len(result_content) > 500 else result_content)
+
+    # agent_outputs에 결과 저장 (기존 결과 유지하면서 추가)
+    updated_outputs = {**state.agent_outputs, "summary": result_content}
+
     return {
         "messages": [response["messages"][-1]],
         "agent_name": "summary_agent",
-        "company_summary": response["messages"][-1].content,
+        "company_summary": result_content,
+        "agent_outputs": updated_outputs,
     }

@@ -6,11 +6,10 @@ import shutil
 import uuid
 import os
 
-from parser import run_parser
+from util.parser import run_parser
 from get_similarity.main import matching
 from openai import OpenAI
 import uvicorn
-import nltk
 import logging
 
 from multi_agents.states.states import (
@@ -62,6 +61,9 @@ app = FastAPI(
 # /api prefix를 모든 라우트에 추가
 from fastapi import APIRouter
 api_router = APIRouter(prefix="/api")
+
+# auth router는 먼저 등록 (prefix 없음)
+app.include_router(auth.router)
 
 # 로거 설정
 logger = logging.getLogger("jobpt")
@@ -426,6 +428,9 @@ async def scrape_jd(request: ScrapeJDRequest):
 # API router를 앱에 등록
 app.include_router(api_router)
 app.include_router(auth.router)
+
+# API router를 앱에 등록 (모든 라우트 정의 후에 등록해야 함)
+app.include_router(api_router)
 
 # 개발용 실행 명령
 if __name__ == "__main__":

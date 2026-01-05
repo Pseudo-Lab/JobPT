@@ -101,4 +101,17 @@ async def suggest_agent(state: State):
     messages = [SystemMessage(content=system_message), *state.messages]
 
     response = cast(AIMessage, await agent.ainvoke({"messages": messages}, config=config))
-    return {"messages": [response["messages"][-1]], "agent_name": "suggestion_agent"}
+
+    result_content = response["messages"][-1].content
+    print("=============suggestion_agent=============")
+    print(result_content[:500] + "..." if len(result_content) > 500 else result_content)
+
+    # agent_outputs에 결과 저장 (기존 결과 유지하면서 추가)
+    updated_outputs = {**state.agent_outputs, "suggestion": result_content}
+
+    return {
+        "messages": [response["messages"][-1]],
+        "agent_name": "suggestion_agent",
+        "agent_outputs": updated_outputs,
+    }
+

@@ -185,13 +185,13 @@ class ATSAnalyzer:
         try:
             # 절대/상대 경로 모두 지원
             try:
-                from parser import run_parser
+                from util.parser import run_parser
             except ImportError:
                 import sys
                 backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
                 if backend_dir not in sys.path:
                     sys.path.insert(0, backend_dir)
-                from parser import run_parser
+                from util.parser import run_parser
             upstage_available = True
         except ImportError:
             print("Warning: upstage_parser not found, using fallback text extraction")

@@ -1,0 +1,85 @@
+version: "3.8"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      labels:
+        - "org.pseudolab.project=jobpt"
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: development
+      # 프론트에서 백엔드로 호출할 주소 (로컬 직접 포트 접근)
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./dev_data/jobpt_resumes:/app/public/uploads
+    depends_on:
+      - backend
+    networks:
+      - internal
+
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-jobpt}
+      MYSQL_USER: ${MYSQL_USER:-jobpt}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-jobpt}
+      LC_ALL: C.UTF-8
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./dev_data/jobpt_mysql:/var/lib/mysql
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      labels:
+        - "org.pseudolab.project=jobpt"
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ENVIRONMENT: development
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      PINECONE_API_KEY: ${PINECONE_API_KEY:-}
+      UPSTAGE_API_KEY: ${UPSTAGE_API_KEY:-}
+      # 로컬 프론트에서 접근하도록
+      FRONTEND_CORS_ORIGIN: ${FRONTEND_CORS_ORIGIN:-http://localhost:3000}
+      MYSQL_HOST: mysql
+      MYSQL_USER: ${MYSQL_USER:-jobpt}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-jobpt}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-jobpt}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./dev_data/jobpt_data:/app/data
+      - ./dev_data/jobpt_resumes:/app/uploaded_resumes
+      - /tmp:/tmp
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge

@@ -40,6 +40,26 @@ services:
       - traefik.http.routers.jobpt-${ENVIRONMENT}-web-http.middlewares=redirect-to-https@file
       - traefik.http.routers.jobpt-${ENVIRONMENT}-web-http.service=jobpt-${ENVIRONMENT}-web
 
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-jobpt}
+      MYSQL_USER: ${MYSQL_USER:-jobpt}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-jobpt}
+      LC_ALL: C.UTF-8
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - jobpt_mysql:/var/lib/mysql
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./backend
@@ -56,10 +76,17 @@ services:
       PINECONE_API_KEY: ${PINECONE_API_KEY:-}
       UPSTAGE_API_KEY: ${UPSTAGE_API_KEY:-}
       FRONTEND_CORS_ORIGIN: ${FRONTEND_CORS_ORIGIN:-http://localhost:3000}
+      MYSQL_HOST: mysql
+      MYSQL_USER: ${MYSQL_USER:-jobpt}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-jobpt}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-jobpt}
     volumes:
       - jobpt_data:/app/data
       - jobpt_resumes:/app/uploaded_resumes
       - /tmp:/tmp
+    depends_on:
+      mysql:
+        condition: service_healthy
     networks:
       - traefik
       - internal
@@ -89,3 +116,4 @@ networks:
 volumes:
   jobpt_data:
   jobpt_resumes:
+  jobpt_mysql:

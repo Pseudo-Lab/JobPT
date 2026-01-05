@@ -16,6 +16,10 @@ class State:
     user_resume: str = field(default="") # 유저가 선택한 resume 부분
     route_decision: str = field(default="")
     company_name: str = field(default="")
+    # 새로운 Supervisor Loop 패턴용 필드
+    next_agent: str = field(default="")  # "summary" | "suggestion" | "FINISH"
+    agent_outputs: dict = field(default_factory=dict)  # {"summary": "...", "suggestion": "..."}
+    final_answer: str = field(default="")
     github_url: str = field(default="")
     blog_url: str = field(default="")
 
@@ -38,6 +42,9 @@ def start_session(session_id: str, **kwargs):
         user_resume=kwargs.get("user_resume", ""),
         route_decision=kwargs.get("route_decision", ""),
         company_name=kwargs.get("company_name", ""),
+        next_agent=kwargs.get("next_agent", ""),
+        agent_outputs=kwargs.get("agent_outputs", {}),
+        final_answer=kwargs.get("final_answer", ""),
         github_url=kwargs.get("github_url", ""),
         blog_url=kwargs.get("blog_url", ""),
     )
