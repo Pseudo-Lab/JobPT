@@ -332,6 +332,11 @@ const EditorPage = () => {
                 setResumeSummary(next);
                 if (typeof window !== "undefined") {
                   window.sessionStorage.setItem("resume_summary", JSON.stringify(next));
+                  const currentResume =
+                    resumePath ?? window.sessionStorage.getItem("resume_path");
+                  if (currentResume) {
+                    window.sessionStorage.setItem("resume_summary_path", currentResume);
+                  }
                 }
               }}
             />

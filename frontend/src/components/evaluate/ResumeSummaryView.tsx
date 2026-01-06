@@ -645,34 +645,59 @@ const ResumeSummaryView = ({
               "aria-label": "수상/자격증",
             })
           ) : (
-            <div className="space-y-4">
-              {certifications.map((cert, idx) => (
-                <div key={`${cert.name}-${idx}`} className="flex items-start gap-3">
-                  <span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 text-slate-400">
+            <div className="space-y-6">
+              {certifications.map((cert, idx) => {
+                const noteParts =
+                  cert.note
+                    ?.split("/")
+                    .map((item) => item.trim())
+                    .filter(Boolean) ?? [];
+                const isAward = noteParts.some((part) => part.includes("수상"));
+                const Icon = () =>
+                  isAward ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="h-5 w-5 text-slate-500"
+                    >
+                      <path d="M12 2a5 5 0 00-5 5c0 1.93 1.14 3.6 2.78 4.45L7 22l5-2 5 2-2.78-10.55A5.001 5.001 0 0017 7a5 5 0 00-5-5z" />
+                    </svg>
+                  ) : (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
-                      strokeWidth={1.5}
-                      className="h-3.5 w-3.5"
+                      strokeWidth={1.6}
+                      className="h-5 w-5 text-slate-500"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 6v12m-6-6h12"
-                      />
+                      <rect x="6" y="3.5" width="12" height="17" rx="2" ry="2" />
+                      <path d="M9.5 7h5M9.5 11h5M9.5 15h3" />
                     </svg>
-                  </span>
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-slate-900">{cert.name}</p>
-                    {cert.date && <p className="text-xs text-slate-500">{cert.date}</p>}
-                    {cert.note && (
-                      <p className="text-xs text-slate-600">{cert.note}</p>
-                    )}
+                  );
+
+                return (
+                  <div key={`${cert.name}-${idx}`} className="flex items-start gap-3">
+                    <span className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50">
+                      <Icon />
+                    </span>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-slate-900">{cert.name}</p>
+                      <p className="text-xs text-slate-500">
+                        {cert.date || "0000.00"}
+                      </p>
+                      {noteParts.length > 0 ? (
+                        <p className="text-xs text-slate-600">
+                          {noteParts.join(" / ")}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-slate-400">취득</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
@@ -690,18 +715,34 @@ const ResumeSummaryView = ({
               "aria-label": "언어",
             })
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-6 sm:grid-cols-2">
               {languages.map((lang) => (
-                <div
-                  key={lang.name}
-                  className="space-y-1 rounded-2xl border border-slate-200 px-4 py-3"
-                >
-                  <p className="text-sm font-semibold text-slate-900">{lang.name}</p>
-                  {lang.details?.map((detail, idx) => (
-                    <p key={`${lang.name}-${idx}`} className="text-xs text-slate-600">
-                      {detail}
-                    </p>
-                  ))}
+                <div key={lang.name} className="flex items-start gap-3">
+                  <span className="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={1.6}
+                      className="h-5 w-5 text-slate-500"
+                    >
+                      <rect x="6" y="3.5" width="12" height="17" rx="2" ry="2" />
+                      <path d="M9.5 7h5M9.5 11h5M9.5 15h3" />
+                    </svg>
+                  </span>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-slate-900">{lang.name}</p>
+                    {lang.details?.length ? (
+                      <ul className="space-y-1 text-xs text-slate-600">
+                        {lang.details.map((detail, idx) => (
+                          <li key={`${lang.name}-${idx}`}>{detail}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-slate-400">레벨 정보 없음</p>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

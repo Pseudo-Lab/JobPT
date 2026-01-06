@@ -61,6 +61,7 @@ export default function Home() {
             "matching_resume_id",
             "jd_text",
             "resume_summary",
+            "resume_summary_path",
             "pdf_url",
             "selected_job_context",
         ].forEach((key) => session.removeItem(key));

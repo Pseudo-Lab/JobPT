@@ -34,6 +34,106 @@ models.Base.metadata.create_all(bind=engine)
 resume_cache = {}
 analysis_cache = {}
 
+MOCK_PARSED_RESUME = {
+    "basic_info": {
+        "name": "홍길동",
+        "phone": "010-1234-5678",
+        "email": "hong.gildong@example.com",
+        "address": None,
+    },
+    "summary": "5년차 백엔드 개발자로서 Python과 Django를 활용한 웹 서비스 개발 경험이 있습니다. 대규모 트래픽을 처리할 수 있는 시스템 설계 및 최적화에 관심이 많습니다.",
+    "careers": [
+        {
+            "company_name": "ABC 테크놀로지",
+            "period": "2020.01 ~ 2023.12",
+            "employment_type": None,
+            "role": "백엔드 개발자",
+            "achievements": [],
+        },
+        {
+            "company_name": "XYZ 스타트업",
+            "period": "2018.06 ~ 2019.12",
+            "employment_type": None,
+            "role": "주니어 개발자",
+            "achievements": [],
+        },
+    ],
+    "educations": [
+        {
+            "school_name": "서울대학교",
+            "period": "2014.03 ~ 2018.02",
+            "graduation_status": "졸업",
+            "major_and_degree": None,
+            "content": None,
+        },
+        {
+            "school_name": "서울고등학교",
+            "period": "2011.03 ~ 2014.02",
+            "graduation_status": "졸업",
+            "major_and_degree": None,
+            "content": None,
+        },
+    ],
+    "skills": [
+        "Python",
+        "Django",
+        "PostgreSQL",
+        "Docker",
+        "Kubernetes",
+        "AWS",
+        "Git",
+        "JavaScript",
+        "TypeScript",
+        "React",
+    ],
+    "activities": [
+        {
+            "activity_name": "정보처리기사",
+            "period": None,
+            "activity_type": "자격증",
+            "content": None,
+        },
+        {
+            "activity_name": "AWS Solutions Architect",
+            "period": None,
+            "activity_type": "자격증",
+            "content": None,
+        },
+        {
+            "activity_name": "오픈소스 기여상",
+            "period": None,
+            "activity_type": "수상",
+            "content": None,
+        },
+        {
+            "activity_name": "개인 프로젝트: 이커머스 플랫폼 개발",
+            "period": None,
+            "activity_type": "프로젝트",
+            "content": None,
+        },
+    ],
+    "languages": [
+        {
+            "language_name": "영어",
+            "level": "상",
+            "certification": "TOEIC",
+            "acquisition_date": None,
+        },
+        {
+            "language_name": "일본어",
+            "level": "중",
+            "certification": "JLPT",
+            "acquisition_date": None,
+        },
+    ],
+    "links": [
+        "https://github.com/hong-gildong",
+        "https://hong-gildong.github.io",
+        "https://linkedin.com/in/hong-gildong",
+    ],
+    "additional_info": {},
+}
+
 # 전역 변수로 선언 (함수 내에서 global 키워드 사용)
 location_cache = ""
 remote_cache = ""
@@ -99,6 +199,10 @@ class MatchRequest(BaseModel):
     resume_path: str
 
 
+class ParseResumeRequest(BaseModel):
+    resume_path: str
+
+
 @api_router.post("/upload")
 async def upload_resume(
     file: UploadFile = File(...), location: str = Form(""), remote: str = Form("any"), job_type: str = Form("any")
@@ -134,6 +238,16 @@ async def upload_resume(
         return JSONResponse(content={"resume_path": file_path})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@api_router.post("/parse-resume")
+async def parse_resume(request: ParseResumeRequest):
+    resume_path = request.resume_path
+    if not resume_path:
+        raise HTTPException(status_code=400, detail="resume_path is required.")
+    if not os.path.exists(resume_path):
+        raise HTTPException(status_code=400, detail="resume_path file not found.")
+    return JSONResponse(content=MOCK_PARSED_RESUME)
 
 
 @api_router.post("/matching")

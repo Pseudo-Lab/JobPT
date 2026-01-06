@@ -15,7 +15,12 @@ import {
   toRecordArray,
   toStringValue,
 } from "@/lib/matching-utils";
-import ResumeSummaryView, { ResumeSummaryData } from "@/components/evaluate/ResumeSummaryView";
+import ResumeSummaryView, {
+  ResumeCertification,
+  ResumeExperience,
+  ResumeLanguage,
+  ResumeSummaryData,
+} from "@/components/evaluate/ResumeSummaryView";
 import AppHeader from "@/components/common/AppHeader";
 
 type ViewState = "loading" | "result" | "error";
@@ -33,6 +38,211 @@ const parseStoredMatchingData = (
   }
 };
 
+const defaultResumeSummary: ResumeSummaryData = {
+  name: "",
+  phone: "",
+  email: "",
+  summary: "",
+  experiences: [],
+  skills: [],
+  certifications: [],
+  languages: [],
+  links: [],
+};
+
+const toStringArray = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value
+        .map((item) => (typeof item === "string" ? item.trim() : ""))
+        .filter(Boolean)
+    : [];
+
+const parseAchievements = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (typeof item === "string") return item.trim();
+      if (isRecord(item)) {
+        return pickFirstString(item, [
+          "content",
+          "description",
+          "detail",
+          "achievement",
+        ]);
+      }
+      return null;
+    })
+    .filter((item): item is string => Boolean(item));
+};
+
+const extractDatesFromPeriod = (period?: string) => {
+  if (!period) return { startDate: undefined, endDate: undefined };
+  const matches = period.match(/\d{4}[.\-/]\d{1,2}(?:[.\-/]\d{1,2})?/g);
+  if (!matches || matches.length === 0) {
+    return { startDate: undefined, endDate: undefined };
+  }
+
+  const toIsoDate = (value: string) => {
+    const parts = value.split(/[.\-/]/).filter(Boolean);
+    const [year, month, day] = parts;
+    if (!year || !month) return undefined;
+    const paddedMonth = month.padStart(2, "0");
+    const paddedDay = (day ?? "01").padStart(2, "0");
+    return `${year}-${paddedMonth}-${paddedDay}`;
+  };
+
+  const startDate = toIsoDate(matches[0]);
+  const endDate = matches[1] ? toIsoDate(matches[1]) : undefined;
+  return { startDate, endDate };
+};
+
+const deriveLinkLabel = (value: string, index: number) => {
+  try {
+    const parsed = new URL(value);
+    const host = parsed.hostname.replace(/^www\./, "");
+    if (host.includes("github")) return "GitHub";
+    if (host.includes("linkedin")) return "LinkedIn";
+    if (host.includes("notion")) return "Notion";
+    if (host.includes("velog")) return "Velog";
+    if (host.includes("tistory")) return "Tistory";
+    const base = host.split(".")[0];
+    if (base) return `${base[0].toUpperCase()}${base.slice(1)}`;
+  } catch (error) {
+    console.warn("[Evaluate] Failed to parse link label", error);
+  }
+  return `링크 ${index + 1}`;
+};
+
+const mapParsedResumeToSummary = (
+  raw: unknown,
+): ResumeSummaryData | null => {
+  if (!isRecord(raw)) return null;
+
+  const basicInfo = isRecord(raw.basic_info) ? raw.basic_info : null;
+  const careers = toRecordArray(raw.careers);
+  const activities = toRecordArray(raw.activities);
+  const languages = toRecordArray(raw.languages);
+
+  const experiences = careers
+    .map((career) => {
+      const company =
+        pickFirstString(career, ["company_name", "company", "companyName"]) ??
+        "";
+      const period = pickFirstString(career, ["period", "duration"]) ?? "";
+      const { startDate, endDate } = extractDatesFromPeriod(period);
+      const title = pickFirstString(career, ["role", "title", "position"]);
+      const achievements = parseAchievements(career.achievements);
+      const description = achievements.length > 0 ? achievements.join("\n") : undefined;
+
+      if (!company && !period && !title && !description) return null;
+
+      return {
+        company,
+        period,
+        startDate,
+        endDate,
+        title,
+        description,
+      };
+    })
+    .filter(
+      (item): item is ResumeExperience => item !== null,
+    );
+
+  const certifications = activities
+    .map((activity, index) => {
+      const name = pickFirstString(activity, [
+        "activity_name",
+        "name",
+        "title",
+      ]);
+      const date = pickFirstString(activity, ["period", "date"]);
+      const type = pickFirstString(activity, [
+        "activity_type",
+        "type",
+        "category",
+      ]);
+      const content = pickFirstString(activity, [
+        "content",
+        "description",
+        "detail",
+      ]);
+      if (!name && !date && !type && !content) return null;
+
+      const note = [type, content].filter(Boolean).join(" / ") || undefined;
+      return {
+        name: name ?? `활동 ${index + 1}`,
+        date,
+        note,
+      };
+    })
+    .filter(
+      (item): item is ResumeCertification => item !== null,
+    );
+
+  const languageItems = languages
+    .map((language) => {
+      const name = pickFirstString(language, [
+        "language_name",
+        "name",
+        "language",
+      ]);
+      if (!name) return null;
+      const level = pickFirstString(language, ["level"]);
+      const certification = pickFirstString(language, ["certification"]);
+      const acquisitionDate = pickFirstString(language, ["acquisition_date"]);
+      const details = [level, certification, acquisitionDate].filter(Boolean);
+      return {
+        name,
+        details: details.length > 0 ? details : undefined,
+      };
+    })
+    .filter(
+      (item): item is ResumeLanguage => item !== null,
+    );
+
+  const rawLinks = toStringArray(raw.links);
+  const links = rawLinks.map((link, index) => ({
+    label: deriveLinkLabel(link, index),
+    url: link,
+  }));
+
+  return {
+    name: pickFirstString(basicInfo, ["name"]) ?? "",
+    phone: pickFirstString(basicInfo, ["phone"]),
+    email: pickFirstString(basicInfo, ["email"]),
+    summary: pickFirstString(raw, ["summary", "about", "intro"]),
+    experiences,
+    skills: toStringArray(raw.skills),
+    certifications,
+    languages: languageItems,
+    links,
+  };
+};
+
+const mergeResumeSummary = (
+  prev: ResumeSummaryData,
+  incoming: ResumeSummaryData,
+): ResumeSummaryData => {
+  const pickString = (value?: string, fallback?: string) =>
+    value && value.trim().length > 0 ? value : fallback;
+  const pickArray = <T,>(value: T[] | undefined, fallback: T[] | undefined) =>
+    value && value.length > 0 ? value : fallback;
+
+  return {
+    ...prev,
+    name: pickString(incoming.name, prev.name) ?? "",
+    phone: pickString(incoming.phone, prev.phone),
+    email: pickString(incoming.email, prev.email),
+    summary: pickString(incoming.summary, prev.summary),
+    experiences: pickArray(incoming.experiences, prev.experiences) ?? [],
+    skills: pickArray(incoming.skills, prev.skills) ?? [],
+    certifications: pickArray(incoming.certifications, prev.certifications) ?? [],
+    languages: pickArray(incoming.languages, prev.languages) ?? [],
+    links: pickArray(incoming.links, prev.links) ?? [],
+  };
+};
+
 export default function EvaluatePage() {
   const [mode, setMode] = useState<ViewState>("loading");
   const [html, setHtml] = useState("");
@@ -45,8 +255,11 @@ export default function EvaluatePage() {
   const [selectedJob, setSelectedJob] = useState<Record<string, unknown> | null>(null);
   const [resumeSummaryState, setResumeSummaryState] = useState<ResumeSummaryData>(() => {
     if (typeof window !== "undefined") {
-      const raw = window.sessionStorage.getItem("resume_summary");
-      if (raw) {
+      const session = window.sessionStorage;
+      const raw = session.getItem("resume_summary");
+      const storedPath = session.getItem("resume_summary_path");
+      const sessionResume = session.getItem("resume_path");
+      if (raw && (!storedPath || storedPath === sessionResume)) {
         try {
           const parsed = JSON.parse(raw);
           if (isRecord(parsed)) {
@@ -77,17 +290,7 @@ export default function EvaluatePage() {
         }
       }
     }
-    return {
-      name: "",
-      phone: "",
-      email: "",
-      summary: "",
-      experiences: [],
-      skills: [],
-      certifications: [],
-      languages: [],
-      links: [],
-    };
+    return defaultResumeSummary;
   });
 
   const normalizeWhitespace = useCallback(
@@ -325,7 +528,11 @@ export default function EvaluatePage() {
       }
 
       const storedResumeSummary = session.getItem("resume_summary");
-      if (storedResumeSummary) {
+      const storedSummaryPath = session.getItem("resume_summary_path");
+      if (
+        storedResumeSummary &&
+        (!storedSummaryPath || storedSummaryPath === sessionResume)
+      ) {
         try {
           const parsed = JSON.parse(storedResumeSummary);
           if (isRecord(parsed)) {
@@ -340,6 +547,80 @@ export default function EvaluatePage() {
       }
     }
   }, [transformMatchingResponse]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const session = window.sessionStorage;
+    const currentResume = resumePath;
+    if (!currentResume) return;
+
+    const storedSummary = session.getItem("resume_summary");
+    const storedSummaryPath = session.getItem("resume_summary_path");
+    if (storedSummary && storedSummaryPath === currentResume) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/parse-resume`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resume_path: currentResume }),
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        const text = await res.text();
+        let parsed: unknown = null;
+        try {
+          parsed = text ? JSON.parse(text) : null;
+        } catch (parseErr) {
+          console.warn("[Evaluate] Failed to parse resume summary", parseErr);
+        }
+        if (!res.ok) {
+          const detail =
+            (isRecord(parsed) && (parsed.detail as string)) ||
+            (isRecord(parsed) && (parsed.error as string)) ||
+            text ||
+            "서버 오류";
+          throw new Error(detail);
+        }
+        if (!parsed) {
+          throw new Error("서버 응답을 이해할 수 없습니다.");
+        }
+        return parsed;
+      })
+      .then((data) => {
+        const mapped = mapParsedResumeToSummary(data);
+        if (!mapped) return;
+        const latestSummaryPath = session.getItem("resume_summary_path");
+        if (latestSummaryPath === currentResume) {
+          return;
+        }
+        setResumeSummaryState((prev) => {
+          const base =
+            storedSummaryPath && storedSummaryPath !== currentResume
+              ? defaultResumeSummary
+              : prev;
+          const merged = mergeResumeSummary(base, mapped);
+          session.setItem("resume_summary", JSON.stringify(merged));
+          session.setItem("resume_summary_path", currentResume);
+          return merged;
+        });
+      })
+      .catch((err: unknown) => {
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
+        console.warn(
+          "[Evaluate] Failed to fetch resume summary",
+          err instanceof Error ? err.message : err,
+        );
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [resumePath]);
 
   useEffect(() => {
     if (mode !== "loading") return;
@@ -734,12 +1015,23 @@ export default function EvaluatePage() {
             summary={resumeSummary}
             editable
             onChange={(next) => {
-            setResumeSummaryState(next);
-            if (typeof window !== "undefined") {
-              window.sessionStorage.setItem("resume_summary", JSON.stringify(next));
-            }
-          }}
-        />
+              setResumeSummaryState(next);
+              if (typeof window !== "undefined") {
+                window.sessionStorage.setItem(
+                  "resume_summary",
+                  JSON.stringify(next),
+                );
+                const currentResume =
+                  resumePath ?? window.sessionStorage.getItem("resume_path");
+                if (currentResume) {
+                  window.sessionStorage.setItem(
+                    "resume_summary_path",
+                    currentResume,
+                  );
+                }
+              }
+            }}
+          />
 
           <div className="space-y-6">
             <div className="space-y-4">
