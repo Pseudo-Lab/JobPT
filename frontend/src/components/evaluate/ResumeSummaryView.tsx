@@ -48,13 +48,13 @@ const ResumeSummaryView = ({
   summary,
   className,
   editable = false,
-  onAttach,
+  // onAttach,
   onChange,
 }: {
   summary: ResumeSummaryData;
   className?: string;
   editable?: boolean;
-  onAttach?: (attachment: { id: string; label: string; content: string }) => void;
+  // onAttach?: (attachment: { id: string; label: string; content: string }) => void;
   onChange?: (next: ResumeSummaryData) => void;
 }) => {
   const {
@@ -271,76 +271,76 @@ const ResumeSummaryView = ({
     return "";
   };
 
-  const attachSummary = () => {
-    if (!onAttach) return;
-    const content =
-      introValue && introValue.trim().length > 0
-        ? introValue
-        : "자기소개 내용이 아직 없습니다.";
-    onAttach({
-      id: "summary",
-      label: "자기소개",
-      content,
-    });
-  };
+  // const attachSummary = () => {
+  //   if (!onAttach) return;
+  //   const content =
+  //     introValue && introValue.trim().length > 0
+  //       ? introValue
+  //       : "자기소개 내용이 아직 없습니다.";
+  //   onAttach({
+  //     id: "summary",
+  //     label: "자기소개",
+  //     content,
+  //   });
+  // };
 
-  const attachExperience = () => {
-    if (!onAttach || experienceValues.length === 0) return;
-    const combined = experienceValues
-      .map((exp, idx) => {
-        const lines = [
-          exp.company ? `회사명: ${exp.company}` : null,
-          formatPeriod(exp) ? `기간: ${formatPeriod(exp)}` : null,
-          exp.title ? `역할: ${exp.title}` : null,
-          exp.description ? `내용: ${exp.description}` : null,
-        ]
-          .filter(Boolean)
-          .join(" | ");
-        return lines ? `경력 ${idx + 1}: ${lines}` : null;
-      })
-      .filter(Boolean)
-      .join("\n\n");
+  // const attachExperience = () => {
+  //   if (!onAttach || experienceValues.length === 0) return;
+  //   const combined = experienceValues
+  //     .map((exp, idx) => {
+  //       const lines = [
+  //         exp.company ? `회사명: ${exp.company}` : null,
+  //         formatPeriod(exp) ? `기간: ${formatPeriod(exp)}` : null,
+  //         exp.title ? `역할: ${exp.title}` : null,
+  //         exp.description ? `내용: ${exp.description}` : null,
+  //       ]
+  //         .filter(Boolean)
+  //         .join(" | ");
+  //       return lines ? `경력 ${idx + 1}: ${lines}` : null;
+  //     })
+  //     .filter(Boolean)
+  //     .join("\n\n");
 
-    const content =
-      combined && combined.trim().length > 0
-        ? combined
-        : "경력 내용이 아직 없습니다.";
-    onAttach({
-      id: "experience",
-      label: "경력",
-      content,
-    });
-  };
+  //   const content =
+  //     combined && combined.trim().length > 0
+  //       ? combined
+  //       : "경력 내용이 아직 없습니다.";
+  //   onAttach({
+  //     id: "experience",
+  //     label: "경력",
+  //     content,
+  //   });
+  // };
 
-  const AttachButton = ({
-    onClick,
-    label,
-  }: {
-    onClick: () => void;
-    label: string;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#d9e9ff] text-[rgb(77,136,205)] shadow-sm transition hover:-translate-y-0.5 hover:shadow"
-      aria-label={label}
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-        className="h-5 w-5"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M5.25 5.25L18.75 12 5.25 18.75 9 12z"
-        />
-      </svg>
-    </button>
-  );
+  // const AttachButton = ({
+  //   onClick,
+  //   label,
+  // }: {
+  //   onClick: () => void;
+  //   label: string;
+  // }) => (
+  //   <button
+  //     type="button"
+  //     onClick={onClick}
+  //     className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#d9e9ff] text-[rgb(77,136,205)] shadow-sm transition hover:-translate-y-0.5 hover:shadow"
+  //     aria-label={label}
+  //   >
+  //     <svg
+  //       xmlns="http://www.w3.org/2000/svg"
+  //       viewBox="0 0 24 24"
+  //       fill="none"
+  //       stroke="currentColor"
+  //       strokeWidth={1.8}
+  //       className="h-5 w-5"
+  //     >
+  //       <path
+  //         strokeLinecap="round"
+  //         strokeLinejoin="round"
+  //         d="M5.25 5.25L18.75 12 5.25 18.75 9 12z"
+  //       />
+  //     </svg>
+  //   </button>
+  // );
 
   return (
     <div

@@ -127,10 +127,6 @@ const defaultResumeSummary: ResumeSummaryData = {
 
 const EditorPage = () => {
   const [resumePath, setResumePath] = useState<string | null>(null);
-  const [userResume] = useState<string>(() => {
-    if (typeof window === "undefined") return "";
-    return window.sessionStorage.getItem("user_resume") ?? "";
-  });
   const [draftMessage, setDraftMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
@@ -323,15 +319,15 @@ const EditorPage = () => {
             <ResumeSummaryView
               summary={resumeSummary}
               editable
-              onAttach={(item) => {
-                setAttachments((prev) => {
-                  const exists = prev.find((p) => p.id === item.id);
-                  if (exists) {
-                    return prev.map((p) => (p.id === item.id ? item : p));
-                  }
-                  return [...prev, item];
-                });
-              }}
+              // onAttach={(item) => {
+              //   setAttachments((prev) => {
+              //     const exists = prev.find((p) => p.id === item.id);
+              //     if (exists) {
+              //       return prev.map((p) => (p.id === item.id ? item : p));
+              //     }
+              //     return [...prev, item];
+              //   });
+              // }}
               onChange={(next) => {
                 setResumeSummary(next);
                 if (typeof window !== "undefined") {
