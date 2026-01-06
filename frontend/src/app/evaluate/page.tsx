@@ -346,6 +346,11 @@ export default function EvaluatePage() {
     return undefined;
   }, []);
 
+  const stripBracketedText = useCallback((text: string) => {
+    // [회사명] 같은 대괄호 안의 텍스트를 제거하고 앞뒤 공백 정리
+    return text.replace(/\[.*?\]/g, "").trim();
+  }, []);
+
   const deriveJobTitle = useCallback(
     (
       job: Record<string, unknown> | null | undefined,
@@ -355,7 +360,10 @@ export default function EvaluatePage() {
       const titleCandidate =
         pickFirstString(job, ["job_title", "title", "position", "role"]) ??
         heading;
-      if (titleCandidate) return titleCandidate;
+      if (titleCandidate) {
+        const cleaned = stripBracketedText(titleCandidate);
+        return cleaned || titleCandidate;
+      }
 
       const companyCandidate = pickFirstString(job, [
         "company",
@@ -366,7 +374,7 @@ export default function EvaluatePage() {
       if (fallbackIndex !== undefined) return "채용 공고";
       return "채용 공고";
     },
-    [extractHeadingFromMarkdown],
+    [extractHeadingFromMarkdown, stripBracketedText],
   );
 
   const persistSelectedJobContext = useCallback(
