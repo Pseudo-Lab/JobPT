@@ -50,6 +50,107 @@ const defaultResumeSummary: ResumeSummaryData = {
   links: [],
 };
 
+const MOCK_PARSED_RESUME = {
+  basic_info: {
+    name: "홍길동",
+    phone: "010-1234-5678",
+    email: "hong.gildong@example.com",
+    address: null,
+  },
+  summary:
+    "5년차 백엔드 개발자로서 Python과 Django를 활용한 웹 서비스 개발 경험이 있습니다. 대규모 트래픽을 처리할 수 있는 시스템 설계 및 최적화에 관심이 많습니다.",
+  careers: [
+    {
+      company_name: "ABC 테크놀로지",
+      period: "2020.01 ~ 2023.12",
+      employment_type: null,
+      role: "백엔드 개발자",
+      achievements: [],
+    },
+    {
+      company_name: "XYZ 스타트업",
+      period: "2018.06 ~ 2019.12",
+      employment_type: null,
+      role: "주니어 개발자",
+      achievements: [],
+    },
+  ],
+  educations: [
+    {
+      school_name: "서울대학교",
+      period: "2014.03 ~ 2018.02",
+      graduation_status: "졸업",
+      major_and_degree: null,
+      content: null,
+    },
+    {
+      school_name: "서울고등학교",
+      period: "2011.03 ~ 2014.02",
+      graduation_status: "졸업",
+      major_and_degree: null,
+      content: null,
+    },
+  ],
+  skills: [
+    "Python",
+    "Django",
+    "PostgreSQL",
+    "Docker",
+    "Kubernetes",
+    "AWS",
+    "Git",
+    "JavaScript",
+    "TypeScript",
+    "React",
+  ],
+  activities: [
+    {
+      activity_name: "정보처리기사",
+      period: null,
+      activity_type: "자격증",
+      content: null,
+    },
+    {
+      activity_name: "AWS Solutions Architect",
+      period: null,
+      activity_type: "자격증",
+      content: null,
+    },
+    {
+      activity_name: "오픈소스 기여상",
+      period: null,
+      activity_type: "수상",
+      content: null,
+    },
+    {
+      activity_name: "개인 프로젝트: 이커머스 플랫폼 개발",
+      period: null,
+      activity_type: "프로젝트",
+      content: null,
+    },
+  ],
+  languages: [
+    {
+      language_name: "영어",
+      level: "상",
+      certification: "TOEIC",
+      acquisition_date: null,
+    },
+    {
+      language_name: "일본어",
+      level: "중",
+      certification: "JLPT",
+      acquisition_date: null,
+    },
+  ],
+  links: [
+    "https://github.com/hong-gildong",
+    "https://hong-gildong.github.io",
+    "https://linkedin.com/in/hong-gildong",
+  ],
+  additional_info: {},
+};
+
 const toStringArray = (value: unknown): string[] =>
   Array.isArray(value)
     ? value
@@ -553,7 +654,8 @@ export default function EvaluatePage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const session = window.sessionStorage;
-    const currentResume = resumePath;
+    const currentResume =
+      resumePath ?? session.getItem("resume_path");
     if (!currentResume) return;
 
     const storedSummary = session.getItem("resume_summary");
@@ -562,66 +664,22 @@ export default function EvaluatePage() {
       return;
     }
 
-    const controller = new AbortController();
-
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/parse-resume`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resume_path: currentResume }),
-      signal: controller.signal,
-    })
-      .then(async (res) => {
-        const text = await res.text();
-        let parsed: unknown = null;
-        try {
-          parsed = text ? JSON.parse(text) : null;
-        } catch (parseErr) {
-          console.warn("[Evaluate] Failed to parse resume summary", parseErr);
-        }
-        if (!res.ok) {
-          const detail =
-            (isRecord(parsed) && (parsed.detail as string)) ||
-            (isRecord(parsed) && (parsed.error as string)) ||
-            text ||
-            "서버 오류";
-          throw new Error(detail);
-        }
-        if (!parsed) {
-          throw new Error("서버 응답을 이해할 수 없습니다.");
-        }
-        return parsed;
-      })
-      .then((data) => {
-        const mapped = mapParsedResumeToSummary(data);
-        if (!mapped) return;
-        const latestSummaryPath = session.getItem("resume_summary_path");
-        if (latestSummaryPath === currentResume) {
-          return;
-        }
-        setResumeSummaryState((prev) => {
-          const base =
-            storedSummaryPath && storedSummaryPath !== currentResume
-              ? defaultResumeSummary
-              : prev;
-          const merged = mergeResumeSummary(base, mapped);
-          session.setItem("resume_summary", JSON.stringify(merged));
-          session.setItem("resume_summary_path", currentResume);
-          return merged;
-        });
-      })
-      .catch((err: unknown) => {
-        if (err instanceof Error && err.name === "AbortError") {
-          return;
-        }
-        console.warn(
-          "[Evaluate] Failed to fetch resume summary",
-          err instanceof Error ? err.message : err,
-        );
-      });
-
-    return () => {
-      controller.abort();
-    };
+    const mapped = mapParsedResumeToSummary(MOCK_PARSED_RESUME);
+    if (!mapped) return;
+    const latestSummaryPath = session.getItem("resume_summary_path");
+    if (latestSummaryPath === currentResume) {
+      return;
+    }
+    setResumeSummaryState((prev) => {
+      const base =
+        storedSummaryPath && storedSummaryPath !== currentResume
+          ? defaultResumeSummary
+          : prev;
+      const merged = mergeResumeSummary(base, mapped);
+      session.setItem("resume_summary", JSON.stringify(merged));
+      session.setItem("resume_summary_path", currentResume);
+      return merged;
+    });
   }, [resumePath]);
 
   useEffect(() => {
