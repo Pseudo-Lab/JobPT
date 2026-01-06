@@ -15,7 +15,12 @@ import {
   toRecordArray,
   toStringValue,
 } from "@/lib/matching-utils";
-import ResumeSummaryView, { ResumeSummaryData } from "@/components/evaluate/ResumeSummaryView";
+import ResumeSummaryView, {
+  ResumeCertification,
+  ResumeExperience,
+  ResumeLanguage,
+  ResumeSummaryData,
+} from "@/components/evaluate/ResumeSummaryView";
 import AppHeader from "@/components/common/AppHeader";
 
 type ViewState = "loading" | "result" | "error";
@@ -33,6 +38,306 @@ const parseStoredMatchingData = (
   }
 };
 
+const defaultResumeSummary: ResumeSummaryData = {
+  name: "",
+  phone: "",
+  email: "",
+  summary: "",
+  experiences: [],
+  skills: [],
+  certifications: [],
+  languages: [],
+  links: [],
+};
+
+const MOCK_PARSED_RESUME = {
+  basic_info: {
+    name: "홍길동",
+    phone: "010-1234-5678",
+    email: "hong.gildong@example.com",
+    address: null,
+  },
+  summary:
+    "5년차 백엔드 개발자로서 Python과 Django를 활용한 웹 서비스 개발 경험이 있습니다. 대규모 트래픽을 처리할 수 있는 시스템 설계 및 최적화에 관심이 많습니다.",
+  careers: [
+    {
+      company_name: "ABC 테크놀로지",
+      period: "2020.01 ~ 2023.12",
+      employment_type: null,
+      role: "백엔드 개발자",
+      achievements: [],
+    },
+    {
+      company_name: "XYZ 스타트업",
+      period: "2018.06 ~ 2019.12",
+      employment_type: null,
+      role: "주니어 개발자",
+      achievements: [],
+    },
+  ],
+  educations: [
+    {
+      school_name: "서울대학교",
+      period: "2014.03 ~ 2018.02",
+      graduation_status: "졸업",
+      major_and_degree: null,
+      content: null,
+    },
+    {
+      school_name: "서울고등학교",
+      period: "2011.03 ~ 2014.02",
+      graduation_status: "졸업",
+      major_and_degree: null,
+      content: null,
+    },
+  ],
+  skills: [
+    "Python",
+    "Django",
+    "PostgreSQL",
+    "Docker",
+    "Kubernetes",
+    "AWS",
+    "Git",
+    "JavaScript",
+    "TypeScript",
+    "React",
+  ],
+  activities: [
+    {
+      activity_name: "정보처리기사",
+      period: null,
+      activity_type: "자격증",
+      content: null,
+    },
+    {
+      activity_name: "AWS Solutions Architect",
+      period: null,
+      activity_type: "자격증",
+      content: null,
+    },
+    {
+      activity_name: "오픈소스 기여상",
+      period: null,
+      activity_type: "수상",
+      content: null,
+    },
+    {
+      activity_name: "개인 프로젝트: 이커머스 플랫폼 개발",
+      period: null,
+      activity_type: "프로젝트",
+      content: null,
+    },
+  ],
+  languages: [
+    {
+      language_name: "영어",
+      level: "상",
+      certification: "TOEIC",
+      acquisition_date: null,
+    },
+    {
+      language_name: "일본어",
+      level: "중",
+      certification: "JLPT",
+      acquisition_date: null,
+    },
+  ],
+  links: [
+    "https://github.com/hong-gildong",
+    "https://hong-gildong.github.io",
+    "https://linkedin.com/in/hong-gildong",
+  ],
+  additional_info: {},
+};
+
+const toStringArray = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value
+        .map((item) => (typeof item === "string" ? item.trim() : ""))
+        .filter(Boolean)
+    : [];
+
+const parseAchievements = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (typeof item === "string") return item.trim();
+      if (isRecord(item)) {
+        return pickFirstString(item, [
+          "content",
+          "description",
+          "detail",
+          "achievement",
+        ]);
+      }
+      return null;
+    })
+    .filter((item): item is string => Boolean(item));
+};
+
+const extractDatesFromPeriod = (period?: string) => {
+  if (!period) return { startDate: undefined, endDate: undefined };
+  const matches = period.match(/\d{4}[.\-/]\d{1,2}(?:[.\-/]\d{1,2})?/g);
+  if (!matches || matches.length === 0) {
+    return { startDate: undefined, endDate: undefined };
+  }
+
+  const toIsoDate = (value: string) => {
+    const parts = value.split(/[.\-/]/).filter(Boolean);
+    const [year, month, day] = parts;
+    if (!year || !month) return undefined;
+    const paddedMonth = month.padStart(2, "0");
+    const paddedDay = (day ?? "01").padStart(2, "0");
+    return `${year}-${paddedMonth}-${paddedDay}`;
+  };
+
+  const startDate = toIsoDate(matches[0]);
+  const endDate = matches[1] ? toIsoDate(matches[1]) : undefined;
+  return { startDate, endDate };
+};
+
+const deriveLinkLabel = (value: string, index: number) => {
+  try {
+    const parsed = new URL(value);
+    const host = parsed.hostname.replace(/^www\./, "");
+    if (host.includes("github")) return "GitHub";
+    if (host.includes("linkedin")) return "LinkedIn";
+    if (host.includes("notion")) return "Notion";
+    if (host.includes("velog")) return "Velog";
+    if (host.includes("tistory")) return "Tistory";
+    const base = host.split(".")[0];
+    if (base) return `${base[0].toUpperCase()}${base.slice(1)}`;
+  } catch (error) {
+    console.warn("[Evaluate] Failed to parse link label", error);
+  }
+  return `링크 ${index + 1}`;
+};
+
+const mapParsedResumeToSummary = (
+  raw: unknown,
+): ResumeSummaryData | null => {
+  if (!isRecord(raw)) return null;
+
+  const basicInfo = isRecord(raw.basic_info) ? raw.basic_info : null;
+  const careers = toRecordArray(raw.careers);
+  const activities = toRecordArray(raw.activities);
+  const languages = toRecordArray(raw.languages);
+
+  const experiences = careers
+    .map((career) => {
+      const company =
+        pickFirstString(career, ["company_name", "company", "companyName"]) ??
+        "";
+      const period = pickFirstString(career, ["period", "duration"]) ?? "";
+      const { startDate, endDate } = extractDatesFromPeriod(period);
+      const title = pickFirstString(career, ["role", "title", "position"]);
+      const achievements = parseAchievements(career.achievements);
+      const description = achievements.length > 0 ? achievements.join("\n") : undefined;
+
+      if (!company && !period && !title && !description) return null;
+
+      return {
+        company,
+        period,
+        startDate,
+        endDate,
+        title,
+        description,
+      } as ResumeExperience;
+    })
+    .filter((item): item is ResumeExperience => item !== null);
+
+  const certifications = activities
+    .map((activity, index) => {
+      const name = pickFirstString(activity, [
+        "activity_name",
+        "name",
+        "title",
+      ]);
+      const date = pickFirstString(activity, ["period", "date"]);
+      const type = pickFirstString(activity, [
+        "activity_type",
+        "type",
+        "category",
+      ]);
+      const content = pickFirstString(activity, [
+        "content",
+        "description",
+        "detail",
+      ]);
+      if (!name && !date && !type && !content) return null;
+
+      const note = [type, content].filter(Boolean).join(" / ") || undefined;
+      return {
+        name: name ?? `활동 ${index + 1}`,
+        date,
+        note,
+      } as ResumeCertification;
+    })
+    .filter((item): item is ResumeCertification => item !== null);
+
+  const languageItems = languages
+    .map((language) => {
+      const name = pickFirstString(language, [
+        "language_name",
+        "name",
+        "language",
+      ]);
+      if (!name) return null;
+      const level = pickFirstString(language, ["level"]);
+      const certification = pickFirstString(language, ["certification"]);
+      const acquisitionDate = pickFirstString(language, ["acquisition_date"]);
+      const details = [level, certification, acquisitionDate].filter(Boolean);
+      return {
+        name,
+        details: details.length > 0 ? details : undefined,
+      } as ResumeLanguage;
+    })
+    .filter((item): item is ResumeLanguage => item !== null);
+
+  const rawLinks = toStringArray(raw.links);
+  const links = rawLinks.map((link, index) => ({
+    label: deriveLinkLabel(link, index),
+    url: link,
+  }));
+
+  return {
+    name: pickFirstString(basicInfo, ["name"]) ?? "",
+    phone: pickFirstString(basicInfo, ["phone"]),
+    email: pickFirstString(basicInfo, ["email"]),
+    summary: pickFirstString(raw, ["summary", "about", "intro"]),
+    experiences,
+    skills: toStringArray(raw.skills),
+    certifications,
+    languages: languageItems,
+    links,
+  } as ResumeSummaryData;
+};
+
+const mergeResumeSummary = (
+  prev: ResumeSummaryData,
+  incoming: ResumeSummaryData,
+): ResumeSummaryData => {
+  const pickString = (value?: string, fallback?: string) =>
+    value && value.trim().length > 0 ? value : fallback;
+  const pickArray = <T,>(value: T[] | undefined, fallback: T[] | undefined) =>
+    value && value.length > 0 ? value : fallback;
+
+  return {
+    ...prev,
+    name: pickString(incoming.name, prev.name) ?? "",
+    phone: pickString(incoming.phone, prev.phone),
+    email: pickString(incoming.email, prev.email),
+    summary: pickString(incoming.summary, prev.summary),
+    experiences: pickArray(incoming.experiences, prev.experiences) ?? [],
+    skills: pickArray(incoming.skills, prev.skills) ?? [],
+    certifications: pickArray(incoming.certifications, prev.certifications) ?? [],
+    languages: pickArray(incoming.languages, prev.languages) ?? [],
+    links: pickArray(incoming.links, prev.links) ?? [],
+  } as ResumeSummaryData;
+};
+
 export default function EvaluatePage() {
   const [mode, setMode] = useState<ViewState>("loading");
   const [html, setHtml] = useState("");
@@ -45,8 +350,11 @@ export default function EvaluatePage() {
   const [selectedJob, setSelectedJob] = useState<Record<string, unknown> | null>(null);
   const [resumeSummaryState, setResumeSummaryState] = useState<ResumeSummaryData>(() => {
     if (typeof window !== "undefined") {
-      const raw = window.sessionStorage.getItem("resume_summary");
-      if (raw) {
+      const session = window.sessionStorage;
+      const raw = session.getItem("resume_summary");
+      const storedPath = session.getItem("resume_summary_path");
+      const sessionResume = session.getItem("resume_path");
+      if (raw && (!storedPath || storedPath === sessionResume)) {
         try {
           const parsed = JSON.parse(raw);
           if (isRecord(parsed)) {
@@ -77,17 +385,7 @@ export default function EvaluatePage() {
         }
       }
     }
-    return {
-      name: "",
-      phone: "",
-      email: "",
-      summary: "",
-      experiences: [],
-      skills: [],
-      certifications: [],
-      languages: [],
-      links: [],
-    };
+    return defaultResumeSummary;
   });
 
   const normalizeWhitespace = useCallback(
@@ -149,6 +447,11 @@ export default function EvaluatePage() {
     return undefined;
   }, []);
 
+  const stripBracketedText = useCallback((text: string) => {
+    // [회사명] 같은 대괄호 안의 텍스트를 제거하고 앞뒤 공백 정리
+    return text.replace(/\[.*?\]/g, "").trim();
+  }, []);
+
   const deriveJobTitle = useCallback(
     (
       job: Record<string, unknown> | null | undefined,
@@ -158,7 +461,10 @@ export default function EvaluatePage() {
       const titleCandidate =
         pickFirstString(job, ["job_title", "title", "position", "role"]) ??
         heading;
-      if (titleCandidate) return titleCandidate;
+      if (titleCandidate) {
+        const cleaned = stripBracketedText(titleCandidate);
+        return cleaned || titleCandidate;
+      }
 
       const companyCandidate = pickFirstString(job, [
         "company",
@@ -169,7 +475,7 @@ export default function EvaluatePage() {
       if (fallbackIndex !== undefined) return "채용 공고";
       return "채용 공고";
     },
-    [extractHeadingFromMarkdown],
+    [extractHeadingFromMarkdown, stripBracketedText],
   );
 
   const persistSelectedJobContext = useCallback(
@@ -325,7 +631,11 @@ export default function EvaluatePage() {
       }
 
       const storedResumeSummary = session.getItem("resume_summary");
-      if (storedResumeSummary) {
+      const storedSummaryPath = session.getItem("resume_summary_path");
+      if (
+        storedResumeSummary &&
+        (!storedSummaryPath || storedSummaryPath === sessionResume)
+      ) {
         try {
           const parsed = JSON.parse(storedResumeSummary);
           if (isRecord(parsed)) {
@@ -340,6 +650,37 @@ export default function EvaluatePage() {
       }
     }
   }, [transformMatchingResponse]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const session = window.sessionStorage;
+    const currentResume =
+      resumePath ?? session.getItem("resume_path");
+    if (!currentResume) return;
+
+    const storedSummary = session.getItem("resume_summary");
+    const storedSummaryPath = session.getItem("resume_summary_path");
+    if (storedSummary && storedSummaryPath === currentResume) {
+      return;
+    }
+
+    const mapped = mapParsedResumeToSummary(MOCK_PARSED_RESUME);
+    if (!mapped) return;
+    const latestSummaryPath = session.getItem("resume_summary_path");
+    if (latestSummaryPath === currentResume) {
+      return;
+    }
+    setResumeSummaryState((prev) => {
+      const base =
+        storedSummaryPath && storedSummaryPath !== currentResume
+          ? defaultResumeSummary
+          : prev;
+      const merged = mergeResumeSummary(base, mapped);
+      session.setItem("resume_summary", JSON.stringify(merged));
+      session.setItem("resume_summary_path", currentResume);
+      return merged;
+    });
+  }, [resumePath]);
 
   useEffect(() => {
     if (mode !== "loading") return;
@@ -593,14 +934,35 @@ export default function EvaluatePage() {
 
   const jobDescriptionHtml = useMemo(() => {
     if (!jobDescriptionText) return "";
-    const parsed = marked.parse(jobDescriptionText);
+    // "## 회사소개" 전의 제목 부분 제거 (이미 jobTitle로 표시됨)
+    const lines = jobDescriptionText.split(/\r?\n/);
+    const filteredLines: string[] = [];
+    let foundFirstSection = false;
+    for (const line of lines) {
+      const trimmed = line.trim();
+      // ## 로 시작하는 첫 번째 섹션을 찾으면 그 이후부터 포함
+      if (!foundFirstSection && trimmed.startsWith("## ")) {
+        foundFirstSection = true;
+      }
+      if (foundFirstSection) {
+        // ## 를 #### 로 변환하여 헤딩 크기를 작게 만듦
+        const converted = line.replace(/^(\s*)## /, "$1#### ");
+        filteredLines.push(converted);
+      }
+    }
+    let filteredText = foundFirstSection ? filteredLines.join("\n") : jobDescriptionText;
+    // ~ 를 이스케이프 처리하여 취소선(strikethrough)이 적용되지 않도록 함 (예: 22~25년)
+    filteredText = filteredText.replace(/~/g, "\\~");
+    const parsed = marked.parse(filteredText);
     const parsedHtml = typeof parsed === "string" ? parsed : "";
     return DOMPurify.sanitize(parsedHtml);
   }, [jobDescriptionText]);
 
   const analysisHtml = useMemo(() => {
     if (analysisText) {
-      const parsed = marked.parse(analysisText);
+      // ~ 를 이스케이프 처리하여 취소선(strikethrough)이 적용되지 않도록 함
+      const escapedText = analysisText.replace(/~/g, "\\~");
+      const parsed = marked.parse(escapedText);
       const parsedHtml = typeof parsed === "string" ? parsed : "";
       return DOMPurify.sanitize(parsedHtml);
     }
@@ -701,7 +1063,7 @@ export default function EvaluatePage() {
                 {matchBadge}
               </span>
             ) : (
-              <span className="text-xs text-slate-300">Match 정보 없음</span>
+              <span className="text-xs text-slate-300"></span>
             )}
             <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[rgb(96,150,222)]">
               View
@@ -734,12 +1096,23 @@ export default function EvaluatePage() {
             summary={resumeSummary}
             editable
             onChange={(next) => {
-            setResumeSummaryState(next);
-            if (typeof window !== "undefined") {
-              window.sessionStorage.setItem("resume_summary", JSON.stringify(next));
-            }
-          }}
-        />
+              setResumeSummaryState(next);
+              if (typeof window !== "undefined") {
+                window.sessionStorage.setItem(
+                  "resume_summary",
+                  JSON.stringify(next),
+                );
+                const currentResume =
+                  resumePath ?? window.sessionStorage.getItem("resume_path");
+                if (currentResume) {
+                  window.sessionStorage.setItem(
+                    "resume_summary_path",
+                    currentResume,
+                  );
+                }
+              }
+            }}
+          />
 
           <div className="space-y-6">
             <div className="space-y-4">
@@ -762,7 +1135,7 @@ export default function EvaluatePage() {
                     <h2 className="text-2xl font-semibold text-slate-900">
                       {jobTitle}
                     </h2>
-                    <p className="text-sm font-medium text-slate-600">
+                    <p className="text-2xl font-medium text-slate-600">
                       {companyName}
                     </p>
                     {metaInformation.length > 0 && (
@@ -787,7 +1160,7 @@ export default function EvaluatePage() {
                 {jobDescriptionHtml ? (
                   <section className="space-y-2">
                     <div
-                      className="prose max-w-none text-xs leading-relaxed text-slate-700 sm:text-sm"
+                      className="prose max-w-none leading-relaxed text-slate-700 markdown-content"
                       dangerouslySetInnerHTML={{ __html: jobDescriptionHtml }}
                     />
                   </section>

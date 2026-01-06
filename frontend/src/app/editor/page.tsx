@@ -127,10 +127,6 @@ const defaultResumeSummary: ResumeSummaryData = {
 
 const EditorPage = () => {
   const [resumePath, setResumePath] = useState<string | null>(null);
-  const [userResume] = useState<string>(() => {
-    if (typeof window === "undefined") return "";
-    return window.sessionStorage.getItem("user_resume") ?? "";
-  });
   const [draftMessage, setDraftMessage] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
@@ -238,10 +234,6 @@ const EditorPage = () => {
       content: "답변 생성중...",
       createdAt: Date.now() + 0.5,
     };
-    const historyForApi = [...messages, userMessage]
-      .filter((msg) => msg.role === "assistant" || msg.role === "user")
-      .slice(-10)
-      .map((msg) => ({ role: msg.role, content: msg.content }));
 
     setMessages((prev) => [...prev, userMessage, typingMessage]);
     setDraftMessage("");
@@ -274,7 +266,6 @@ const EditorPage = () => {
           session_id: sessionId,
           job_title: jobTitleForApi,
           job_url: jobUrlForApi,
-          conversation_history: historyForApi,
         }),
       });
 
@@ -323,19 +314,24 @@ const EditorPage = () => {
             <ResumeSummaryView
               summary={resumeSummary}
               editable
-              onAttach={(item) => {
-                setAttachments((prev) => {
-                  const exists = prev.find((p) => p.id === item.id);
-                  if (exists) {
-                    return prev.map((p) => (p.id === item.id ? item : p));
-                  }
-                  return [...prev, item];
-                });
-              }}
+              // onAttach={(item) => {
+              //   setAttachments((prev) => {
+              //     const exists = prev.find((p) => p.id === item.id);
+              //     if (exists) {
+              //       return prev.map((p) => (p.id === item.id ? item : p));
+              //     }
+              //     return [...prev, item];
+              //   });
+              // }}
               onChange={(next) => {
                 setResumeSummary(next);
                 if (typeof window !== "undefined") {
                   window.sessionStorage.setItem("resume_summary", JSON.stringify(next));
+                  const currentResume =
+                    resumePath ?? window.sessionStorage.getItem("resume_path");
+                  if (currentResume) {
+                    window.sessionStorage.setItem("resume_summary_path", currentResume);
+                  }
                 }
               }}
             />
