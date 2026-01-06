@@ -892,7 +892,9 @@ export default function EvaluatePage() {
         filteredLines.push(converted);
       }
     }
-    const filteredText = foundFirstSection ? filteredLines.join("\n") : jobDescriptionText;
+    let filteredText = foundFirstSection ? filteredLines.join("\n") : jobDescriptionText;
+    // ~ 를 이스케이프 처리하여 취소선(strikethrough)이 적용되지 않도록 함 (예: 22~25년)
+    filteredText = filteredText.replace(/~/g, "\\~");
     const parsed = marked.parse(filteredText);
     const parsedHtml = typeof parsed === "string" ? parsed : "";
     return DOMPurify.sanitize(parsedHtml);
@@ -900,7 +902,9 @@ export default function EvaluatePage() {
 
   const analysisHtml = useMemo(() => {
     if (analysisText) {
-      const parsed = marked.parse(analysisText);
+      // ~ 를 이스케이프 처리하여 취소선(strikethrough)이 적용되지 않도록 함
+      const escapedText = analysisText.replace(/~/g, "\\~");
+      const parsed = marked.parse(escapedText);
       const parsedHtml = typeof parsed === "string" ? parsed : "";
       return DOMPurify.sanitize(parsedHtml);
     }
