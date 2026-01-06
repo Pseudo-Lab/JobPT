@@ -143,11 +143,9 @@ const mapParsedResumeToSummary = (
         endDate,
         title,
         description,
-      };
+      } as ResumeExperience;
     })
-    .filter(
-      (item): item is ResumeExperience => item !== null,
-    );
+    .filter((item): item is ResumeExperience => item !== null);
 
   const certifications = activities
     .map((activity, index) => {
@@ -174,11 +172,9 @@ const mapParsedResumeToSummary = (
         name: name ?? `활동 ${index + 1}`,
         date,
         note,
-      };
+      } as ResumeCertification;
     })
-    .filter(
-      (item): item is ResumeCertification => item !== null,
-    );
+    .filter((item): item is ResumeCertification => item !== null);
 
   const languageItems = languages
     .map((language) => {
@@ -195,11 +191,9 @@ const mapParsedResumeToSummary = (
       return {
         name,
         details: details.length > 0 ? details : undefined,
-      };
+      } as ResumeLanguage;
     })
-    .filter(
-      (item): item is ResumeLanguage => item !== null,
-    );
+    .filter((item): item is ResumeLanguage => item !== null);
 
   const rawLinks = toStringArray(raw.links);
   const links = rawLinks.map((link, index) => ({
@@ -217,7 +211,7 @@ const mapParsedResumeToSummary = (
     certifications,
     languages: languageItems,
     links,
-  };
+  } as ResumeSummaryData;
 };
 
 const mergeResumeSummary = (
@@ -240,7 +234,7 @@ const mergeResumeSummary = (
     certifications: pickArray(incoming.certifications, prev.certifications) ?? [],
     languages: pickArray(incoming.languages, prev.languages) ?? [],
     links: pickArray(incoming.links, prev.links) ?? [],
-  };
+  } as ResumeSummaryData;
 };
 
 export default function EvaluatePage() {
@@ -874,7 +868,22 @@ export default function EvaluatePage() {
 
   const jobDescriptionHtml = useMemo(() => {
     if (!jobDescriptionText) return "";
-    const parsed = marked.parse(jobDescriptionText);
+    // "## 회사소개" 전의 제목 부분 제거 (이미 jobTitle로 표시됨)
+    const lines = jobDescriptionText.split(/\r?\n/);
+    const filteredLines: string[] = [];
+    let foundFirstSection = false;
+    for (const line of lines) {
+      const trimmed = line.trim();
+      // ## 로 시작하는 첫 번째 섹션을 찾으면 그 이후부터 포함
+      if (!foundFirstSection && trimmed.startsWith("## ")) {
+        foundFirstSection = true;
+      }
+      if (foundFirstSection) {
+        filteredLines.push(line);
+      }
+    }
+    const filteredText = foundFirstSection ? filteredLines.join("\n") : jobDescriptionText;
+    const parsed = marked.parse(filteredText);
     const parsedHtml = typeof parsed === "string" ? parsed : "";
     return DOMPurify.sanitize(parsedHtml);
   }, [jobDescriptionText]);
@@ -982,7 +991,7 @@ export default function EvaluatePage() {
                 {matchBadge}
               </span>
             ) : (
-              <span className="text-xs text-slate-300">Match 정보 없음</span>
+              <span className="text-xs text-slate-300"></span>
             )}
             <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-[rgb(96,150,222)]">
               View
@@ -1079,7 +1088,7 @@ export default function EvaluatePage() {
                 {jobDescriptionHtml ? (
                   <section className="space-y-2">
                     <div
-                      className="prose max-w-none text-xs leading-relaxed text-slate-700 sm:text-sm"
+                      className="prose max-w-none leading-relaxed text-slate-700 markdown-content"
                       dangerouslySetInnerHTML={{ __html: jobDescriptionHtml }}
                     />
                   </section>
