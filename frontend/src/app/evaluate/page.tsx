@@ -887,7 +887,9 @@ export default function EvaluatePage() {
         foundFirstSection = true;
       }
       if (foundFirstSection) {
-        filteredLines.push(line);
+        // ## 를 #### 로 변환하여 헤딩 크기를 작게 만듦
+        const converted = line.replace(/^(\s*)## /, "$1#### ");
+        filteredLines.push(converted);
       }
     }
     const filteredText = foundFirstSection ? filteredLines.join("\n") : jobDescriptionText;
@@ -1071,7 +1073,7 @@ export default function EvaluatePage() {
                     <h2 className="text-2xl font-semibold text-slate-900">
                       {jobTitle}
                     </h2>
-                    <p className="text-sm font-medium text-slate-600">
+                    <p className="text-2xl font-medium text-slate-600">
                       {companyName}
                     </p>
                     {metaInformation.length > 0 && (
