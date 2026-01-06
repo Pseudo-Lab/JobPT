@@ -20,7 +20,6 @@ markdown2==2.5.3
 pandas==2.2.3
 pdf2image==1.17.0
 pdfplumber==0.11.6
-pip==22.0.2
 PyMuPDF==1.25.1
 PyPDF2==3.0.1
 setuptools==59.6.0
