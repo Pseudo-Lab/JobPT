@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "JobPT",
   description: "Resume Analyzer",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
