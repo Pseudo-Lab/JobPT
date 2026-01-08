@@ -5,8 +5,10 @@ from pydantic import BaseModel
 import shutil
 import uuid
 import os
+import json
 
 from util.parser import run_parser
+from util.resume_structured_parser import parse_resume_to_structured
 from get_similarity.main import matching
 from openai import OpenAI
 import uvicorn
@@ -32,6 +34,7 @@ models.Base.metadata.create_all(bind=engine)
 
 # 캐시 저장소
 resume_cache = {}
+resume_structured_cache = {}  # 구조화된 이력서 데이터 캐시
 analysis_cache = {}
 
 # 전역 변수로 선언 (함수 내에서 global 키워드 사용)
@@ -156,9 +159,24 @@ async def run(data: MatchRequest):
     resume = run_parser(resume_path)
     resume_content_text = resume[0]  # 첫 번째 반환값이 텍스트
 
-    # 캐시 저장
+    # 캐시 저장 (기존 문자열 저장)
     resume_cache[resume_path] = resume_content_text
     logger.info(f"[{trace_id}] parsed_pages={len(resume_content_text)} total_chars={len(resume_content_text)}")
+
+    # 구조화된 데이터 생성 및 저장
+    try:
+        if resume_path not in resume_structured_cache or resume_structured_cache[resume_path] is None:
+            structured_resume = await parse_resume_to_structured(resume_content_text)
+            if structured_resume:
+                resume_structured_cache[resume_path] = structured_resume
+                logger.info(f"[{trace_id}] structured resume data saved")
+                # 구조화된 이력서 결과를 JSON 형식으로 로그 출력
+                logger.info(f"[{trace_id}] ========== 구조화된 이력서 파싱 결과 ==========")
+                logger.info(f"[{trace_id}] {json.dumps(structured_resume, ensure_ascii=False, indent=2)}")
+                logger.info(f"[{trace_id}] ============================================")
+    except Exception as e:
+        logger.warning(f"[{trace_id}] failed to parse structured resume: {e}")
+        # 구조화 파싱 실패해도 기존 로직은 계속 진행
 
     # 채용공고 추천
     # res, job_description, job_url, c_name = await matching(
@@ -262,6 +280,21 @@ async def chat(request: Request):
         resume = run_parser(resume_path)
         resume_content_text = resume[0]
         resume_cache[resume_path] = resume_content_text
+        
+        # 구조화된 데이터 생성 및 저장
+        try:
+            if resume_path not in resume_structured_cache or resume_structured_cache[resume_path] is None:
+                structured_resume = await parse_resume_to_structured(resume_content_text)
+                if structured_resume:
+                    resume_structured_cache[resume_path] = structured_resume
+                    # 구조화된 이력서 결과를 JSON 형식으로 로그 출력
+                    logger.info(f"[CHAT] ========== 구조화된 이력서 파싱 결과 ==========")
+                    logger.info(f"[CHAT] resume_path={resume_path}")
+                    logger.info(f"[CHAT] {json.dumps(structured_resume, ensure_ascii=False, indent=2)}")
+                    logger.info(f"[CHAT] ============================================")
+        except Exception as e:
+            logger.warning(f"[CHAT] failed to parse structured resume: {e}")
+            # 구조화 파싱 실패해도 기존 로직은 계속 진행
     else:
         resume_content_text = resume_cache[resume_path]
 
@@ -393,6 +426,64 @@ async def evaluate(request: EvaluateRequest):
     except Exception as e:
         print(f"ATS 분석 오류: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# /resume/structured - 구조화된 이력서 데이터 조회
+class StructuredResumeRequest(BaseModel):
+    resume_path: str
+
+
+@api_router.post("/resume/structured")
+async def get_structured_resume(request: StructuredResumeRequest):
+    """
+    구조화된 이력서 데이터를 조회합니다.
+
+    Args:
+        resume_path: 이력서 파일 경로
+
+    Returns:
+        JSONResponse: 구조화된 이력서 데이터 (스키마에 맞는 형식)
+    """
+    resume_path = request.resume_path
+    
+    if not resume_path:
+        raise HTTPException(status_code=400, detail="resume_path is required.")
+    
+    # 캐시에서 조회
+    if resume_path in resume_structured_cache:
+        structured_data = resume_structured_cache[resume_path]
+        if structured_data:
+            return JSONResponse(content=structured_data)
+    
+    # 캐시에 없으면 텍스트에서 생성 시도
+    if resume_path in resume_cache:
+        try:
+            resume_content_text = resume_cache[resume_path]
+            structured_resume = await parse_resume_to_structured(resume_content_text)
+            if structured_resume:
+                resume_structured_cache[resume_path] = structured_resume
+                return JSONResponse(content=structured_resume)
+        except Exception as e:
+            logger.warning(f"failed to parse structured resume: {e}")
+    
+    # 모두 실패 시 기본 구조 반환
+    default_structured = {
+        "basic_info": {
+            "name": None,
+            "phone": None,
+            "email": None,
+            "address": None
+        },
+        "summary": None,
+        "careers": [],
+        "educations": [],
+        "skills": [],
+        "activities": [],
+        "languages": [],
+        "links": [],
+        "additional_info": {}
+    }
+    return JSONResponse(content=default_structured)
 
 
 # /scrape-jd - JD URL 크롤링
