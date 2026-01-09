@@ -24,6 +24,6 @@ CACHE_PATH = "./data/cache"
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY", "")
 LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY", "")
-SMITHERY_API_KEY = os.getenv("SMITHERY_API_KEY", "")
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 AGENT_MODEL = "solar-pro2"

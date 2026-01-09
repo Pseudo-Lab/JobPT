@@ -1,3 +1,9 @@
+# FastAPI and server (필수)
+fastapi==0.115.5
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+python-multipart==0.0.20
+
 # validation agent
 python-docx==1.1.2 
 matplotlib==3.9.3
@@ -33,7 +39,8 @@ rank-bm25==0.2.2
 # multi agent
 langchain>=0.3.0
 langchain-core>=0.3.29
-langchain-mcp-adapters>=0.0.8,<0.2.0
+langchain-community>=0.3.0
+tavily-python>=0.3.0
 aiohttp>=3.9.0
 asyncio>=3.4.3 
 python-dotenv>=1.0.1
