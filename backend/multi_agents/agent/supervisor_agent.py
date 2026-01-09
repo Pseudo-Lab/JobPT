@@ -1,18 +1,15 @@
 from typing import cast
-from openai import OpenAI
 from langgraph.prebuilt import create_react_agent
-from langchain_openai import ChatOpenAI
-from langchain_mcp_adapters.client import MultiServerMCPClient
+from langchain_upstage import ChatUpstage
 from langchain_core.messages import AIMessage, SystemMessage
 from multi_agents.states.states import State
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import PromptTemplate
+from multi_agents.prompts.supervisor_prompt import get_supervisor_prompt
+from langfuse import Langfuse, get_client
+from langfuse.langchain import CallbackHandler
 
 import json
 import re
-from configs import *  # 필요한 모든 설정 import
-
-client = OpenAI()
+from configs import AGENT_MODEL, UPSTAGE_API_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY
 
 
 def parse_json_loose(text: str) -> dict:
@@ -28,119 +25,120 @@ def parse_json_loose(text: str) -> dict:
     return json.loads(obj)
 
 
-async def router(state: State):
+async def supervisor(state: State):
     """
-    사용자 입력을 분석하여 적절한 에이전트 실행 순서를 결정하는 라우터 함수
-
-    Args:
-        state (State): 현재 상태 정보 (사용자 입력, 이력서 등 포함)
-
-    Returns:
-        dict: 라우팅 결정이 포함된 메시지 딕셔너리
+    Supervisor Loop 패턴의 핵심 함수
+    - 현재 상태를 분석하여 다음 agent를 선택하거나 FINISH
+    - FINISH 시 최종 답변 생성
     """
-    model = ChatOpenAI(model="gpt-4o", temperature=0)
+    model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
 
-    # client = MultiServerMCPClient()
-    # tools = await client.get_tools()
-    tools = []
-    agent = create_react_agent(model, tools)
+    # 이미 수집된 agent 결과 포맷팅
+    agent_outputs = state.get("agent_outputs", {})
+    collected_info = ""
+    if agent_outputs:
+        if "summary" in agent_outputs:
+            collected_info += f"\n[회사 정보 요약]\n{agent_outputs['summary']}\n"
+        if "suggestion" in agent_outputs:
+            collected_info += f"\n[이력서 개선 제안]\n{agent_outputs['suggestion']}\n"
 
-    # 라우팅을 위한 시스템 메시지 구성
-    # 사용자 입력과 이력서 정보를 바탕으로 적절한 에이전트 실행 순서 결정
-    system_message = """
-user_input: {user_input}
-user_resume: {user_resume}
----
-이 시스템은 이력서를 개선하기 위해 Summary Agent와 Suggestion Agent를 사용합니다.
+    # 이미 호출된 agent 목록 확인
+    called_agents = list(agent_outputs.keys()) if agent_outputs else []
 
-Summary Agent: 사용자가 제공한 채용공고와 관련된 회사 정보를 찾아 요약합니다.  
-Suggestion Agent: 사용자가 지정한 이력서 부분과 요약된 회사 정보를 기반으로 구체적인 개선 제안을 생성합니다.  
+    # 사용자 입력 추출 (첫 번째 HumanMessage)
+    user_input = ""
+    messages_list = state.get("messages", [])
+    
+    for msg in messages_list:
+        if hasattr(msg, 'content') and msg.__class__.__name__ == 'HumanMessage':
+            print("msg: ", msg.content)
+            user_input = msg.content
+            break
+    
+    # 프롬프트 생성 (외부 파일에서 가져오기)
+    formatted_message = get_supervisor_prompt(
+        user_input=user_input,
+        user_resume=state.get("user_resume", ""),
+        company_name=state.get("company_name", ""),
+        job_description=state.get("job_description", ""),
+        called_agents=called_agents,
+        collected_info=collected_info,
+    )
 
-아래의 실행 시퀀스 중 하나를 선택하여 한 줄로 출력하세요 (옵션 중 정확히 하나만 선택):  
+    langfuse_handler = Langfuse(
+        public_key=LANGFUSE_PUBLIC_KEY,
+        secret_key=LANGFUSE_SECRET_KEY,
+        host="https://cloud.langfuse.com"  # Optional: defaults to https://cloud.langfuse.com
+    )
 
-1. END: 입력이 단순 질문으로 Summary 또는 Suggestion Agent가 필요하지 않거나, user_resume이 비어 있을 때  
-2. summary: Summary Agent만 필요한 경우  
-3. summary_suggestion: 이력서를 개선하기 위해 Summary Agent와 Suggestion Agent 모두 필요한 경우  
-4. suggestion: 회사 요약 정보 없이 Suggestion Agent만 필요한 경우  
+    # Initialize the Langfuse handler
+    langfuse_handler = CallbackHandler()
 
-각 요청마다 JSON 형식으로 결과를 출력하세요.  
-출력 시 'sequence' 키만 포함하고, 그 외 키는 절대 포함하지 마세요.  
+    messages = [SystemMessage(content=formatted_message), *messages_list]
 
-출력 예시:  
-{{
-    sequence: "END"
-}}  
-{{
-    sequence: "summary"
-}}  
-{{
-    sequence: "summary_suggestion"
-}}  
-{{
-    sequence: "suggestion"
-}}  
-"""
-    # 시스템 메시지에 현재 상태 정보 삽입
-    system_message = system_message.format(user_input=state.messages, user_resume=state.user_resume)
-
-    messages = [SystemMessage(content=system_message), *state.messages]
-
-    response = cast(AIMessage, await agent.ainvoke({"messages": messages}))
+    # ReAct agent 생성 (도구 없이 의사결정만)
+    agent = create_react_agent(model, [])
+    response = cast(AIMessage, await agent.ainvoke({"messages": messages}, config={"callbacks": [langfuse_handler]}))
 
     result = response["messages"][-1].content
-    print("=============router=============")
+    print("=============supervisor=============")
     print(result)
+
+    # 기본값 초기화
+    next_agent = "FINISH"
+    reasoning = ""
+    final_answer = ""
+
     try:
         data = parse_json_loose(result)
-        seq = data.get("sequence", "END")
+        next_agent = data.get("next_agent", "FINISH")
+        reasoning = data.get("reasoning", "")
+        final_answer = data.get("final_answer", "")
     except Exception as e:
-        print("router json parse error:", e)
-        seq = "END"
-    state.route_decision = seq
-    response["messages"][-1].content = seq
-    return {"messages": [response["messages"][-1]]}
+        print("supervisor json parse error:", e)
+        # 파싱 실패 시 원본 응답을 최종 답변으로 사용
+        final_answer = result
+
+    # next_agent 유효성 검사
+    if next_agent not in {"summary", "suggestion", "FINISH"}:
+        next_agent = "FINISH"
+
+    print(f"next_agent: {next_agent}")
+    print(f"reasoning: {reasoning}")
+
+    # 상태 업데이트
+    update = {
+        "next_agent": next_agent,
+    }
+
+    if next_agent == "FINISH":
+        update["final_answer"] = final_answer
+        update["messages"] = [AIMessage(content=final_answer)]
+
+    return update
+
+
+# 하위 호환성을 위해 기존 함수명 유지 (deprecated)
+async def router(state: State):
+    """
+    [Deprecated] supervisor() 함수를 사용하세요.
+    하위 호환성을 위해 유지됩니다.
+    """
+    return await supervisor(state)
 
 
 def refine_answer(state: State) -> dict:
     """
-    최종 사용자 응답을 다듬고 개선하는 함수
-
-    Args:
-        state (State): 현재 상태 정보
-
-    Returns:
-        dict: 개선된 응답 메시지를 포함한 딕셔너리
+    [Deprecated] supervisor가 최종 답변을 직접 생성하므로 더 이상 사용하지 않습니다.
+    하위 호환성을 위해 유지됩니다.
     """
-    # ChatOpenAI 모델 초기화 (환경변수 자동 사용)
-    model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    # 이미 final_answer가 있으면 그대로 반환
+    final_answer = state.get("final_answer", "")
+    if final_answer:
+        return {"messages": [AIMessage(content=final_answer)]}
 
-    # 응답 개선을 위한 시스템 메시지
-    # 원본 의미와 구조를 유지하면서 명확성과 문법을 개선
-    system_message = """
-당신은 사용자에게 제공될 최종 답변을 다듬는 어시스턴트입니다.
-
-아래는 원래 사용자 입력과 어시스턴트의 초안 답변입니다:
-- User Input: {user_input}
-- Assistant Draft Response: {assistant_response}
-
-만약 Assistant Draft Response가 'END'라면, 사용자 입력에 집중하여 즉흥적으로 답변을 생성하세요.
-절대 'END'라고 그대로 반환하지 마세요.
-
-당신의 임무는 초안을 **가볍게 다듬는 것**이며, 의미, 톤, 구조는 변경하지 마세요.  
-핵심 세부 사항은 모두 유지해야 합니다.  
-명확성, 문법, 흐름 개선이 필요한 경우에만 손보세요.  
-
-중요한 정보를 삭제하거나 의도를 바꿀 수 있는 식으로 다시 표현하지 마세요.  
-
-어시스턴트의 답변이 이미 명확하고 적절하다면 그대로 반환하세요.
-"""
-    prompt = PromptTemplate.from_template(system_message)
-    chain = prompt | model | StrOutputParser()
-
-    # 응답 개선 실행
-    answer = chain.invoke({"user_input": state.messages[0].content, "assistant_response": state.messages[-1].content})
-
-    print("=============refined_answer=============")
-    print(answer)
-
-    return {"messages": [AIMessage(content=answer)]}
+    # fallback: 마지막 메시지 반환
+    messages_list = state.get("messages", [])
+    if messages_list:
+        return {"messages": [messages_list[-1]]}
+    return {"messages": []}

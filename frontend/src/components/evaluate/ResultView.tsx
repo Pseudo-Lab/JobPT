@@ -1,21 +1,18 @@
 "use client";
-import DOMPurify from 'dompurify';
+import DOMPurify from "dompurify";
 import { marked } from "marked";
-import React, { memo } from 'react';
-import Image from 'next/image';
-import { PdfHighlighterView } from '@/components/common';
-import type { ResultViewProps } from '@/types/evaluate';
+import React, { memo } from "react";
+import Image from "next/image";
+import type { ResultViewProps } from "@/types/evaluate";
 
 const ResultView: React.FC<ResultViewProps> = memo(({
   pdfError,
-  isPdf,
   thumbnailUrl,
   company,
   JD,
   JD_url,
   output,
   handleBackToUpload,
-  pdfUrl,
   userResumeDraft,
   setUserResumeDraft,
   userResume,
@@ -35,10 +32,9 @@ const ResultView: React.FC<ResultViewProps> = memo(({
           className="px-6 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium text-lg shadow-md transition duration-300 transform hover:scale-105"
           onClick={() => {
             if (typeof window !== 'undefined') {
-              sessionStorage.setItem('resume_path', pdfUrl || '');
               sessionStorage.setItem('jd_text', JD || '');
             }
-            window.location.href = '/evaluate';
+            window.location.href = '/preferences';
           }}
         >
           📝 평가받기
@@ -50,8 +46,6 @@ const ResultView: React.FC<ResultViewProps> = memo(({
           <h2 className="text-lg font-semibold border-b pb-2 mb-4">📄 이력서</h2>
           {pdfError ? (
             <div className="border rounded p-4 bg-red-50 text-red-500">{pdfError}</div>
-          ) : isPdf && pdfUrl ? (
-            <PdfHighlighterView key={pdfUrl} pdfUrl={pdfUrl} />
           ) : thumbnailUrl ? (
             <Image
               src={thumbnailUrl}
@@ -162,7 +156,7 @@ const ResultView: React.FC<ResultViewProps> = memo(({
                 >
                   <div className="mb-3 text-left">
                     <div className="inline-block px-4 py-2 rounded-lg bg-gray-200 text-gray-800 max-w-[90%]">
-                      <div className="prose prose-sm" 
+                      <div className="markdown-content" 
                         dangerouslySetInnerHTML={{
                           __html: DOMPurify.sanitize(marked("안녕하세요! 이력서 개선을 도와드릴게요. 분석 결과를 바탕으로 어떤 부분을 도와드릴까요?") as string)
                         }}

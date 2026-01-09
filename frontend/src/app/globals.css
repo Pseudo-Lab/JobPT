@@ -97,4 +97,168 @@ body {
   .animate-fade-in {
     animation: fade-in 1s ease-out;
   }
+
+  /* 마크다운 콘텐츠 스타일 */
+  .markdown-content {
+    line-height: 1.75;
+  }
+
+  .markdown-content h1 {
+    font-size: 2em;
+    font-weight: bold;
+    margin-top: 0.67em;
+    margin-bottom: 0.67em;
+    line-height: 1.2;
+  }
+
+  .markdown-content h2 {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: 0.83em;
+    margin-bottom: 0.83em;
+    line-height: 1.3;
+  }
+
+  .markdown-content h3 {
+    font-size: 1.17em;
+    font-weight: bold;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    line-height: 1.4;
+  }
+
+  .markdown-content h4 {
+    font-size: 1em;
+    font-weight: bold;
+    margin-top: 1.33em;
+    margin-bottom: 1.33em;
+    line-height: 1.5;
+  }
+
+  .markdown-content h5 {
+    font-size: 0.83em;
+    font-weight: bold;
+    margin-top: 1.67em;
+    margin-bottom: 1.67em;
+    line-height: 1.5;
+  }
+
+  .markdown-content h6 {
+    font-size: 0.67em;
+    font-weight: bold;
+    margin-top: 2.33em;
+    margin-bottom: 2.33em;
+    line-height: 1.5;
+  }
+
+  /* 흰색 배경의 채팅 메시지 (사용자 메시지) */
+  .bg-indigo-600 .markdown-content h1,
+  .bg-indigo-600 .markdown-content h2,
+  .bg-indigo-600 .markdown-content h3,
+  .bg-indigo-600 .markdown-content h4,
+  .bg-indigo-600 .markdown-content h5,
+  .bg-indigo-600 .markdown-content h6 {
+    color: white;
+  }
+
+  .markdown-content p {
+    margin-top: 1em;
+    margin-bottom: 1em;
+  }
+
+  .markdown-content ul,
+  .markdown-content ol {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    padding-left: 2em;
+  }
+
+  .markdown-content li {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
+  .markdown-content strong {
+    font-weight: bold;
+  }
+
+  .markdown-content em {
+    font-style: italic;
+  }
+
+  .markdown-content code {
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 0.2em 0.4em;
+    border-radius: 0.25em;
+    font-family: monospace;
+    font-size: 0.9em;
+  }
+
+  .markdown-content pre {
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 1em;
+    border-radius: 0.5em;
+    overflow-x: auto;
+    margin-top: 1em;
+    margin-bottom: 1em;
+  }
+
+  .markdown-content pre code {
+    background-color: transparent;
+    padding: 0;
+  }
+
+  .markdown-content blockquote {
+    border-left: 4px solid #ccc;
+    padding-left: 1em;
+    margin-left: 0;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    color: #666;
+  }
+
+  .markdown-content hr {
+    border: none;
+    border-top: 1px solid #ccc;
+    margin-top: 2em;
+    margin-bottom: 2em;
+  }
+
+  .markdown-content a {
+    color: #3b82f6;
+    text-decoration: underline;
+  }
+
+  .markdown-content a:hover {
+    color: #2563eb;
+  }
+
+  .markdown-content table {
+    border-collapse: collapse;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    width: 100%;
+  }
+
+  .markdown-content th,
+  .markdown-content td {
+    border: 1px solid #ccc;
+    padding: 0.5em;
+  }
+
+  .markdown-content th {
+    font-weight: bold;
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  /* Enable text selection inside react-pdf layers */
+  .react-pdf__Page__textContent {
+    pointer-events: auto !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+
+  .react-pdf__Page__textContent span {
+    cursor: text !important;
+  }
 }

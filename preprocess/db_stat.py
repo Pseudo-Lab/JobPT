@@ -10,6 +10,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_pinecone import PineconeVectorStore
 from langchain_openai import OpenAIEmbeddings
 from langchain_upstage import UpstageEmbeddings
+from langchain_upstage import UpstageEmbeddings
 from tqdm import tqdm
 import yaml
 
@@ -192,30 +193,51 @@ async def update_index(file: UploadFile, collection: str="korea-jd-dev"):
         index = pc.Index(index_name)
         ids = get_all_ids(index)
         url_set = set()
-        for id in ids:
-            url_set.add(get_metadata_by_id(index, id)["job_url"])
-        print(url_set)
+        date_dicts = {}
+        
+        # Pinecone fetch API - URI 길이 제한 고려하여 100개씩 처리
+        batch_size = 100
+        print(f"총 {len(ids)}개 ID를 {batch_size}개씩 배치 처리...")
+        
+        for start_idx in tqdm(range(0, len(ids), batch_size), desc="Getting metadata from Pinecone"):
+            end_idx = min(start_idx + batch_size, len(ids))
+            batch_ids = ids[start_idx:end_idx]
+            
+            # 한 번에 여러 ID 가져오기
+            resp = index.fetch(ids=batch_ids)
+            
+            for vid, vector_data in resp.vectors.items():
+                metadata = vector_data.metadata
+                url_set.add(metadata["job_url"])
+                date_dicts[vid] = metadata["deadline"]
+        
+        print(f"📊 Pinecone에서 가져온 URL: {len(url_set)}개")
         if result == False:
             raise ValueError("Index check failed: result is False")
 
         uploaded_file = file.file
         df = pd.read_csv(uploaded_file)
+        print(f"📊 CSV에서 읽은 데이터: {len(df)}개")
+        print(f"📊 Pinecone에 있는 URL: {len(url_set)}개")
+        
         # INSERT_YOUR_CODE
         # df["url"] 컬럼에서 url_set에 존재하는 url이 있는 행 제거
         before = len(df)
         df = df[~df["url"].isin(url_set)].reset_index(drop=True)
         removed = before - len(df)
-        print(f"Removed {removed} rows")
-        ### request를 무조건 list(dict{role, content})로 전달해야함
-        # summaries = []
-        # for i in tqdm(range(len(df)), desc="JD 요약 중"):
-        #     request = [
-        #         {"role": "system", "content": prompts["prompts_ver1"]["system"]},
-        #         {"role": "user", "content": prompts["prompts_ver1"]["user"].format(jd=df.iloc[i]["description"])}
-        #     ]
-        #     summaries.append(model.summary(request))
-        # print(summaries[:10])
-        # df["summary"] = summaries
+        after = len(df)
+        
+        print(f"📊 처리 전: {before}개")
+        print(f"📊 처리 후: {after}개")
+        print(f"📊 제거된 행: {removed}개")
+
+        delete_ids = []
+        for k, v in date_dicts.items():
+            if check_deadline(v)==False:
+                delete_ids.append(k)
+        delete_vectors(index, delete_ids)
+        print(f"✅ {len(delete_ids)}개의 벡터가 삭제되었습니다.")
+
         total_chunks = preprocess(df)
 
         # index = pc.Index(index_name)
@@ -224,10 +246,6 @@ async def update_index(file: UploadFile, collection: str="korea-jd-dev"):
         emb_model = UpstageEmbeddings(model="solar-embedding-1-large")
 
         vector_store = PineconeVectorStore(index=index, embedding=emb_model)
-
-        ### 데이터가 남아있을때 데이터 제거(소량일때만 사용), 추후 모듈화
-        if len(index.describe_index_stats()["namespaces"]) > 0:
-            index.delete(delete_all=True, namespace="")
 
         ### 파인콘 API로 한번에 대용량 update가 불가능하여 배치처리
         total = len(total_chunks)
@@ -277,10 +295,6 @@ async def update_index(file: UploadFile, collection: str="test-custom-index"):
 
         vector_store = PineconeVectorStore(index=index, embedding=emb_model)
 
-        ### 데이터가 남아있을때 데이터 제거(소량일때만 사용), 추후 모듈화
-        if len(index.describe_index_stats()["namespaces"]) > 0:
-            index.delete(delete_all=True, namespace="")
-
         ### 파인콘 API로 한번에 대용량 update가 불가능하여 배치처리
         total = len(total_chunks)
         batch_size = 100
@@ -301,6 +315,20 @@ async def update_index(file: UploadFile, collection: str="test-custom-index"):
             content={"message": str(e)}
         )
 
+
+@app.delete("/clear_index")
+async def clear_index(collection: str):
+    """
+    특정 컬렉션의 모든 데이터를 삭제합니다.
+    """
+    try:
+        index = pc.Index(collection)
+        if len(index.describe_index_stats()["namespaces"]) > 0:
+            index.delete(delete_all=True, namespace="")
+            return JSONResponse(status_code=200, content={"message": f"{collection} 인덱스가 초기화되었습니다"})
+        return JSONResponse(status_code=200, content={"message": "삭제할 데이터가 없습니다"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": str(e)})
 
 
 if __name__ == "__main__":

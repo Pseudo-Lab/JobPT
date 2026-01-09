@@ -7,10 +7,7 @@ export interface UploadViewProps {
   handleAnalyze: () => void;
   handleDrop: (e: React.DragEvent<HTMLDivElement>) => void;
   setIsDragging: (dragging: boolean) => void;
-  location: string[];
-  remote: boolean[];
-  jobType: string[];
-  setLocation: (val: string[]) => void;
-  setRemote: (val: boolean[]) => void;
-  setJobType: (val: string[]) => void;
-} 
+  jobPostingUrl: string;
+  onJobPostingUrlChange: (url: string) => void;
+  handleManualJD?: () => void;
+}

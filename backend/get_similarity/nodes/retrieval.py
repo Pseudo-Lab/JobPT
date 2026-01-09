@@ -1,6 +1,3 @@
-from langchain.embeddings.openai import OpenAIEmbeddings
-
-
 def check_db_status(db, db_type="chroma", index=None):
     """
     DB 상태를 확인하는 함수

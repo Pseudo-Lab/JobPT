@@ -6,9 +6,9 @@ load_dotenv()
 
 ### JD 추천 관련 api
 PINECONE_API_KEY=os.getenv("PINECONE_API_KEY", "")
-RAG_MODEL = os.getenv("RAG_MODEL", "gpt-4o-mini")  # default: gpt-4o-mini
+RAG_MODEL = os.getenv("RAG_MODEL", "solar-pro2")  # default: solar-pro2
 DB_TYPE = "Pinecone"    #["Chroma", "Pinecone"]
-PINECONE_INDEX = "korea-jd-dev"
+PINECONE_INDEX = "temp"
 DB_PATH = "Pinecone"    #크로마에서만 사용
 COLLECTION = "semantic_0"   #크로마에서만 사용
 PROMPT_YAML = "get_similarity/data/prompt.yaml"
@@ -25,4 +25,5 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY", "")
 LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY", "")
 SMITHERY_API_KEY = os.getenv("SMITHERY_API_KEY", "")
-AGENT_MODEL = "gpt-4o-mini"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+AGENT_MODEL = "solar-pro2"

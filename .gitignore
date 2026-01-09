@@ -1,6 +1,7 @@
 cache/
 resume_JD_similarity/data/** 
 .env
+venv/
 *.pyc
 !resume_JD_similarity/data/prompt.yaml
 !resume_JD_similarity/data/sample_resume.txt
@@ -15,7 +16,6 @@ resume_JD_similarity/data/**
 !/assets/*png
 **uploaded_resumes**
 **html**
-**lib**
 **chroma_db**
 **bin**
 ui/public/uploads/**
@@ -23,3 +23,4 @@ backend/test_api.py
 backend/test_ats.py
 backend/ats_report.html
 data/uploads/**
+dev_data

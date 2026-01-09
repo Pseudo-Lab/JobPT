@@ -5,50 +5,61 @@ from pydantic import BaseModel
 import shutil
 import uuid
 import os
+import traceback
 
-from parser import run_parser
+from util.parser import run_parser
 from get_similarity.main import matching
 from openai import OpenAI
 import uvicorn
-import nltk
 import logging
 
-from multi_agents.states.states import (
-    State,
-    get_session_state,
-    end_session,
-    add_user_input_to_state,
-    add_assistant_response_to_state,
-)
+from multi_agents.states.states import State
 from multi_agents.graph import create_graph
+from langchain_core.messages import HumanMessage
 from configs import *
 
 from langfuse.langchain import CallbackHandler
 
 from ATS_agent.ats_analyzer_improved import ATSAnalyzer
+from util.jd_crawler import crawl_jd_from_url
+
+from db.database import engine, Base
+from db import models
+from routers import auth
+
+# Create database tables
+models.Base.metadata.create_all(bind=engine)
 
 
 # 캐시 저장소
 resume_cache = {}
 analysis_cache = {}
 
+# 전역 변수로 선언 (함수 내에서 global 키워드 사용)
 location_cache = ""
 remote_cache = ""
 job_type_cache = ""
-
-env = os.getenv("ENVIRONMENT", "development").lower()
-
-is_prod = env == "production"
 
 app = FastAPI(
     title="JobPT",
     description="JobPT Backend Service",
     version="1.0.0",
-    docs_url=None if is_prod else "/docs",
-    redoc_url=None if is_prod else "/redoc",
-    openapi_url=None if is_prod else "/openapi.json",
-    servers=[{"url": "/api"}],  # Swagger에서 /api prefix 붙여 호출
 )
+
+# # Middleware to strip /api prefix for local development
+# @app.middleware("http")
+# async def strip_api_prefix(request: Request, call_next):
+#     if request.url.path.startswith("/api"):
+#         request.scope["path"] = request.url.path[4:]
+#     response = await call_next(request)
+#     return response
+
+# /api prefix를 모든 라우트에 추가
+from fastapi import APIRouter
+api_router = APIRouter(prefix="/api")
+
+# auth router는 먼저 등록 (prefix 없음)
+app.include_router(auth.router)
 
 # 로거 설정
 logger = logging.getLogger("jobpt")
@@ -89,7 +100,7 @@ class MatchRequest(BaseModel):
     resume_path: str
 
 
-@app.post("/upload")
+@api_router.post("/upload")
 async def upload_resume(
     file: UploadFile = File(...), location: str = Form(""), remote: str = Form("any"), job_type: str = Form("any")
 ):
@@ -99,8 +110,8 @@ async def upload_resume(
     Args:
         file: 사용자가 업로드한 이력서 파일(PDF)
 
-        아래 3개의 인자는 검색시 메타데이터 필터링을 위해 사용됨(e.g. Location=USA)
-        location: 근무 희망 위치 ['USA', 'Germany', 'UK']
+        아래 3개의 인자는 검색시 메타데이터 필터링을 위해 사용됨(e.g. Location=Korea)
+        location: 근무 희망 위치 ['Korea']
         remote: 원격 근무 여부 ['True', 'False']
         job_type: 근무 유형 ['fulltime', 'parttime']
     Returns:
@@ -116,24 +127,38 @@ async def upload_resume(
 
         # 로그 또는 활용 예시
         print(f"[UPLOAD] location={location}, remote={remote}, job_type={job_type}")
+        global location_cache, remote_cache, job_type_cache
         location_cache = location
         remote_cache = remote
         job_type_cache = job_type
 
         return JSONResponse(content={"resume_path": file_path})
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_traceback = traceback.format_exc()
+        logger.error(f"[UPLOAD ERROR] Failed to upload resume: {str(e)}")
+        logger.error(f"[UPLOAD ERROR] Filename: {file.filename if file else 'None'}")
+        logger.error(f"[UPLOAD ERROR] Location: {location}, Remote: {remote}, Job Type: {job_type}")
+        logger.error(f"[UPLOAD ERROR] Traceback:\n{error_traceback}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to upload resume: {str(e)}"
+        )
 
 
-@app.post("/matching")
+@api_router.post("/matching")
 async def run(data: MatchRequest):
     """
     사용자의 이력서를 기반으로 벡터 DB에서 채용공고를 검색하고
     LLM을 이용해 CV, JD 리뷰를 수행하는 함수
     """
     trace_id = str(uuid.uuid4())
-    logger.info(f"[{trace_id}] /matching start resume_path={data.resume_path}")
     resume_path = data.resume_path
+    logger.info(f"[{trace_id}] /matching start resume_path={resume_path}")
+
+    if not resume_path:
+        raise HTTPException(status_code=400, detail="resume_path is required.")
+    if not os.path.exists(resume_path):
+        raise HTTPException(status_code=400, detail="resume_path file not found.")
 
     # PDF를 JPG로 변환 후 저장
     # PDF를 직접 파싱 (JPG 변환 없이)
@@ -149,58 +174,147 @@ async def run(data: MatchRequest):
     #     resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache
     # )
 
-    jd_summaries, jd_urls, c_names = await matching(resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache)
+    jd_summaries, jd_urls, c_names = await matching(
+        resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache
+    )
+
+    logger.info(f">>>>"*30)
+    logger.info(f"[{trace_id}] jd_summaries={jd_summaries}")
+    logger.info(f"[{trace_id}] jd_urls={jd_urls}")
+    logger.info(f"[{trace_id}] c_names={c_names}")
+
+
+    def to_list(value):
+        if isinstance(value, list):
+            return value
+        if value is None:
+            return []
+        if isinstance(value, str) and not value.strip():
+            return []
+        return [value]
+
+    def normalize_text(value: str) -> str:
+        return " ".join(value.split()).strip().lower()
+
+    def deduplicate(recs):
+        seen_urls = set()
+        seen_jds = set()
+        unique = []
+        for rec in recs:
+            url = rec.get("job_url")
+            normalized_url = url.strip().lower() if isinstance(url, str) else None
+            jd_text = rec.get("JD")
+            normalized_jd = normalize_text(jd_text) if isinstance(jd_text, str) else None
+
+            if normalized_url and normalized_url in seen_urls:
+                continue
+            if normalized_jd and normalized_jd in seen_jds:
+                continue
+
+            if normalized_url:
+                seen_urls.add(normalized_url)
+            if normalized_jd:
+                seen_jds.add(normalized_jd)
+            unique.append(rec)
+        return unique
+
+    summaries_list = to_list(jd_summaries)
+    urls_list = to_list(jd_urls)
+    names_list = to_list(c_names)
+
+    recommendations = []
+    for summary, url, name in zip(summaries_list, urls_list, names_list):
+        recommendations.append(
+            {
+                "JD": summary,
+                "job_url": url,
+                "company": name,
+            }
+        )
+
+    deduped_recommendations = deduplicate(recommendations)
+    primary = deduped_recommendations[0] if deduped_recommendations else {}
 
     analysis_cache[resume_path] = {
-        "output": jd_summaries,
-        "JD": jd_urls,
-        "name": c_names,
+        "output": primary.get("JD", ""),
+        "JD": primary.get("JD", ""),
+        "name": primary.get("company", ""),
+        "recommendations": deduped_recommendations,
     }
-    logger.info(f"[{trace_id}] matching success company={c_names} url={jd_urls}")
 
-    return {"JD": jd_summaries, "JD_url": jd_urls, "name": c_names, "trace_id": trace_id}
+    logger.info(
+        f"[{trace_id}] matching success results={len(deduped_recommendations)} "
+        f"primary_company={primary.get('company', '')} url={primary.get('job_url', '')}"
+    )
+
+    return {
+        "recommendations": deduped_recommendations,
+        "primary": primary,
+        "trace_id": trace_id,
+    }
 
 
 # /chat - 캐시된 이력서/분석 결과 기반 OpenAI 응답
 langfuse_handler = CallbackHandler()
 
-
-@app.post("/chat")
+@api_router.post("/chat")
 async def chat(request: Request):
+    """
+    채팅 엔드포인트 - LangGraph의 MemorySaver를 사용한 자동 상태 관리
+    
+    - thread_id (session_id)로 세션 구분
+    - 상태는 자동으로 저장/복원됨
+    - messages는 add_messages reducer로 자동 누적
+    """
     data = await request.json()
     session_id = data["session_id"]
     user_input = data["message"]
     company_name = data.get("company", "")
     resume_path = data.get("resume_path", "")
 
-    if resume_cache[resume_path] is None:
-        # PDF를 직접 파싱 (JPG 변환 없이)
+    # 이력서 캐시 확인
+    if resume_path not in resume_cache or resume_cache[resume_path] is None:
         resume = run_parser(resume_path)
-        resume_content_text = resume[0]  # 첫 번째 반환값이 텍스트
+        resume_content_text = resume[0]
+        resume_cache[resume_path] = resume_content_text
     else:
         resume_content_text = resume_cache[resume_path]
 
-    print(resume_content_text)
-    state = get_session_state(
-        session_id,
-        job_description=data.get("jd", ""),
-        resume=resume_content_text,
-        company_name=company_name,
-        user_resume=data.get("user_resume", ""),
-        route_decision=data.get("route_decision", ""),
-    )
+    print(f"[DEBUG] Resume content length: {len(resume_content_text)}")
 
-    add_user_input_to_state(state, user_input)
-    graph, state = await create_graph(state)
+    # Graph 생성 (한 번만 생성, checkpointer 포함)
+    graph = create_graph()
 
-    result = await graph.ainvoke(state, config={"callbacks": [langfuse_handler]})
+    # 초기 상태 구성 (사용자 메시지 추가)
+    input_state: State = {
+        "messages": [HumanMessage(content=user_input)],
+        "job_description": data.get("jd", ""),
+        "resume": resume_content_text,
+        "company_name": company_name,
+        "next_agent": "",
+        "agent_outputs": {},
+        "final_answer": "",
+        "github_url": "",
+        "blog_url": "",
+    }
+
+    # thread_id를 config에 전달하여 세션별 상태 관리
+    config = {
+        "configurable": {"thread_id": session_id},
+        "callbacks": [langfuse_handler]
+    }
+
+    # Graph 실행 (상태는 자동으로 저장/복원됨)
+    result = await graph.ainvoke(input_state, config=config)
+    
+    # 마지막 AI 메시지 추출
     answer = result["messages"][-1].content
-    add_assistant_response_to_state(state, answer)
+    
     return {"response": answer}
 
 
-@app.post("/mock_chat")
-async def chat(request_data: dict = Body(...)):
+@api_router.post("/mock_chat")
+async def mock_chat(request_data: dict = Body(...)):
     message = request_data.get("message", "")
     resume_path = request_data.get("resume_path", "")
     company_name = request_data.get("company_name", "")
@@ -239,7 +353,11 @@ async def chat(request_data: dict = Body(...)):
     """
 
     try:
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        from configs import UPSTAGE_API_KEY
+        client = OpenAI(
+            api_key=UPSTAGE_API_KEY,
+            base_url="https://api.upstage.ai/v1"
+        )
         # Build a detailed, professional system prompt in English, including user preferences
         preference_info = []
         if request_data.get("location"):
@@ -260,7 +378,7 @@ async def chat(request_data: dict = Body(...)):
         )
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="solar-pro2",
             messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
             max_tokens=800,
             temperature=0.7,
@@ -278,7 +396,7 @@ class EvaluateRequest(BaseModel):
     model: int = 1
 
 
-@app.post("/evaluate")
+@api_router.post("/evaluate")
 async def evaluate(request: EvaluateRequest):
     try:
         analyzer = ATSAnalyzer(request.resume_path, request.jd_text, model=request.model)
@@ -290,6 +408,56 @@ async def evaluate(request: EvaluateRequest):
     except Exception as e:
         print(f"ATS 분석 오류: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# /scrape-jd - JD URL 크롤링
+class ScrapeJDRequest(BaseModel):
+    url: str
+
+
+@api_router.post("/scrape-jd")
+async def scrape_jd(request: ScrapeJDRequest):
+    """
+    채용 공고 URL에서 텍스트를 크롤링합니다.
+
+    Args:
+        url: 채용 공고 URL
+
+    Returns:
+        JSONResponse: {
+            "success": bool,
+            "text": str,  # 추출된 JD 텍스트
+            "site": str,  # 사이트명
+            "error": str  # 에러 메시지 (실패시)
+        }
+    """
+    trace_id = str(uuid.uuid4())
+    logger.info(f"[{trace_id}] /scrape-jd start url={request.url}")
+
+    try:
+        result = crawl_jd_from_url(request.url)
+
+        if result["success"]:
+            logger.info(f"[{trace_id}] scraping success site={result['site']} text_length={len(result['text'])}")
+        else:
+            logger.warning(f"[{trace_id}] scraping failed error={result['error']}")
+
+        return JSONResponse(content=result)
+
+    except Exception as e:
+        logger.error(f"[{trace_id}] unexpected error: {str(e)}")
+        return JSONResponse(
+            content={
+                "success": False,
+                "text": "",
+                "site": "",
+                "error": f"서버 오류가 발생했습니다: {str(e)}"
+            },
+            status_code=500
+        )
+
+# API router를 앱에 등록 (모든 라우트 정의 후에 등록해야 함)
+app.include_router(api_router)
 
 
 # 개발용 실행 명령

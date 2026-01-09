@@ -1,11 +1,14 @@
+# syntax=docker/dockerfile:1.4
 # Python 3.11 이미지 기반
 FROM python:3.11-slim
 
 # 작업 디렉터리 설정
 WORKDIR /app
 
-# 필요한 시스템 패키지 설치
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# 필요한 시스템 패키지 설치 (캐시 활용)
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
     g++ \
@@ -20,18 +23,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     poppler-utils \
     tesseract-ocr \
     tesseract-ocr-eng \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+    curl
 
-# pip 업그레이드
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+# uv 설치 (pip보다 10-100배 빠름)
+RUN pip install uv
 
-# 의존성 파일 복사 및 설치
+# 의존성 파일 복사 및 설치 (uv 캐시 마운트로 빠른 설치)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# 보수적으로 requests 설치 보장
-RUN pip install --no-cache-dir requests==2.31.0
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --system -r requirements.txt
 
 # NLTK 데이터 다운로드
 RUN python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
@@ -50,5 +50,5 @@ EXPOSE 8000
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# 서버 실행
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 서버 실행 (개발 모드에서는 --reload 옵션 사용)
+CMD ["sh", "-c", "if [ \"$ENVIRONMENT\" = \"development\" ] || [ -z \"$ENVIRONMENT\" ]; then uvicorn main:app --host 0.0.0.0 --port 8000 --reload; else uvicorn main:app --host 0.0.0.0 --port 8000; fi"]
