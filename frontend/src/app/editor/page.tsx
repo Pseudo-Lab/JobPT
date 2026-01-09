@@ -155,6 +155,7 @@ const EditorPage = () => {
     return defaultResumeSummary;
   });
   const listRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -240,6 +241,9 @@ const EditorPage = () => {
 
     setMessages((prev) => [...prev, userMessage, typingMessage]);
     setDraftMessage("");
+    if (chatInputRef.current) {
+      chatInputRef.current.style.height = "auto";
+    }
     // 첨부 표시를 즉시 비워 UI 칩을 빠르게 숨기고, 이미 조합한 메시지에는 포함된 상태를 유지합니다.
     setAttachments([]);
 
@@ -307,6 +311,17 @@ const EditorPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (chatInputRef.current) {
+      resizeChatInput(chatInputRef.current);
+    }
+  }, []);
+
+  const resizeChatInput = (target: HTMLTextAreaElement) => {
+    target.style.height = "auto";
+    target.style.height = `${Math.min(target.scrollHeight, 240)}px`;
+  };
+
   return (
     <div className="min-h-screen bg-[#1f1f1f]">
       <AppHeader />
@@ -317,6 +332,7 @@ const EditorPage = () => {
             <ResumeSummaryView
               summary={resumeSummary}
               editable
+              className="max-h-[calc(110vh-20rem)] overflow-y-auto pr-6"
               // onAttach={(item) => {
               //   setAttachments((prev) => {
               //     const exists = prev.find((p) => p.id === item.id);
@@ -428,12 +444,16 @@ const EditorPage = () => {
 
                 <div className="mt-auto rounded-3xl border border-slate-200 bg-white px-4 py-3 shadow-inner">
                   <div className="flex items-center gap-3">
-                    <input
-                      type="text"
+                    <textarea
+                      ref={chatInputRef}
+                      rows={1}
                       value={draftMessage}
-                      onChange={(event) => setDraftMessage(event.target.value)}
+                      onChange={(event) => {
+                        setDraftMessage(event.target.value);
+                        resizeChatInput(event.target);
+                      }}
                       placeholder="입력하세요."
-                      className="flex-1 border-0 bg-transparent text-sm focus:outline-none"
+                      className="flex-1 resize-none border-0 bg-transparent py-1 text-sm leading-5 focus:outline-none"
                       onCompositionStart={() => setIsComposing(true)}
                       onCompositionEnd={() => setIsComposing(false)}
                       onKeyDown={(event) => {
@@ -441,6 +461,14 @@ const EditorPage = () => {
                         if (event.key === "Enter" && !event.shiftKey) {
                           event.preventDefault();
                           handleSendMessage();
+                          return;
+                        }
+                        if (event.key === "Enter" && event.shiftKey) {
+                          requestAnimationFrame(() => {
+                            if (event.currentTarget) {
+                              resizeChatInput(event.currentTarget);
+                            }
+                          });
                         }
                       }}
                     />
