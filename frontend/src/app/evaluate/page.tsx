@@ -1160,6 +1160,7 @@ export default function EvaluatePage() {
           <ResumeSummaryView
             summary={resumeSummary}
             editable
+            className="max-h-[calc(185vh-20rem)] overflow-y-auto pr-6"
             onChange={(next) => {
               setResumeSummaryState(next);
               if (typeof window !== "undefined") {

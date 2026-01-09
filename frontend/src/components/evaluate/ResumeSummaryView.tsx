@@ -599,9 +599,9 @@ const ResumeSummaryView = ({
               </div>
             )}
           </div>
-          <div className="space-y-8">
+          <div className="space-y-10">
             {experiencesToRender.map((exp, idx) => (
-              <div key={`experience-${idx}`} className="space-y-3">
+              <div key={`experience-${idx}`} className="space-y-4">
                 <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50">
                     {exp.logoUrl ? (
@@ -690,7 +690,7 @@ const ResumeSummaryView = ({
                       "aria-label": `경력 ${idx + 1} 타이틀`,
                     })}
                     {renderTextArea({
-                      rows: 4,
+                      rows: 5,
                       placeholder: "주요 업무 및 성과를 작성하세요.",
                       value: exp.description ?? "",
                       onChange: (e) =>
@@ -722,99 +722,10 @@ const ResumeSummaryView = ({
         </section>
       )}
 
-      {(editable || educationsToRender.length > 0) && (
-        <section className="space-y-4">
-          <SectionTitle>학력</SectionTitle>
-          <div className="space-y-6">
-            {educationsToRender.map((edu, idx) => (
-              <div key={`education-${idx}`} className="space-y-2">
-                {editable ? (
-                  <>
-                    {renderInput({
-                      placeholder: "학교명",
-                      value: edu.school ?? "",
-                      onChange: (e) =>
-                        setEducationValues((prev) => {
-                          const next = [...prev];
-                          const base =
-                            next[idx] ??
-                            { school: "", period: "", startDate: "", endDate: "", degree: "", status: "", content: "" };
-                          next[idx] = { ...base, school: e.target.value };
-                          return next;
-                        }),
-                      "aria-label": `학력 ${idx + 1} 학교명`,
-                    })}
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {renderInput({
-                        type: "date",
-                        value: edu.startDate ?? "",
-                        onChange: (e) =>
-                          setEducationValues((prev) => {
-                            const next = [...prev];
-                            const base =
-                              next[idx] ??
-                              { school: "", period: "", startDate: "", endDate: "", degree: "", status: "", content: "" };
-                            next[idx] = { ...base, startDate: e.target.value, period: "" };
-                            return next;
-                          }),
-                        "aria-label": `학력 ${idx + 1} 시작일`,
-                      })}
-                      {renderInput({
-                        type: "date",
-                        value: edu.endDate ?? "",
-                        onChange: (e) =>
-                          setEducationValues((prev) => {
-                            const next = [...prev];
-                            const base =
-                              next[idx] ??
-                              { school: "", period: "", startDate: "", endDate: "", degree: "", status: "", content: "" };
-                            next[idx] = { ...base, endDate: e.target.value, period: "" };
-                            return next;
-                          }),
-                        "aria-label": `학력 ${idx + 1} 종료일`,
-                      })}
-                    </div>
-                    {renderTextArea({
-                      rows: 3,
-                      placeholder: "주요 내용 또는 비고를 입력하세요.",
-                      value: edu.content ?? "",
-                      onChange: (e) =>
-                        setEducationValues((prev) => {
-                          const next = [...prev];
-                          const base =
-                            next[idx] ??
-                            { school: "", period: "", startDate: "", endDate: "", degree: "", status: "", content: "" };
-                          next[idx] = { ...base, content: e.target.value };
-                          return next;
-                        }),
-                      "aria-label": `학력 ${idx + 1} 내용`,
-                    })}
-                  </>
-                ) : (
-                  <>
-                    <p className="text-base font-semibold text-slate-900">
-                      {edu.school || `학교 ${idx + 1}`}
-                    </p>
-                    {formatEducationPeriod(edu) && (
-                      <p className="text-sm text-slate-500">
-                        {formatEducationPeriod(edu)}
-                      </p>
-                    )}
-                    {edu.content && (
-                      <p className="text-sm leading-relaxed text-slate-700">{edu.content}</p>
-                    )}
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
       {(editable || activitiesToRender.length > 0) && (
         <section className="space-y-4">
           <SectionTitle>활동</SectionTitle>
-          <div className="space-y-4">
+          <div className="space-y-5">
             {activitiesToRender.map((activity, idx) => (
               <div
                 key={`activity-${idx}`}
@@ -942,7 +853,7 @@ const ResumeSummaryView = ({
                       })}
                     </div>
                     {renderTextArea({
-                      rows: 3,
+                      rows: 4,
                       placeholder: "활동 내용을 입력하세요.",
                       value: activity.content ?? "",
                       onChange: (e) =>
@@ -994,6 +905,95 @@ const ResumeSummaryView = ({
                       <p className="text-sm leading-relaxed text-slate-700">
                         {activity.content}
                       </p>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {(editable || educationsToRender.length > 0) && (
+        <section className="space-y-4">
+          <SectionTitle>학력/교육</SectionTitle>
+          <div className="space-y-6">
+            {educationsToRender.map((edu, idx) => (
+              <div key={`education-${idx}`} className="space-y-2">
+                {editable ? (
+                  <>
+                    {renderInput({
+                      placeholder: "학교명",
+                      value: edu.school ?? "",
+                      onChange: (e) =>
+                        setEducationValues((prev) => {
+                          const next = [...prev];
+                          const base =
+                            next[idx] ??
+                            { school: "", period: "", startDate: "", endDate: "", degree: "", status: "", content: "" };
+                          next[idx] = { ...base, school: e.target.value };
+                          return next;
+                        }),
+                      "aria-label": `학력 ${idx + 1} 학교명`,
+                    })}
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {renderInput({
+                        type: "date",
+                        value: edu.startDate ?? "",
+                        onChange: (e) =>
+                          setEducationValues((prev) => {
+                            const next = [...prev];
+                            const base =
+                              next[idx] ??
+                              { school: "", period: "", startDate: "", endDate: "", degree: "", status: "", content: "" };
+                            next[idx] = { ...base, startDate: e.target.value, period: "" };
+                            return next;
+                          }),
+                        "aria-label": `학력 ${idx + 1} 시작일`,
+                      })}
+                      {renderInput({
+                        type: "date",
+                        value: edu.endDate ?? "",
+                        onChange: (e) =>
+                          setEducationValues((prev) => {
+                            const next = [...prev];
+                            const base =
+                              next[idx] ??
+                              { school: "", period: "", startDate: "", endDate: "", degree: "", status: "", content: "" };
+                            next[idx] = { ...base, endDate: e.target.value, period: "" };
+                            return next;
+                          }),
+                        "aria-label": `학력 ${idx + 1} 종료일`,
+                      })}
+                    </div>
+                    {renderTextArea({
+                      rows: 3,
+                      placeholder: "주요 내용 또는 비고를 입력하세요.",
+                      value: edu.content ?? "",
+                      onChange: (e) =>
+                        setEducationValues((prev) => {
+                          const next = [...prev];
+                          const base =
+                            next[idx] ??
+                            { school: "", period: "", startDate: "", endDate: "", degree: "", status: "", content: "" };
+                          next[idx] = { ...base, content: e.target.value };
+                          return next;
+                        }),
+                      "aria-label": `학력 ${idx + 1} 내용`,
+                    })}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-base font-semibold text-slate-900">
+                      {edu.school || `학교 ${idx + 1}`}
+                    </p>
+                    {formatEducationPeriod(edu) && (
+                      <p className="text-sm text-slate-500">
+                        {formatEducationPeriod(edu)}
+                      </p>
+                    )}
+                    {edu.content && (
+                      <p className="text-sm leading-relaxed text-slate-700">{edu.content}</p>
                     )}
                   </>
                 )}
