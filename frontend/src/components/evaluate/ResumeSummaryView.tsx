@@ -10,6 +10,27 @@ export interface ResumeExperience {
   logoUrl?: string;
 }
 
+export interface ResumeEducation {
+  school: string;
+  period?: string;
+  startDate?: string;
+  endDate?: string;
+  degree?: string;
+  status?: string;
+  content?: string;
+}
+
+export interface ResumeActivity {
+  name: string;
+  period?: string;
+  startDate?: string;
+  endDate?: string;
+  company?: string;
+  role?: string;
+  type?: string;
+  content?: string;
+}
+
 export interface ResumeCertification {
   name: string;
   date?: string;
@@ -28,10 +49,13 @@ export interface ResumeLink {
 
 export interface ResumeSummaryData {
   name: string;
+  address?: string;
   phone?: string;
   email?: string;
   summary?: string;
   experiences?: ResumeExperience[];
+  educations?: ResumeEducation[];
+  activities?: ResumeActivity[];
   skills?: string[];
   certifications?: ResumeCertification[];
   languages?: ResumeLanguage[];
@@ -59,10 +83,13 @@ const ResumeSummaryView = ({
 }) => {
   const {
     name,
+    address,
     phone,
     email,
     summary: intro,
     experiences = [],
+    educations = [],
+    activities = [],
     skills = [],
     certifications = [],
     languages = [],
@@ -70,7 +97,10 @@ const ResumeSummaryView = ({
   } = summary;
 
   const [introValue, setIntroValue] = useState(intro ?? "");
+  const [addressValue, setAddressValue] = useState(address ?? "");
   const [experienceValues, setExperienceValues] = useState<ResumeExperience[]>(experiences);
+  const [educationValues, setEducationValues] = useState<ResumeEducation[]>(educations);
+  const [activityValues, setActivityValues] = useState<ResumeActivity[]>(activities);
   const [skillsValues, setSkillsValues] = useState<string[]>(skills);
   const [skillInput, setSkillInput] = useState("");
   const [certInput, setCertInput] = useState(
@@ -131,12 +161,15 @@ const ResumeSummaryView = ({
   useEffect(() => {
     if (!editable) {
       setIntroValue(intro ?? "");
+      setAddressValue(address ?? "");
     }
-  }, [editable, intro]);
+  }, [address, editable, intro]);
 
   useEffect(() => {
     if (!editable) {
       setExperienceValues(experiences);
+      setEducationValues(educations);
+      setActivityValues(activities);
       setSkillsValues(skills);
       setCertInput(
         (certifications ?? [])
@@ -154,7 +187,7 @@ const ResumeSummaryView = ({
           .join("\n"),
       );
     }
-  }, [certifications, editable, experiences, languages, links, skills]);
+  }, [activities, certifications, editable, educations, experiences, languages, links, skills]);
 
   useEffect(() => {
     if (editable && experienceValues.length === 0) {
@@ -172,6 +205,39 @@ const ResumeSummaryView = ({
     }
   }, [editable, experienceValues.length]);
 
+  useEffect(() => {
+    if (editable && educationValues.length === 0) {
+      setEducationValues([
+        {
+          school: "",
+          period: "",
+          startDate: "",
+          endDate: "",
+          degree: "",
+          status: "",
+          content: "",
+        },
+      ]);
+    }
+  }, [editable, educationValues.length]);
+
+  useEffect(() => {
+    if (editable && activityValues.length === 0) {
+      setActivityValues([
+        {
+          name: "",
+          company: "",
+          role: "",
+          period: "",
+          startDate: "",
+          endDate: "",
+          type: "",
+          content: "",
+        },
+      ]);
+    }
+  }, [activityValues.length, editable]);
+
   const experiencesToRender =
     editable && experienceValues.length === 0
       ? [
@@ -188,6 +254,41 @@ const ResumeSummaryView = ({
       : editable
         ? experienceValues
         : experiences;
+
+  const educationsToRender =
+    editable && educationValues.length === 0
+      ? [
+          {
+            school: "",
+            period: "",
+            startDate: "",
+            endDate: "",
+            degree: "",
+            status: "",
+            content: "",
+          },
+        ]
+      : editable
+        ? educationValues
+        : educations;
+
+  const activitiesToRender =
+    editable && activityValues.length === 0
+      ? [
+          {
+            name: "",
+            company: "",
+            role: "",
+            period: "",
+            startDate: "",
+            endDate: "",
+            type: "",
+            content: "",
+          },
+        ]
+      : editable
+        ? activityValues
+        : activities;
 
   const addSkill = () => {
     const trimmed = skillInput.trim();
@@ -224,14 +325,27 @@ const ResumeSummaryView = ({
     onChange({
       ...summary,
       summary: introValue,
+      address: addressValue,
       experiences: experienceValues,
+      educations: educationValues,
+      activities: activityValues,
       skills: skillsValues,
       certifications: parseCertifications(certInput),
       languages: parseLanguages(languageInput),
       links: parseLinks(linkInput),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [certInput, experienceValues, introValue, languageInput, linkInput, skillsValues]);
+  }, [
+    activityValues,
+    addressValue,
+    certInput,
+    educationValues,
+    experienceValues,
+    introValue,
+    languageInput,
+    linkInput,
+    skillsValues,
+  ]);
 
   const renderInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input
@@ -265,6 +379,27 @@ const ResumeSummaryView = ({
     if (exp.period && exp.period.trim().length > 0) return exp.period;
     const start = exp.startDate && exp.startDate.trim().length > 0 ? exp.startDate : null;
     const end = exp.endDate && exp.endDate.trim().length > 0 ? exp.endDate : null;
+    if (start || end) {
+      return `${start ?? "시작일"} ~ ${end ?? "종료일"}`;
+    }
+    return "";
+  };
+
+  const formatEducationPeriod = (edu: ResumeEducation) => {
+    if (edu.period && edu.period.trim().length > 0) return edu.period;
+    const start = edu.startDate && edu.startDate.trim().length > 0 ? edu.startDate : null;
+    const end = edu.endDate && edu.endDate.trim().length > 0 ? edu.endDate : null;
+    if (start || end) {
+      return `${start ?? "시작일"} ~ ${end ?? "종료일"}`;
+    }
+    return "";
+  };
+
+  const formatActivityPeriod = (activity: ResumeActivity) => {
+    if (activity.period && activity.period.trim().length > 0) return activity.period;
+    const start =
+      activity.startDate && activity.startDate.trim().length > 0 ? activity.startDate : null;
+    const end = activity.endDate && activity.endDate.trim().length > 0 ? activity.endDate : null;
     if (start || end) {
       return `${start ?? "시작일"} ~ ${end ?? "종료일"}`;
     }
@@ -392,6 +527,26 @@ const ResumeSummaryView = ({
                   </svg>
                   {email || "email@gmail.com"}
                 </span>
+                {addressValue && (
+                  <span className="inline-flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                      className="h-4 w-4 text-slate-400"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 21s6-4.35 6-10A6 6 0 006 11c0 5.65 6 10 6 10z"
+                      />
+                      <circle cx="12" cy="11" r="2.5" />
+                    </svg>
+                    {addressValue}
+                  </span>
+                )}
               </div>
             </div>
             {/* {editable && onAttach && (
@@ -444,9 +599,9 @@ const ResumeSummaryView = ({
               </div>
             )}
           </div>
-          <div className="space-y-8">
+          <div className="space-y-10">
             {experiencesToRender.map((exp, idx) => (
-              <div key={`experience-${idx}`} className="space-y-3">
+              <div key={`experience-${idx}`} className="space-y-4">
                 <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-50">
                     {exp.logoUrl ? (
@@ -535,7 +690,7 @@ const ResumeSummaryView = ({
                       "aria-label": `경력 ${idx + 1} 타이틀`,
                     })}
                     {renderTextArea({
-                      rows: 4,
+                      rows: 5,
                       placeholder: "주요 업무 및 성과를 작성하세요.",
                       value: exp.description ?? "",
                       onChange: (e) =>
@@ -558,6 +713,287 @@ const ResumeSummaryView = ({
                       <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
                         {exp.description}
                       </p>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {(editable || activitiesToRender.length > 0) && (
+        <section className="space-y-4">
+          <SectionTitle>활동</SectionTitle>
+          <div className="space-y-5">
+            {activitiesToRender.map((activity, idx) => (
+              <div
+                key={`activity-${idx}`}
+                className="space-y-2 rounded-2xl border border-slate-100 bg-slate-50 p-4"
+              >
+                {editable ? (
+                  <>
+                    {renderInput({
+                      placeholder: "활동/회사명",
+                      value: activity.name ?? activity.company ?? "",
+                      onChange: (e) =>
+                        setActivityValues((prev) => {
+                          const next = [...prev];
+                          const base =
+                            next[idx] ??
+                            {
+                              name: "",
+                              company: "",
+                              role: "",
+                              period: "",
+                              startDate: "",
+                              endDate: "",
+                              type: "",
+                              content: "",
+                            };
+                          next[idx] = { ...base, name: e.target.value, company: e.target.value };
+                          return next;
+                        }),
+                      "aria-label": `활동 ${idx + 1} 이름`,
+                    })}
+                    <div className="grid grid-cols-2 gap-2">
+                      {renderInput({
+                        type: "date",
+                        value: activity.startDate ?? "",
+                        onChange: (e) =>
+                          setActivityValues((prev) => {
+                            const next = [...prev];
+                            const base =
+                              next[idx] ??
+                              {
+                                name: "",
+                                company: "",
+                                role: "",
+                                period: "",
+                                startDate: "",
+                                endDate: "",
+                                type: "",
+                                content: "",
+                              };
+                            next[idx] = { ...base, startDate: e.target.value, period: "" };
+                            return next;
+                          }),
+                        "aria-label": `활동 ${idx + 1} 시작일`,
+                      })}
+                      {renderInput({
+                        type: "date",
+                        value: activity.endDate ?? "",
+                        onChange: (e) =>
+                          setActivityValues((prev) => {
+                            const next = [...prev];
+                            const base =
+                              next[idx] ??
+                              {
+                                name: "",
+                                company: "",
+                                role: "",
+                                period: "",
+                                startDate: "",
+                                endDate: "",
+                                type: "",
+                                content: "",
+                              };
+                            next[idx] = { ...base, endDate: e.target.value, period: "" };
+                            return next;
+                          }),
+                        "aria-label": `활동 ${idx + 1} 종료일`,
+                      })}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {renderInput({
+                        placeholder: "역할/직책",
+                        value: activity.role ?? "",
+                        onChange: (e) =>
+                          setActivityValues((prev) => {
+                            const next = [...prev];
+                            const base =
+                              next[idx] ??
+                              {
+                                name: "",
+                                company: "",
+                                role: "",
+                                period: "",
+                                startDate: "",
+                                endDate: "",
+                                type: "",
+                                content: "",
+                              };
+                            next[idx] = { ...base, role: e.target.value };
+                            return next;
+                          }),
+                        "aria-label": `활동 ${idx + 1} 역할`,
+                      })}
+                      {renderInput({
+                        placeholder: "유형 (예: 프로젝트, 자격증)",
+                        value: activity.type ?? "",
+                        onChange: (e) =>
+                          setActivityValues((prev) => {
+                            const next = [...prev];
+                            const base =
+                              next[idx] ??
+                              {
+                                name: "",
+                                company: "",
+                                role: "",
+                                period: "",
+                                startDate: "",
+                                endDate: "",
+                                type: "",
+                                content: "",
+                              };
+                            next[idx] = { ...base, type: e.target.value };
+                            return next;
+                          }),
+                        "aria-label": `활동 ${idx + 1} 유형`,
+                      })}
+                    </div>
+                    {renderTextArea({
+                      rows: 4,
+                      placeholder: "활동 내용을 입력하세요.",
+                      value: activity.content ?? "",
+                      onChange: (e) =>
+                        setActivityValues((prev) => {
+                          const next = [...prev];
+                          const base =
+                            next[idx] ??
+                            {
+                              name: "",
+                              company: "",
+                              role: "",
+                              period: "",
+                              startDate: "",
+                              endDate: "",
+                              type: "",
+                              content: "",
+                            };
+                          next[idx] = { ...base, content: e.target.value };
+                          return next;
+                        }),
+                      "aria-label": `활동 ${idx + 1} 내용`,
+                    })}
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-slate-900">
+                          {activity.company || activity.name || `활동 ${idx + 1}`}
+                        </p>
+                        {activity.type && (
+                          <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+                            {activity.type}
+                          </span>
+                        )}
+                      </div>
+                      {(activity.role || activity.name) && (
+                        <span className="text-xs font-medium text-slate-500">
+                          {activity.role || activity.name}
+                        </span>
+                      )}
+                    </div>
+                    {formatActivityPeriod(activity) && (
+                      <p className="text-xs text-slate-500">
+                        {formatActivityPeriod(activity)}
+                      </p>
+                    )}
+                    {activity.content && (
+                      <p className="text-sm leading-relaxed text-slate-700">
+                        {activity.content}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {(editable || educationsToRender.length > 0) && (
+        <section className="space-y-4">
+          <SectionTitle>학력/교육</SectionTitle>
+          <div className="space-y-6">
+            {educationsToRender.map((edu, idx) => (
+              <div key={`education-${idx}`} className="space-y-2">
+                {editable ? (
+                  <>
+                    {renderInput({
+                      placeholder: "학교명",
+                      value: edu.school ?? "",
+                      onChange: (e) =>
+                        setEducationValues((prev) => {
+                          const next = [...prev];
+                          const base =
+                            next[idx] ??
+                            { school: "", period: "", startDate: "", endDate: "", degree: "", status: "", content: "" };
+                          next[idx] = { ...base, school: e.target.value };
+                          return next;
+                        }),
+                      "aria-label": `학력 ${idx + 1} 학교명`,
+                    })}
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {renderInput({
+                        type: "date",
+                        value: edu.startDate ?? "",
+                        onChange: (e) =>
+                          setEducationValues((prev) => {
+                            const next = [...prev];
+                            const base =
+                              next[idx] ??
+                              { school: "", period: "", startDate: "", endDate: "", degree: "", status: "", content: "" };
+                            next[idx] = { ...base, startDate: e.target.value, period: "" };
+                            return next;
+                          }),
+                        "aria-label": `학력 ${idx + 1} 시작일`,
+                      })}
+                      {renderInput({
+                        type: "date",
+                        value: edu.endDate ?? "",
+                        onChange: (e) =>
+                          setEducationValues((prev) => {
+                            const next = [...prev];
+                            const base =
+                              next[idx] ??
+                              { school: "", period: "", startDate: "", endDate: "", degree: "", status: "", content: "" };
+                            next[idx] = { ...base, endDate: e.target.value, period: "" };
+                            return next;
+                          }),
+                        "aria-label": `학력 ${idx + 1} 종료일`,
+                      })}
+                    </div>
+                    {renderTextArea({
+                      rows: 3,
+                      placeholder: "주요 내용 또는 비고를 입력하세요.",
+                      value: edu.content ?? "",
+                      onChange: (e) =>
+                        setEducationValues((prev) => {
+                          const next = [...prev];
+                          const base =
+                            next[idx] ??
+                            { school: "", period: "", startDate: "", endDate: "", degree: "", status: "", content: "" };
+                          next[idx] = { ...base, content: e.target.value };
+                          return next;
+                        }),
+                      "aria-label": `학력 ${idx + 1} 내용`,
+                    })}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-base font-semibold text-slate-900">
+                      {edu.school || `학교 ${idx + 1}`}
+                    </p>
+                    {formatEducationPeriod(edu) && (
+                      <p className="text-sm text-slate-500">
+                        {formatEducationPeriod(edu)}
+                      </p>
+                    )}
+                    {edu.content && (
+                      <p className="text-sm leading-relaxed text-slate-700">{edu.content}</p>
                     )}
                   </>
                 )}
@@ -753,31 +1189,45 @@ const ResumeSummaryView = ({
       {(editable || links.length > 0) && (
         <section className="space-y-4">
           <SectionTitle>링크</SectionTitle>
-          {editable ? (
-            renderTextArea({
-              rows: 3,
-              placeholder: "링크를 줄바꿈으로 입력하세요. (예: 포트폴리오 - https://...)",
-              value: linkInput,
-              onChange: (e) => setLinkInput(e.target.value),
-              "aria-label": "링크",
-            })
-          ) : (
-            <ul className="space-y-2">
-              {links.map((link) => (
-                <li key={link.url}>
+      {editable ? (
+        renderTextArea({
+          rows: 3,
+          placeholder: "링크를 줄바꿈으로 입력하세요. (예: 포트폴리오 - https://...)",
+          value: linkInput,
+          onChange: (e) => setLinkInput(e.target.value),
+          "aria-label": "링크",
+        })
+      ) : (
+        <ul className="space-y-2">
+          {links.map((link, idx) => {
+            const isClickable = Boolean(link.url);
+            const content = (
+              <>
+                <span className="h-1 w-1 rounded-full bg-slate-400" />
+                <span>{link.label}</span>
+              </>
+            );
+            return (
+              <li key={`${link.label}-${idx}`}>
+                {isClickable ? (
                   <a
                     href={link.url}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-2 text-sm text-slate-600 underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900"
                   >
-                    <span className="h-1 w-1 rounded-full bg-slate-400" />
-                    <span>{link.label}</span>
+                    {content}
                   </a>
-                </li>
-              ))}
-            </ul>
-          )}
+                ) : (
+                  <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+                    {content}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
         </section>
       )}
     </div>

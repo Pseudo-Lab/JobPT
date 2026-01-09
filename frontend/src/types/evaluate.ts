@@ -38,4 +38,56 @@ export type RawElement = {
     height: number;
   };
   content: { text: string; markdown: string };
-}; 
+};
+
+export interface StructuredResume {
+  basic_info?: {
+    name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    address?: string | null;
+  } | null;
+  summary?: string | null;
+  careers?: Array<{
+    company_name?: string | null;
+    period?: string | null;
+    employment_type?: string | null;
+    role?: string | null;
+    achievements?: Array<string | Record<string, unknown>> | null;
+  }> | null;
+  educations?: Array<{
+    school_name?: string | null;
+    period?: string | null;
+    graduation_status?: string | null;
+    major_and_degree?: string | null;
+    content?: string | null;
+  }> | null;
+  skills?: string[] | null;
+  activities?: Array<{
+    activity_name?: string | null;
+    period?: string | null;
+    activity_type?: string | null;
+    content?: string | null;
+  }> | null;
+  languages?: Array<{
+    language_name?: string | null;
+    level?: string | null;
+    certification?: string | null;
+    acquisition_date?: string | null;
+  }> | null;
+  links?: string[] | null;
+  additional_info?: {
+    certifications?: Array<{
+      name?: string | null;
+      date?: string | null;
+      note?: string | null;
+    }> | null;
+    other_experience?: Array<{
+      company_name?: string | null;
+      period?: string | null;
+      role?: string | null;
+    }> | null;
+    [key: string]: unknown;
+  } | null;
+  [key: string]: unknown;
+}

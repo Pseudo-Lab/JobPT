@@ -29,7 +29,7 @@ const UploadView: React.FC<UploadViewProps> = memo(
             JobPT 시작하기
           </h1>
           <p className="text-sm text-slate-500 md:text-base">
-            이력서를 업로드하고, 맞춤 공고를 받아보세요 (멘트 수정)
+            이력서를 업로드하고, 맞춤 공고를 받아보세요
           </p>
         </header>
 

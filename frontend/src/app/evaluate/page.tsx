@@ -15,10 +15,13 @@ import {
   toRecordArray,
   toStringValue,
 } from "@/lib/matching-utils";
+import { StructuredResume } from "@/types/evaluate";
 import ResumeSummaryView, {
   ResumeCertification,
+  ResumeEducation,
   ResumeExperience,
   ResumeLanguage,
+  ResumeActivity,
   ResumeSummaryData,
 } from "@/components/evaluate/ResumeSummaryView";
 import AppHeader from "@/components/common/AppHeader";
@@ -40,115 +43,17 @@ const parseStoredMatchingData = (
 
 const defaultResumeSummary: ResumeSummaryData = {
   name: "",
+  address: "",
   phone: "",
   email: "",
   summary: "",
   experiences: [],
+  educations: [],
+  activities: [],
   skills: [],
   certifications: [],
   languages: [],
   links: [],
-};
-
-const MOCK_PARSED_RESUME = {
-  basic_info: {
-    name: "홍길동",
-    phone: "010-1234-5678",
-    email: "hong.gildong@example.com",
-    address: null,
-  },
-  summary:
-    "5년차 백엔드 개발자로서 Python과 Django를 활용한 웹 서비스 개발 경험이 있습니다. 대규모 트래픽을 처리할 수 있는 시스템 설계 및 최적화에 관심이 많습니다.",
-  careers: [
-    {
-      company_name: "ABC 테크놀로지",
-      period: "2020.01 ~ 2023.12",
-      employment_type: null,
-      role: "백엔드 개발자",
-      achievements: [],
-    },
-    {
-      company_name: "XYZ 스타트업",
-      period: "2018.06 ~ 2019.12",
-      employment_type: null,
-      role: "주니어 개발자",
-      achievements: [],
-    },
-  ],
-  educations: [
-    {
-      school_name: "서울대학교",
-      period: "2014.03 ~ 2018.02",
-      graduation_status: "졸업",
-      major_and_degree: null,
-      content: null,
-    },
-    {
-      school_name: "서울고등학교",
-      period: "2011.03 ~ 2014.02",
-      graduation_status: "졸업",
-      major_and_degree: null,
-      content: null,
-    },
-  ],
-  skills: [
-    "Python",
-    "Django",
-    "PostgreSQL",
-    "Docker",
-    "Kubernetes",
-    "AWS",
-    "Git",
-    "JavaScript",
-    "TypeScript",
-    "React",
-  ],
-  activities: [
-    {
-      activity_name: "정보처리기사",
-      period: null,
-      activity_type: "자격증",
-      content: null,
-    },
-    {
-      activity_name: "AWS Solutions Architect",
-      period: null,
-      activity_type: "자격증",
-      content: null,
-    },
-    {
-      activity_name: "오픈소스 기여상",
-      period: null,
-      activity_type: "수상",
-      content: null,
-    },
-    {
-      activity_name: "개인 프로젝트: 이커머스 플랫폼 개발",
-      period: null,
-      activity_type: "프로젝트",
-      content: null,
-    },
-  ],
-  languages: [
-    {
-      language_name: "영어",
-      level: "상",
-      certification: "TOEIC",
-      acquisition_date: null,
-    },
-    {
-      language_name: "일본어",
-      level: "중",
-      certification: "JLPT",
-      acquisition_date: null,
-    },
-  ],
-  links: [
-    "https://github.com/hong-gildong",
-    "https://hong-gildong.github.io",
-    "https://linkedin.com/in/hong-gildong",
-  ],
-  additional_info: {},
 };
 
 const toStringArray = (value: unknown): string[] =>
@@ -222,52 +127,140 @@ const mapParsedResumeToSummary = (
   const basicInfo = isRecord(raw.basic_info) ? raw.basic_info : null;
   const careers = toRecordArray(raw.careers);
   const activities = toRecordArray(raw.activities);
+  const educations = toRecordArray(raw.educations);
   const languages = toRecordArray(raw.languages);
+  const additionalInfo = isRecord(raw.additional_info) ? raw.additional_info : null;
+  const additionalExperiences = toRecordArray(additionalInfo?.other_experience);
+  const certificationRecords = toRecordArray(additionalInfo?.certifications);
 
-  const experiences = careers
-    .map((career) => {
-      const company =
-        pickFirstString(career, ["company_name", "company", "companyName"]) ??
-        "";
-      const period = pickFirstString(career, ["period", "duration"]) ?? "";
-      const { startDate, endDate } = extractDatesFromPeriod(period);
-      const title = pickFirstString(career, ["role", "title", "position"]);
-      const achievements = parseAchievements(career.achievements);
-      const description = achievements.length > 0 ? achievements.join("\n") : undefined;
+  const experiences = [
+    ...careers
+      .map((career) => {
+        const company =
+          pickFirstString(career, ["company_name", "company", "companyName"]) ??
+          "";
+        const period = pickFirstString(career, ["period", "duration"]) ?? "";
+        const { startDate, endDate } = extractDatesFromPeriod(period);
+        const title = pickFirstString(career, ["role", "title", "position"]);
+        const achievements = parseAchievements(career.achievements);
+        const description =
+          achievements.length > 0
+            ? achievements.join("\n")
+            : pickFirstString(career, ["description", "content", "detail"]);
 
-      if (!company && !period && !title && !description) return null;
+        if (!company && !period && !title && !description) return null;
 
+        return {
+          company,
+          period,
+          startDate,
+          endDate,
+          title,
+          description,
+        } as ResumeExperience;
+      })
+      .filter((item): item is ResumeExperience => item !== null),
+    ...additionalExperiences
+      .map((item) => {
+        const company = pickFirstString(item, ["company_name", "company"]);
+        const period = pickFirstString(item, ["period", "duration"]);
+        const { startDate, endDate } = extractDatesFromPeriod(period ?? "");
+        const title = pickFirstString(item, ["role", "title", "position"]);
+        if (!company && !period && !title) return null;
+        return {
+          company: company ?? "",
+          period: period ?? "",
+          startDate,
+          endDate,
+          title,
+        } as ResumeExperience;
+      })
+      .filter((item): item is ResumeExperience => item !== null),
+  ];
+
+  const educationItems = educations
+    .map((education) => {
+      const school = pickFirstString(education, ["school_name", "school"]);
+      const period = pickFirstString(education, ["period"]);
+      const { startDate, endDate } = extractDatesFromPeriod(period ?? "");
+      const degree = pickFirstString(education, ["major_and_degree", "major", "degree"]);
+      const status = pickFirstString(education, ["graduation_status", "status"]);
+      const content = pickFirstString(education, ["content", "description", "detail"]);
+      if (!school && !period && !degree && !content && !status) return null;
       return {
-        company,
+        school: school ?? "",
         period,
         startDate,
         endDate,
-        title,
-        description,
-      } as ResumeExperience;
+        degree,
+        status,
+        content,
+      };
     })
-    .filter((item): item is ResumeExperience => item !== null);
+    .filter(Boolean) as ResumeEducation[];
 
-  const certifications = activities
-    .map((activity, index) => {
+  const activityItems = activities
+    .map((activity) => {
       const name = pickFirstString(activity, [
         "activity_name",
         "name",
         "title",
       ]);
-      const date = pickFirstString(activity, ["period", "date"]);
+      const company = pickFirstString(activity, ["company_name", "company"]);
+      const period = pickFirstString(activity, ["period", "date"]);
+      const { startDate, endDate } = extractDatesFromPeriod(period ?? "");
       const type = pickFirstString(activity, [
         "activity_type",
         "type",
         "category",
       ]);
+      const role = pickFirstString(activity, ["role", "position"]);
       const content = pickFirstString(activity, [
         "content",
         "description",
         "detail",
       ]);
-      if (!name && !date && !type && !content) return null;
+      if (!name && !company && !period && !type && !content && !role) return null;
+      return {
+        name: name ?? company ?? "",
+        company: company ?? undefined,
+        role: role ?? undefined,
+        period,
+        startDate,
+        endDate,
+        type,
+        content,
+      };
+    })
+    .filter(Boolean) as ResumeActivity[];
 
+  const certificationsFromAdditional = certificationRecords
+    .map((cert, index) => {
+      const name = pickFirstString(cert, ["name", "title"]);
+      const date = pickFirstString(cert, ["date", "acquired_at"]);
+      const note = pickFirstString(cert, ["note", "description", "detail"]);
+      if (!name && !date && !note) return null;
+      return {
+        name: name ?? `자격증 ${index + 1}`,
+        date,
+        note,
+      } as ResumeCertification;
+    })
+    .filter((item): item is ResumeCertification => item !== null);
+
+  const certificationsFromActivities = activities
+    .map((activity, index) => {
+      const type = pickFirstString(activity, ["activity_type", "type", "category"]);
+      const name = pickFirstString(activity, ["activity_name", "name", "title"]);
+      const date = pickFirstString(activity, ["period", "date"]);
+      const content = pickFirstString(activity, ["content", "description", "detail"]);
+      const typeLabel = type?.toLowerCase() ?? "";
+      const isCertification =
+        typeLabel.includes("cert") ||
+        typeLabel.includes("자격") ||
+        typeLabel.includes("수상");
+      if (!isCertification) return null;
+      if (!name && !date && !content) return null;
       const note = [type, content].filter(Boolean).join(" / ") || undefined;
       return {
         name: name ?? `활동 ${index + 1}`,
@@ -297,19 +290,30 @@ const mapParsedResumeToSummary = (
     .filter((item): item is ResumeLanguage => item !== null);
 
   const rawLinks = toStringArray(raw.links);
-  const links = rawLinks.map((link, index) => ({
-    label: deriveLinkLabel(link, index),
-    url: link,
-  }));
+  const links = rawLinks.map((link, index) => {
+    const label = deriveLinkLabel(link, index);
+    const isUrl = /^https?:\/\//i.test(link);
+    const friendlyLabel =
+      !isUrl && label.startsWith("링크") ? link : label;
+    return {
+      label: friendlyLabel || `링크 ${index + 1}`,
+      url: isUrl ? link : "",
+    };
+  });
+
+  const skills = Array.from(new Set(toStringArray(raw.skills)));
 
   return {
     name: pickFirstString(basicInfo, ["name"]) ?? "",
+    address: pickFirstString(basicInfo, ["address"]),
     phone: pickFirstString(basicInfo, ["phone"]),
     email: pickFirstString(basicInfo, ["email"]),
     summary: pickFirstString(raw, ["summary", "about", "intro"]),
     experiences,
-    skills: toStringArray(raw.skills),
-    certifications,
+    educations: educationItems,
+    activities: activityItems,
+    skills,
+    certifications: [...certificationsFromAdditional, ...certificationsFromActivities],
     languages: languageItems,
     links,
   } as ResumeSummaryData;
@@ -327,10 +331,13 @@ const mergeResumeSummary = (
   return {
     ...prev,
     name: pickString(incoming.name, prev.name) ?? "",
+    address: pickString(incoming.address, prev.address),
     phone: pickString(incoming.phone, prev.phone),
     email: pickString(incoming.email, prev.email),
     summary: pickString(incoming.summary, prev.summary),
     experiences: pickArray(incoming.experiences, prev.experiences) ?? [],
+    educations: pickArray(incoming.educations, prev.educations) ?? [],
+    activities: pickArray(incoming.activities, prev.activities) ?? [],
     skills: pickArray(incoming.skills, prev.skills) ?? [],
     certifications: pickArray(incoming.certifications, prev.certifications) ?? [],
     languages: pickArray(incoming.languages, prev.languages) ?? [],
@@ -360,11 +367,18 @@ export default function EvaluatePage() {
           if (isRecord(parsed)) {
             return {
               name: toStringValue(parsed.name) ?? "",
+              address: toStringValue(parsed.address),
               phone: toStringValue(parsed.phone),
               email: toStringValue(parsed.email),
               summary: toStringValue(parsed.summary),
               experiences: Array.isArray(parsed.experiences)
                 ? (parsed.experiences as ResumeSummaryData["experiences"])
+                : [],
+              educations: Array.isArray(parsed.educations)
+                ? (parsed.educations as ResumeSummaryData["educations"])
+                : [],
+              activities: Array.isArray(parsed.activities)
+                ? (parsed.activities as ResumeSummaryData["activities"])
                 : [],
               skills: Array.isArray(parsed.skills)
                 ? (parsed.skills as string[])
@@ -664,22 +678,73 @@ export default function EvaluatePage() {
       return;
     }
 
-    const mapped = mapParsedResumeToSummary(MOCK_PARSED_RESUME);
-    if (!mapped) return;
-    const latestSummaryPath = session.getItem("resume_summary_path");
-    if (latestSummaryPath === currentResume) {
-      return;
-    }
-    setResumeSummaryState((prev) => {
-      const base =
-        storedSummaryPath && storedSummaryPath !== currentResume
-          ? defaultResumeSummary
-          : prev;
-      const merged = mergeResumeSummary(base, mapped);
-      session.setItem("resume_summary", JSON.stringify(merged));
-      session.setItem("resume_summary_path", currentResume);
-      return merged;
-    });
+    const controller = new AbortController();
+
+    const fetchStructuredResume = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/resume/structured`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ resume_path: currentResume }),
+            signal: controller.signal,
+          },
+        );
+
+        const text = await response.text();
+        let parsed: StructuredResume | null = null;
+        try {
+          parsed = text ? (JSON.parse(text) as StructuredResume) : null;
+        } catch (error) {
+          console.warn("[Evaluate] Failed to parse structured resume response", error);
+        }
+
+        if (!response.ok) {
+          const parsedDetail =
+            parsed && typeof (parsed as Record<string, unknown>).detail === "string"
+              ? ((parsed as Record<string, unknown>).detail as string)
+              : undefined;
+          const detail =
+            parsedDetail ||
+            text ||
+            "이력서를 불러오지 못했습니다.";
+          throw new Error(detail);
+        }
+
+        if (!parsed) return;
+
+        const mapped = mapParsedResumeToSummary(parsed);
+        if (!mapped) return;
+
+        const latestSummaryPath = session.getItem("resume_summary_path");
+        if (latestSummaryPath === currentResume) {
+          return;
+        }
+
+        setResumeSummaryState((prev) => {
+          const base =
+            storedSummaryPath && storedSummaryPath !== currentResume
+              ? defaultResumeSummary
+              : prev;
+          const merged = mergeResumeSummary(base, mapped);
+          session.setItem("resume_summary", JSON.stringify(merged));
+          session.setItem("resume_summary_path", currentResume);
+          return merged;
+        });
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
+        console.warn("[Evaluate] Failed to fetch structured resume", error);
+      }
+    };
+
+    fetchStructuredResume();
+
+    return () => {
+      controller.abort();
+    };
   }, [resumePath]);
 
   useEffect(() => {
@@ -1095,6 +1160,7 @@ export default function EvaluatePage() {
           <ResumeSummaryView
             summary={resumeSummary}
             editable
+            className="max-h-[calc(185vh-20rem)] overflow-y-auto pr-6"
             onChange={(next) => {
               setResumeSummaryState(next);
               if (typeof window !== "undefined") {

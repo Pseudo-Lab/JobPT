@@ -115,10 +115,13 @@ const ChatAvatar = ({
 
 const defaultResumeSummary: ResumeSummaryData = {
   name: "",
+  address: "",
   phone: "",
   email: "",
   summary: "",
   experiences: [],
+  educations: [],
+  activities: [],
   skills: [],
   certifications: [],
   languages: [],
