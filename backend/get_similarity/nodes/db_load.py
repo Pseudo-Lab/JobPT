@@ -28,7 +28,10 @@ def get_db(DB_PATH, emb_model, collection, DB_TYPE):
         print("Pinecone DB 사용")
         pc = Pinecone(api_key=PINECONE_API_KEY)
         index = pc.Index(PINECONE_INDEX)
-        persist_db = PineconeVectorStore(index=index, embedding=emb_model)
+        # text 필드가 없으므로 job_id를 텍스트로 쓰게 함 (Chunk ID 추출용으로만 사용)
+        persist_db = PineconeVectorStore(index=index, embedding=emb_model, text_key="job_id")
         check_db_status(index, "pinecone", index)
+        # 중요: Raw Index 객체를 함께 반환해야 fetch_vectors가 가능함
+        return persist_db, index
 
-    return persist_db
+    return persist_db, None

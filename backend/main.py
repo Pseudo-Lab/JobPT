@@ -6,6 +6,7 @@ import shutil
 import uuid
 import os
 import json
+import traceback
 
 from util.parser import run_parser
 from util.resume_structured_parser import parse_resume_to_structured
@@ -136,7 +137,15 @@ async def upload_resume(
 
         return JSONResponse(content={"resume_path": file_path})
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_traceback = traceback.format_exc()
+        logger.error(f"[UPLOAD ERROR] Failed to upload resume: {str(e)}")
+        logger.error(f"[UPLOAD ERROR] Filename: {file.filename if file else 'None'}")
+        logger.error(f"[UPLOAD ERROR] Location: {location}, Remote: {remote}, Job Type: {job_type}")
+        logger.error(f"[UPLOAD ERROR] Traceback:\n{error_traceback}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to upload resume: {str(e)}"
+        )
 
 
 @api_router.post("/matching")
@@ -186,6 +195,12 @@ async def run(data: MatchRequest):
     jd_summaries, jd_urls, c_names = await matching(
         resume_content_text, location=location_cache, remote=remote_cache, jobtype=job_type_cache
     )
+
+    logger.info(f">>>>"*30)
+    logger.info(f"[{trace_id}] jd_summaries={jd_summaries}")
+    logger.info(f"[{trace_id}] jd_urls={jd_urls}")
+    logger.info(f"[{trace_id}] c_names={c_names}")
+
 
     def to_list(value):
         if isinstance(value, list):
@@ -532,12 +547,9 @@ async def scrape_jd(request: ScrapeJDRequest):
             status_code=500
         )
 
-# API router를 앱에 등록
-app.include_router(api_router)
-app.include_router(auth.router)
-
 # API router를 앱에 등록 (모든 라우트 정의 후에 등록해야 함)
 app.include_router(api_router)
+
 
 # 개발용 실행 명령
 if __name__ == "__main__":
