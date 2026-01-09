@@ -100,8 +100,8 @@ async def parse_resume_to_structured(resume_text: str) -> Optional[Dict[str, Any
 - 배열이 비어있으면 빈 배열 []로 설정
 - 정확한 JSON 형식으로만 응답 (추가 설명 없이)
 - company_name, school_name, activity_name, language_name은 필수 필드
-- skills는 최대 50개까지
-- links는 중복 제거된 URL 배열
+- skills는 하나의 단어로 최대 10개까지 추출
+- links는 @가 포함된 유저가 삽입한 링크를 의미. 유효한 url이 아닌 경우 빈 배열로 생성
 
 JSON만 응답해주세요:"""
 
@@ -156,8 +156,8 @@ JSON만 응답해주세요:"""
         }
         
         # skills 최대 50개 제한
-        if len(result["skills"]) > 50:
-            result["skills"] = result["skills"][:50]
+        if len(result["skills"]) > 10:
+            result["skills"] = result["skills"][:10]
         
         logger.info(f"[ResumeParser] 구조화 파싱 완료 - 기본정보: name={result['basic_info'].get('name')}, phone={result['basic_info'].get('phone')}, email={result['basic_info'].get('email')}")
         logger.info(f"[ResumeParser] 경력: {len(result['careers'])}개, 학력: {len(result['educations'])}개, 스킬: {len(result['skills'])}개")
