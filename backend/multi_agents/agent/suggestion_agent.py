@@ -4,7 +4,6 @@ from langgraph.prebuilt import create_react_agent
 from langchain_upstage import ChatUpstage
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage, SystemMessage
-from langchain_mcp_adapters.client import MultiServerMCPClient
 from multi_agents.states.states import State
 from multi_agents.prompts.suggestion_prompt import get_suggestion_prompt
 from langfuse import Langfuse, get_client
@@ -44,20 +43,11 @@ async def suggest_agent(state: State):
     model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
     # model = ChatOpenAI(model=AGENT_MODEL, temperature=0, api_key=OPENAI_API_KEY)
 
-    # MCP 도구와 GitHub 도구 결합
-    try:
-        client = MultiServerMCPClient()
-        mcp_tools = await client.get_tools()
-        print(f"✓ MCP Tools 로드: {len(mcp_tools)}개")
-    except Exception as e:
-        print(f"⚠️ MCP Tools 로드 실패: {e}")
-        mcp_tools = []
+    # GitHub API 도구 및 블로그 도구 사용
+    all_tools = GITHUB_TOOLS + BLOG_TOOLS
+    print(f"✓ 총 도구 수: {len(all_tools)}개 (GitHub: {len(GITHUB_TOOLS)}, Blog: {len(BLOG_TOOLS)})")
 
-    # GitHub API 도구들 추가
-    all_tools = mcp_tools + GITHUB_TOOLS + BLOG_TOOLS
-    print(f"✓ 총 도구 수: {len(all_tools)}개 (MCP: {len(mcp_tools)}, GitHub: {len(GITHUB_TOOLS)})")
-
-    # React 에이전트 생성 (MCP 도구 + GitHub API 도구)
+    # React 에이전트 생성 (GitHub API 도구 + 블로그 도구)
     agent = create_react_agent(model, all_tools)
 
     config = {"recursion_limit": 20, "max_iterations": 10, "callbacks": [langfuse_handler]}

@@ -1,41 +1,43 @@
 import asyncio
+import os
 from langgraph.prebuilt import create_react_agent
 from langchain_upstage import ChatUpstage
-from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_core.messages import AIMessage, SystemMessage
 from multi_agents.states.states import State
 from multi_agents.prompts.summary_prompt import get_summary_prompt
 from typing import Dict, List, cast
 from configs import *
 
+# Tavily 도구 import
+try:
+    from langchain_community.tools.tavily_search import TavilySearchResults
+    TAVILY_AVAILABLE = True
+except ImportError:
+    TAVILY_AVAILABLE = False
+    print("Warning: langchain_community not available. Tavily search will be disabled.")
+
 
 async def summary_agent(state: State) -> Dict[str, List[AIMessage]]:
 
     model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
 
-    # Option 1 from error message: client = MultiServerMCPClient(...)
+    # Tavily 검색 도구 설정
+    tools = []
     try:
-        client = MultiServerMCPClient(
-            {
-                "tavily-mcp": {
-                    "command": "npx",
-                    "args": [
-                        "-y",
-                        "@smithery/cli@latest",
-                        "run",
-                        "@tavily-ai/tavily-mcp",
-                        "--key",
-                        os.getenv("SMITHERY_API_KEY"),
-                    ],
-                    "transport": "stdio",
-                }
-            }
-        )
-        tools = await client.get_tools()
-        agent = create_react_agent(model, tools)
+        tavily_api_key = os.getenv("TAVILY_API_KEY")
+        if TAVILY_AVAILABLE and tavily_api_key:
+            tavily_tool = TavilySearchResults(
+                max_results=5,
+                api_key=tavily_api_key
+            )
+            tools = [tavily_tool]
+            print("Tavily search tool enabled")
+        else:
+            print("Tavily search tool disabled: API key not found or package not installed")
     except Exception as e:
-        print("summary_agent mcp error:", e)
-        agent = create_react_agent(model, [])
+        print(f"Error initializing Tavily tool: {e}")
+    
+    agent = create_react_agent(model, tools)
 
     # 프롬프트 생성 (외부 파일에서 가져오기)
     system_message = get_summary_prompt(company_name=state.get("company_name", ""))
