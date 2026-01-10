@@ -1,7 +1,7 @@
 from typing import cast
 from langgraph.prebuilt import create_react_agent
-from langchain_upstage import ChatUpstage
-# from langchain_openai import ChatOpenAI
+# from langchain_upstage import ChatUpstage
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage, SystemMessage
 from multi_agents.states.states import State
 from multi_agents.prompts.supervisor_prompt import get_supervisor_prompt
@@ -32,8 +32,8 @@ async def supervisor(state: State):
     - 현재 상태를 분석하여 다음 agent를 선택하거나 FINISH
     - FINISH 시 최종 답변 생성
     """
-    model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
-    # model = ChatOpenAI(model="gpt-5-mini", temperature=0, api_key=OPENAI_API_KEY)
+    # model = ChatUpstage(model=AGENT_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
+    model = ChatOpenAI(model="gpt-4o-mini", api_key=OPENAI_API_KEY)
 
     # 이미 수집된 agent 결과 포맷팅
     agent_outputs = state.get("agent_outputs", {})
