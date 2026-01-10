@@ -175,7 +175,7 @@ async def run(data: MatchRequest):
     # 구조화된 데이터 생성 및 저장
     try:
         if resume_path not in resume_structured_cache or resume_structured_cache[resume_path] is None:
-            structured_resume = await parse_resume_to_structured(resume_content_text)
+            structured_resume = await parse_resume_to_structured(resume_content_text, pdf_path=resume_path)
             if structured_resume:
                 resume_structured_cache[resume_path] = structured_resume
                 logger.info(f"[{trace_id}] structured resume data saved")
@@ -299,7 +299,7 @@ async def chat(request: Request):
         # 구조화된 데이터 생성 및 저장
         try:
             if resume_path not in resume_structured_cache or resume_structured_cache[resume_path] is None:
-                structured_resume = await parse_resume_to_structured(resume_content_text)
+                structured_resume = await parse_resume_to_structured(resume_content_text, pdf_path=resume_path)
                 if structured_resume:
                     resume_structured_cache[resume_path] = structured_resume
                     # 구조화된 이력서 결과를 JSON 형식으로 로그 출력
@@ -474,7 +474,7 @@ async def get_structured_resume(request: StructuredResumeRequest):
     if resume_path in resume_cache:
         try:
             resume_content_text = resume_cache[resume_path]
-            structured_resume = await parse_resume_to_structured(resume_content_text)
+            structured_resume = await parse_resume_to_structured(resume_content_text, pdf_path=resume_path)
             if structured_resume:
                 resume_structured_cache[resume_path] = structured_resume
                 return JSONResponse(content=structured_resume)

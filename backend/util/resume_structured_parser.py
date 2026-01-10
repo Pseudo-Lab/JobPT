@@ -7,6 +7,7 @@ import logging
 from typing import Dict, Any, Optional
 from langchain_upstage import ChatUpstage
 from configs import UPSTAGE_API_KEY, RAG_MODEL
+from util.url_extractor import get_urls_from_pdf, extract_urls_from_text
 
 logger = logging.getLogger("jobpt")
 
@@ -27,18 +28,52 @@ def parse_json_loose(text: str) -> dict:
     return json.loads(obj)
 
 
-async def parse_resume_to_structured(resume_text: str) -> Optional[Dict[str, Any]]:
+async def parse_resume_to_structured(resume_text: str, pdf_path: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """
     이력서 텍스트를 구조화된 JSON 형식으로 변환
     
     Args:
         resume_text: 파싱된 이력서 텍스트
+        pdf_path: PDF 파일 경로 (선택사항, 하이퍼링크 URL 추출용)
         
     Returns:
         구조화된 이력서 데이터 (스키마에 맞는 형식) 또는 None (실패 시)
     """
     if not resume_text or not resume_text.strip():
         return None
+    
+    # PDF에서 하이퍼링크 URL 추출 (있는 경우)
+    extracted_urls = []
+    extracted_email = None
+    
+    if pdf_path:
+        try:
+            # PDF에서 하이퍼링크 추출
+            pdf_urls = get_urls_from_pdf(pdf_path, text_content=resume_text)
+            logger.info(f"[ResumeParser] PDF에서 {len(pdf_urls)}개의 URL 추출됨")
+            
+            # 텍스트에서도 URL 패턴 추출 (하이퍼링크가 아닌 경우)
+            text_urls = extract_urls_from_text(resume_text)
+            
+            # 모든 URL 합치기
+            all_urls = list(set(pdf_urls + text_urls))
+            
+            # email과 일반 URL 분리
+            for url in all_urls:
+                # mailto: 링크에서 email 추출
+                if url.startswith("mailto:"):
+                    email = url.replace("mailto:", "").strip()
+                    if email and "@" in email:
+                        extracted_email = email
+                        logger.info(f"[ResumeParser] 하이퍼링크에서 email 추출: {extracted_email}")
+                # 일반 URL (email이 아닌 경우)
+                elif "@" not in url or not url.startswith("mailto:"):
+                    extracted_urls.append(url)
+            
+            logger.info(f"[ResumeParser] 추출된 URL: {len(extracted_urls)}개, Email: {extracted_email}")
+        except Exception as e:
+            logger.warning(f"[ResumeParser] PDF URL 추출 실패 (계속 진행): {e}")
+            # URL 추출 실패해도 LLM 파싱은 계속 진행
     
     llm = ChatUpstage(model=RAG_MODEL, temperature=0, api_key=UPSTAGE_API_KEY)
     
@@ -159,8 +194,21 @@ JSON만 응답해주세요:"""
         if len(result["skills"]) > 10:
             result["skills"] = result["skills"][:10]
         
+        # PDF에서 추출한 URL과 email을 LLM 결과와 병합
+        # 1. Email 병합: PDF에서 추출한 email이 있고 LLM 결과가 없거나 빈 값이면 사용
+        if extracted_email and (not result["basic_info"].get("email") or not result["basic_info"]["email"].strip()):
+            result["basic_info"]["email"] = extracted_email
+            logger.info(f"[ResumeParser] PDF에서 추출한 email로 업데이트: {extracted_email}")
+        
+        # 2. Links 병합: PDF에서 추출한 URL을 links 배열에 추가 (중복 제거)
+        if extracted_urls:
+            existing_links = set(result.get("links", []))
+            new_links = [url for url in extracted_urls if url not in existing_links]
+            result["links"] = list(existing_links) + new_links
+            logger.info(f"[ResumeParser] PDF에서 추출한 {len(new_links)}개의 URL을 links에 추가")
+        
         logger.info(f"[ResumeParser] 구조화 파싱 완료 - 기본정보: name={result['basic_info'].get('name')}, phone={result['basic_info'].get('phone')}, email={result['basic_info'].get('email')}")
-        logger.info(f"[ResumeParser] 경력: {len(result['careers'])}개, 학력: {len(result['educations'])}개, 스킬: {len(result['skills'])}개")
+        logger.info(f"[ResumeParser] 경력: {len(result['careers'])}개, 학력: {len(result['educations'])}개, 스킬: {len(result['skills'])}개, 링크: {len(result['links'])}개")
         
         return result
         
