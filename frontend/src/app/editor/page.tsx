@@ -332,7 +332,7 @@ const EditorPage = () => {
             <ResumeSummaryView
               summary={resumeSummary}
               editable
-              className="max-h-[calc(110vh-20rem)] overflow-y-auto pr-6"
+              className="max-h-[80vh] overflow-y-auto pr-6"
               // onAttach={(item) => {
               //   setAttachments((prev) => {
               //     const exists = prev.find((p) => p.id === item.id);
@@ -356,7 +356,7 @@ const EditorPage = () => {
             />
 
             <div className="flex h-full flex-col gap-6">
-              <section className="flex h-full min-h-[70vh] flex-col rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+              <section className="flex h-[80vh] flex-col rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
                 <header className="flex items-center justify-between">
                   <div>
                     <h2 className="text-2xl font-semibold text-slate-900">AI Assistant</h2>
